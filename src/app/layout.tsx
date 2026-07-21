@@ -4,9 +4,6 @@ import {
   IBM_Plex_Sans,
   Newsreader,
 } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
-import { ui } from "@clerk/ui";
-import { shadcn } from "@clerk/ui/themes";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
@@ -51,27 +48,7 @@ export default function RootLayout({
       className={`${plexSans.variable} ${plexMono.variable} ${newsreader.variable}`}
     >
       <body className="min-h-dvh bg-background text-foreground antialiased">
-        <ClerkProvider
-          dynamic
-          ui={ui}
-          appearance={{
-            theme: shadcn,
-            elements: {
-              // Clerk's fixed drawers intentionally ship without a z-index.
-              // Keep checkout and its backdrop above Switchboard's sticky UI.
-              drawerBackdrop: { zIndex: 9_999 },
-              drawerRoot: { zIndex: 10_000 },
-            },
-          }}
-          signInUrl="/sign-in"
-          signUpUrl="/sign-up"
-          afterSignOutUrl="/"
-          taskUrls={{
-            "choose-organization": "/session-tasks/choose-organization",
-          }}
-        >
-          <Providers>{children}</Providers>
-        </ClerkProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
