@@ -37,7 +37,7 @@ export function useQuery<T>(endpoint: string, args: Record<string, unknown> | "s
   return data;
 }
 
-export function useMutation<TArgs extends Record<string, unknown>, TResult>(endpoint: string) {
+export function useMutation<TArgs extends Record<string, unknown> = Record<string, any>, TResult = any>(endpoint: string) {
   return useCallback(
     async (args: TArgs): Promise<TResult> => {
       const result = await callApi(endpoint, args);
