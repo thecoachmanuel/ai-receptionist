@@ -93,8 +93,8 @@ export async function POST(
         signedUrl,
         dynamicVariables: createAgentDynamicVariables({
           siteSlug: published.site.siteSlug,
-          businessName: published.site.config.businessName,
-          description: published.site.config.about,
+          businessName: (published.site as any).config?.businessName || (published.site as any).businessName || published.organization.name,
+          description: (published.site as any).config?.about || (published.site as any).about,
           timezone: published.organization.timezone,
           locale: published.organization.locale,
           currency: published.organization.currency,
