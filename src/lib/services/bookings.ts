@@ -38,7 +38,7 @@ export async function listBookings(
     .limit(limit)
     .toArray();
 
-  return bookings.map((b) => ({
+  return bookings.map((b: any) => ({
     bookingId: b._id!.toString(),
     status: b.status,
     startAt: b.startAt,
@@ -122,8 +122,8 @@ export async function createBooking(
       .collection<DbTeamMember>("teamMembers")
       .find({ organizationId: orgId, active: true, acceptingBookings: true })
       .toArray();
-    const candidate = members.find((m) =>
-      m.offeringIds.some((id) => id === args.offeringId),
+    const candidate = members.find((m: any) =>
+      m.offeringIds.some((id: any) => id === args.offeringId),
     );
     if (!candidate) throw new Error("No team member is available for this offering.");
     teamMember = candidate;
@@ -142,7 +142,7 @@ export async function createBooking(
     organizationId: orgId,
     publicSiteId: args.publicSiteId,
     offeringId: offering._id!.toString(),
-    teamMemberId: teamMember._id!.toString(),
+    teamMemberId: teamMember!._id!.toString(),
     confirmationCode: code,
     status: "confirmed",
     source: args.source ?? "dashboard",
@@ -159,8 +159,8 @@ export async function createBooking(
       currency: offering.currency,
     },
     teamMemberSnapshot: {
-      name: teamMember.name,
-      title: teamMember.title,
+      name: teamMember!.name,
+      title: teamMember!.title,
     },
     customerSnapshot: {
       name: args.customer.name,

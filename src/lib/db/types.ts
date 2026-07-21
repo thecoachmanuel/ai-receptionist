@@ -183,7 +183,7 @@ export type DbBooking = {
   _id?: ObjectId | string;
   organizationId: string;
   publicSiteId?: string;
-  contactId: string;
+  contactId?: string;
   offeringId: string;
   teamMemberId: string;
   startAt: number;

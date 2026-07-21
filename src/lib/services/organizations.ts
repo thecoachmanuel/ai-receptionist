@@ -52,17 +52,17 @@ export async function getUserOrganizations(userId: string) {
     .toArray();
 
   const orgIds = members
-    .map((m) => (ObjectId.isValid(m.organizationId) ? new ObjectId(m.organizationId) : null))
-    .filter((id): id is ObjectId => id !== null);
+    .map((m: any) => (ObjectId.isValid(m.organizationId) ? new ObjectId(m.organizationId) : null))
+    .filter((id: any): id is ObjectId => id !== null);
 
   const orgs = await db
     .collection<DbOrganization>("organizations")
     .find({ _id: { $in: orgIds } })
     .toArray();
 
-  const memberRoleMap = new Map(members.map((m) => [m.organizationId, m.role]));
+  const memberRoleMap = new Map(members.map((m: any) => [m.organizationId, m.role]));
 
-  return orgs.map((org) => ({
+  return orgs.map((org: any) => ({
     id: org._id!.toString(),
     clerkOrgId: org.clerkOrgId,
     name: org.name,

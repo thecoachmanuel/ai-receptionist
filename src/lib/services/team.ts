@@ -16,7 +16,7 @@ export async function listMembers(orgId: string, includeInactive = false) {
     .sort({ sortOrder: 1, createdAt: 1 })
     .toArray();
 
-  return members.map((m) => ({
+  return members.map((m: any) => ({
     _id: m._id!.toString(),
     name: m.name,
     title: m.title,

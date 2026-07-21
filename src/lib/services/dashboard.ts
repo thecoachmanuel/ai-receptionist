@@ -99,7 +99,7 @@ export async function getOverview(orgId: string) {
       activeTeamMembers,
       activeTeamMembersIsCapped: false,
     },
-    upcomingBookings: upcomingBookings.map((b) => ({
+    upcomingBookings: upcomingBookings.map((b: any) => ({
       bookingId: b._id!.toString(),
       status: b.status,
       startAt: b.startAt,
@@ -115,7 +115,7 @@ export async function getOverview(orgId: string) {
       createdAt: b.createdAt,
       updatedAt: b.updatedAt,
     })),
-    recentConversations: recentConversations.map((c) => ({
+    recentConversations: recentConversations.map((c: any) => ({
       _id: c._id!.toString(),
       externalConversationId: c.externalConversationId,
       channel: c.channel,

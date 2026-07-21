@@ -10,7 +10,7 @@ export async function listRecentConversations(orgId: string, limit = 20) {
     .limit(limit)
     .toArray();
 
-  return conversations.map((c) => ({
+  return conversations.map((c: any) => ({
     _id: c._id!.toString(),
     externalConversationId: c.externalConversationId,
     channel: c.channel,

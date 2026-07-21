@@ -19,7 +19,7 @@ export async function uploadFileToGridFS(
     uploadStream.on("finish", () => {
       resolve(uploadStream.id.toString());
     });
-    uploadStream.on("error", (err) => {
+    uploadStream.on("error", (err: any) => {
       reject(err);
     });
     uploadStream.end(buffer);
@@ -27,7 +27,7 @@ export async function uploadFileToGridFS(
 }
 
 export async function downloadFileFromGridFS(idString: string): Promise<{
-  stream: NodeJS.ReadableStream;
+  stream: any;
   filename: string;
   contentType: string;
 } | null> {

@@ -16,7 +16,7 @@ export async function listRules(orgId: string, teamMemberId?: string) {
     .sort({ dayOfWeek: 1, startMinute: 1 })
     .toArray();
 
-  return rules.map((r) => ({
+  return rules.map((r: any) => ({
     _id: r._id!.toString(),
     teamMemberId: r.teamMemberId,
     timezone: r.timezone,

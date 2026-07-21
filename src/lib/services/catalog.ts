@@ -17,7 +17,7 @@ export async function listOfferings(orgId: string, includeInactive = false) {
     .sort({ createdAt: 1 })
     .toArray();
 
-  return offerings.map((o) => ({
+  return offerings.map((o: any) => ({
     _id: o._id!.toString(),
     name: o.name,
     slug: o.slug,

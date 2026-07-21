@@ -57,8 +57,8 @@ export async function getPublishedBySlug(siteSlug: string) {
       terminology: organization.terminology,
     },
     offerings: offerings
-      .filter((o) => o.bookableOnline)
-      .map((o) => ({
+      .filter((o: any) => o.bookableOnline)
+      .map((o: any) => ({
         _id: o._id!.toString(),
         name: o.name,
         slug: o.slug,
@@ -70,8 +70,8 @@ export async function getPublishedBySlug(siteSlug: string) {
         active: o.active,
       })),
     teamMembers: teamMembers
-      .filter((m) => m.acceptingBookings)
-      .map((m) => ({
+      .filter((m: any) => m.acceptingBookings)
+      .map((m: any) => ({
         _id: m._id!.toString(),
         name: m.name,
         title: m.title,
@@ -80,7 +80,7 @@ export async function getPublishedBySlug(siteSlug: string) {
         offeringIds: m.offeringIds || [],
         active: m.active,
       })),
-    knowledgeItems: knowledgeItems.map((k) => ({
+    knowledgeItems: knowledgeItems.map((k: any) => ({
       _id: k._id!.toString(),
       title: k.title,
       content: k.content,

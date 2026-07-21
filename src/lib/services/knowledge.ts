@@ -14,7 +14,7 @@ export async function listKnowledgeItems(orgId: string, includeUnpublished = fal
     .sort({ sortOrder: 1 })
     .toArray();
 
-  return items.map((k) => ({
+  return items.map((k: any) => ({
     _id: k._id!.toString(),
     title: k.title,
     content: k.content,
