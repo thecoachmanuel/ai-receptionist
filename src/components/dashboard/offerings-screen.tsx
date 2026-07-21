@@ -218,7 +218,7 @@ export function OfferingsScreen() {
         <LoadingPanel rows={5} />
       ) : offerings.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {offerings.map((offering, index) => (
+          {offerings.map((offering: any, index: number) => (
             <Card key={offering._id} className="bg-white">
               <CardContent className="flex h-full flex-col pt-0">
                 <div className="flex items-start justify-between gap-3">

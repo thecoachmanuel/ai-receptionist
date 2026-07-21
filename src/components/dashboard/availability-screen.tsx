@@ -225,18 +225,18 @@ export function AvailabilityScreen() {
   const bookableMembers = useMemo(
     () =>
       (members ?? []).filter(
-        (member) => member.active && member.acceptingBookings,
+        (member: any) => member.active && member.acceptingBookings,
       ),
     [members],
   );
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const effectiveMemberId =
-    bookableMembers.find((member) => member._id === selectedMemberId)?._id ??
+    bookableMembers.find((member: any) => member._id === selectedMemberId)?._id ??
     bookableMembers[0]?._id ??
     "";
-  const member = bookableMembers.find((entry) => entry._id === effectiveMemberId);
+  const member = bookableMembers.find((entry: any) => entry._id === effectiveMemberId);
   const memberRules = (rules ?? []).filter(
-    (rule) => rule.teamMemberId === effectiveMemberId,
+    (rule: any) => rule.teamMemberId === effectiveMemberId,
   );
 
   return (

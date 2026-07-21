@@ -250,7 +250,7 @@ export function TeamScreen() {
         <LoadingPanel rows={5} />
       ) : members.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {members.map((member) => (
+          {members.map((member: any) => (
             <Card key={member._id} className="bg-white">
               <CardContent className="flex h-full flex-col pt-0">
                 <div className="flex items-start gap-3">
