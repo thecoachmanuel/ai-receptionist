@@ -74,7 +74,7 @@ export default async function PublicSitePage({
   return (
     <PublicSite
       siteSlug={siteSlug}
-      publishedSite={publishedSite}
+      publishedSite={publishedSite as any}
       textAgentEnabled={agentFeatures.text}
       voiceAgentEnabled={agentFeatures.voice}
     />

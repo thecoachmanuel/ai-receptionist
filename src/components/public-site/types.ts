@@ -36,33 +36,35 @@ export type PublishedSite = {
   site: {
     _id: string;
     siteSlug: string;
-    businessName: string;
+    config?: any;
+    businessName?: string;
     heroHeadline?: string;
     heroSubheadline?: string;
     about?: string;
-    sections: string[];
-    layoutStyle: string;
-    primaryColor: string;
-    contact: {
+    sections?: string[];
+    layoutStyle?: string;
+    primaryColor?: string;
+    contact?: {
       phone?: string;
       email?: string;
       address?: string;
     };
-    socialLinks: Array<{ label: string; url: string }>;
-    updatedAt: number;
+    socialLinks?: Array<{ label: string; url: string }>;
+    updatedAt?: number;
     publishedAt?: number;
   };
   organization: {
+    clerkOrgId?: string;
     name: string;
     slug: string;
     timezone: string;
     currency: string;
     locale: string;
-    terminology: PublicTerminology;
+    terminology: any;
   };
-  offerings: PublicOffering[];
-  teamMembers: PublicTeamMember[];
-  knowledgeItems: Array<{ _id: string; title: string; content: string }>;
+  offerings: any[];
+  teamMembers: any[];
+  knowledgeItems: any[];
   agentEmbed?: {
     agentId: string;
     publicApiKey?: string;
