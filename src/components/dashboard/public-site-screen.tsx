@@ -295,7 +295,7 @@ function SitePreview({
                   : "grid sm:grid-cols-2",
             )}
           >
-            {previewOfferings.map((offering) =>
+            {previewOfferings.map((offering: any) =>
               isCompact ? (
                 <div
                   key={offering._id}
@@ -379,7 +379,7 @@ function SitePreview({
               </p>
             </div>
             <div className="mt-4 flex -space-x-2">
-              {members.slice(0, 5).map((member) => (
+              {members.slice(0, 5).map((member: any) => (
                 <span
                   key={member._id}
                   className="grid size-9 place-items-center border-2 border-white text-[8px] font-semibold text-white"

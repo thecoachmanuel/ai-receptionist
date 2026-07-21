@@ -166,7 +166,7 @@ function MemberDialog({ member }: { member?: TeamMember }) {
             <div className="space-y-2 sm:col-span-2">
               <Label>{terminology.offeringPlural}</Label>
               <div className="grid max-h-40 gap-2 overflow-y-auto rounded-lg border border-black/10 bg-muted/20 p-3 sm:grid-cols-2">
-                {(offerings ?? []).map((offering) => (
+                {(offerings ?? []).map((offering: any) => (
                   <label
                     key={offering._id}
                     className="flex cursor-pointer items-center gap-2 rounded-md bg-white p-2 text-xs ring-1 ring-black/8"

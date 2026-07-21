@@ -228,7 +228,7 @@ function BookingStatusSelect({ booking }: { booking: Booking }) {
         <SelectValue />
       </SelectTrigger>
       <SelectContent align="end">
-        {statuses.map((status) => (
+        {statuses.map((status: any) => (
           <SelectItem key={status} value={status}>
             {status.replaceAll("_", " ")}
           </SelectItem>
@@ -300,7 +300,7 @@ export function BookingsScreen() {
                 </SelectTrigger>
                 <SelectContent align="end">
                   <SelectItem value="all">All statuses</SelectItem>
-                  {statuses.map((status) => (
+                  {statuses.map((status: any) => (
                     <SelectItem key={status} value={status}>
                       {status.replaceAll("_", " ")}
                     </SelectItem>
@@ -327,7 +327,7 @@ export function BookingsScreen() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((booking) => (
+                {filtered.map((booking: any) => (
                   <TableRow key={booking._id}>
                     <TableCell className="font-mono text-xs">
                       {formatDateTime(booking.startAt, organization?.timezone)}

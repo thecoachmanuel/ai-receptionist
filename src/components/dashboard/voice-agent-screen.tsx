@@ -319,7 +319,7 @@ export function VoiceAgentScreen() {
             <LoadingPanel rows={4} />
           ) : conversations.length ? (
             <div className="divide-y divide-black/8">
-              {conversations.map((conversation) => {
+              {conversations.map((conversation: any) => {
                 const createdAt = conversation.startedAt;
                 return (
                   <div

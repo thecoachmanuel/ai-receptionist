@@ -138,7 +138,7 @@ export function OverviewScreen() {
       />
 
       <section className="grid gap-px overflow-hidden rounded-xl border border-black/10 bg-black/10 sm:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric, index) => {
+        {metrics.map((metric: any, index: number) => {
           const Icon = metric.icon;
           return (
             <div key={metric.label} className="bg-white p-4 sm:p-5">
@@ -182,7 +182,7 @@ export function OverviewScreen() {
           <CardContent>
             {today.length ? (
               <div className="divide-y divide-black/8">
-                {today.slice(0, 7).map((booking) => (
+                {today.slice(0, 7).map((booking: any) => (
                   <BookingRow key={booking._id} booking={booking} />
                 ))}
               </div>
@@ -220,7 +220,7 @@ export function OverviewScreen() {
             <CardContent>
               {overview.recentConversations.length ? (
                 <div>
-                  {overview.recentConversations.slice(0, 3).map((conversation, index) => (
+                  {overview.recentConversations.slice(0, 3).map((conversation: any, index: number) => (
                     <div key={conversation._id}>
                       {index > 0 && <Separator className="my-3 bg-white/10" />}
                       <div className="flex items-start gap-3">
