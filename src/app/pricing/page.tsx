@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
 import { Brand } from "@/components/brand";

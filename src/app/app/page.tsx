@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { redirect } from "next/navigation";
 import { ArrowRight, Building2, Sparkles } from "lucide-react";
 import { OrganizationList } from "@/components/auth/org-switcher";
