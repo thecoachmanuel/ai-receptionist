@@ -190,7 +190,7 @@ function terminologyMatches(
   second: BackendTerminology,
 ) {
   return (Object.keys(first) as TerminologyKey[]).every(
-    (key: any) => first[key] === second[key],
+    (key: TerminologyKey) => first[key] === second[key],
   );
 }
 
