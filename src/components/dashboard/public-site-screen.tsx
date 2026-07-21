@@ -991,10 +991,10 @@ export function PublicSiteScreen() {
           key={`${current.site._id}-${current.site.updatedAt}`}
           initial={current}
           offerings={offerings.filter(
-            (offering) => offering.active && offering.bookableOnline,
+            (offering: any) => offering.active && offering.bookableOnline,
           )}
           members={members.filter(
-            (member) => member.active && member.acceptingBookings,
+            (member: any) => member.active && member.acceptingBookings,
           )}
         />
       )}
