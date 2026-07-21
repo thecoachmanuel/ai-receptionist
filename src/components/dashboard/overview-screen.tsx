@@ -82,7 +82,7 @@ export function OverviewScreen() {
     );
   }
 
-  const upcomingBookings = overview.upcomingBookings.map(normalizeBooking);
+  const upcomingBookings = (overview.upcomingBookings ?? []).map((b: any) => normalizeBooking(b));
   const localDateKey = (value: number) =>
     new Intl.DateTimeFormat("en-CA", {
       year: "numeric",
@@ -92,7 +92,7 @@ export function OverviewScreen() {
     }).format(value);
   const todayKey = localDateKey(referenceTime);
   const today = upcomingBookings.filter(
-    (booking) => localDateKey(booking.startAt) === todayKey,
+    (booking: any) => localDateKey(booking.startAt) === todayKey,
   );
 
   const metrics = [
