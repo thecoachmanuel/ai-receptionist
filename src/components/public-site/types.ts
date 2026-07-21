@@ -92,7 +92,7 @@ export type BookingConfirmation = {
   startAt: number;
   startTimeISO: string;
   endTimeISO: string;
-  offering: { name: string };
+  offering: { name: string; priceMinor?: number; currency?: string };
   teamMember: { name: string };
   customer: { name: string; email?: string; phone?: string };
   replayed?: boolean;

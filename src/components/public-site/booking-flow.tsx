@@ -880,8 +880,8 @@ export function BookingFlow({
                       <dt className="text-xs text-muted-foreground">Total</dt>
                       <dd className="mt-1 font-medium">
                         {formatPrice(
-                          confirmation.offering.priceMinor,
-                          confirmation.offering.currency,
+                          (confirmation.offering as any).priceMinor,
+                          (confirmation.offering as any).currency,
                           locale,
                         )}
                       </dd>
