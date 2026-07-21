@@ -233,7 +233,7 @@ export async function deleteOrganizationData(orgId: string) {
   const orgIdStr = org._id!.toString();
 
   await Promise.all([
-    db.collection("organizations").deleteOne({ _id: org._id }),
+    db.collection("organizations").deleteOne({ _id: org._id as any }),
     db.collection("orgMembers").deleteMany({ organizationId: orgIdStr }),
     db.collection("offerings").deleteMany({ organizationId: orgIdStr }),
     db.collection("teamMembers").deleteMany({ organizationId: orgIdStr }),
