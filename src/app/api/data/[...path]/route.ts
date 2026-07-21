@@ -117,7 +117,7 @@ export async function POST(
           ...body,
           createdByUserId: session.user.id,
           source: "dashboard",
-        });
+        } as any);
         return NextResponse.json(data);
       }
       case "bookings/updateStatus": {
