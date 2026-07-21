@@ -146,8 +146,8 @@ function CreateBookingDialog() {
                 </SelectTrigger>
                 <SelectContent>
                   {(offerings ?? [])
-                    .filter((offering) => offering.active)
-                    .map((offering) => (
+                    .filter((offering: any) => offering.active)
+                    .map((offering: any) => (
                       <SelectItem key={offering._id} value={offering._id}>
                         {offering.name}
                       </SelectItem>
@@ -165,12 +165,12 @@ function CreateBookingDialog() {
                   <SelectItem value="unassigned">Unassigned</SelectItem>
                   {(members ?? [])
                     .filter(
-                      (member) =>
+                      (member: any) =>
                         member.active &&
                         member.acceptingBookings &&
                         member.offeringIds.includes(offeringId),
                     )
-                    .map((member) => (
+                    .map((member: any) => (
                       <SelectItem key={member._id} value={member._id}>
                         {member.name}
                       </SelectItem>
@@ -254,7 +254,7 @@ export function BookingsScreen() {
 
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    return normalizedBookings.filter((booking) => {
+    return normalizedBookings.filter((booking: any) => {
       const statusMatches =
         statusFilter === "all" || booking.status === statusFilter;
       const queryMatches =
