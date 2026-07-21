@@ -426,7 +426,12 @@ export function createAgentClientTools({
           dateStr: date,
           ...(member ? { teamMemberId: member._id } : {}),
         });
-        const availability = { slots: rawSlots || [] };
+        const availability: any = {
+          slots: rawSlots || [],
+          timezone,
+          offering: offering.name,
+          date,
+        };
         const groupedSlots = Array.from(
           availability.slots.reduce(
             (groups: any, slot: any) => {
