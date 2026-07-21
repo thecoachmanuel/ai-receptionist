@@ -38,16 +38,19 @@ export async function generateMetadata({
     };
   }
 
-  const { config } = publishedSite.site;
-  const title = `${config.businessName} · Book online`;
+  const site = publishedSite.site as any;
+  const config = site.config || site;
+  const businessName = config?.businessName || publishedSite.organization.name;
+  const title = `${businessName} · Book online`;
+  const description = config?.subheadline || config?.about;
 
   return {
     title,
-    description: config.subheadline || config.about,
+    description,
     openGraph: {
       title,
-      description: config.subheadline || config.about,
-      images: config.heroImageUrl ? [config.heroImageUrl] : undefined,
+      description,
+      images: config?.heroImageUrl ? [config.heroImageUrl] : undefined,
     },
   };
 }
