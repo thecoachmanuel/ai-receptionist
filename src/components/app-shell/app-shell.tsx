@@ -165,7 +165,7 @@ function ShellChrome({
 }) {
   const pathname = usePathname();
   const { organization, isBootstrapping, terminology } = useWorkspace();
-  const publicSite = useQuery(
+  const publicSite = useQuery<any>(
     dashboardApi.publicSite.getCurrentDraft,
     organization ? {} : "skip",
   );
@@ -271,7 +271,7 @@ function ShellChrome({
             </Badge>
             <Button asChild variant="outline" size="sm" className="hidden sm:flex">
               <Link
-                href={`/p/${publicSite?.site.siteSlug ?? orgSlug}`}
+                href={`/p/${publicSite?.site?.siteSlug ?? orgSlug}`}
                 target="_blank"
               >
                 Open public page
