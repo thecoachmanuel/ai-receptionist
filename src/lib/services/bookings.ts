@@ -112,68 +112,45 @@ export async function createBooking(
     teamMember = await db.collection<DbTeamMember>("teamMembers").findOne({
       _id: new ObjectId(args.teamMemberId),
       organizationId: orgId,
-    });
-  } else {
-    // Pick first available member assigned to offering
-    teamMember = await db.collection<DbTeamMember>("teamMembers").findOne({
-      organizationId: orgId,
-      offeringIds: args.offeringId,
       active: true,
       acceptingBookings: true,
     });
+    if (!teamMember) throw new Error("Invalid team member selected.");
+  } else {
+    // Auto assign first matching team member
+    const members = await db
+      .collection<DbTeamMember>("teamMembers")
+      .find({ organizationId: orgId, active: true, acceptingBookings: true })
+      .toArray();
+    const candidate = members.find((m) =>
+      m.offeringIds.some((id) => id === args.offeringId),
+    );
+    if (!candidate) throw new Error("No team member is available for this offering.");
+    teamMember = candidate;
   }
 
-  if (!teamMember || !teamMember.active || !teamMember.acceptingBookings) {
-    throw new Error("No team member available for this offering.");
-  }
-
+  const now = Date.now();
   const durationMs = offering.durationMinutes * 60_000;
   const endAt = args.startAt + durationMs;
+
   const reservedStartAt = args.startAt - offering.bufferBeforeMinutes * 60_000;
   const reservedEndAt = endAt + offering.bufferAfterMinutes * 60_000;
 
-  // Contact resolution or creation
-  const customerName = requiredTrimmed(args.customer.name, "customer.name", 120);
-  const emailNorm = normalizedEmail(args.customer.email);
-  const phoneNorm = normalizedPhone(args.customer.phone);
-
-  let contact = await db.collection<DbContact>("contacts").findOne({
-    organizationId: orgId,
-    ...(emailNorm ? { emailNormalized: emailNorm } : phoneNorm ? { phoneNormalized: phoneNorm } : { name: customerName }),
-  });
-
-  const now = Date.now();
-  if (!contact) {
-    const insertContact = await db.collection<DbContact>("contacts").insertOne({
-      organizationId: orgId,
-      name: customerName,
-      email: args.customer.email,
-      emailNormalized: emailNorm,
-      phone: args.customer.phone,
-      phoneNormalized: phoneNorm,
-      tags: ["customer"],
-      createdAt: now,
-      updatedAt: now,
-    });
-    contact = (await db.collection<DbContact>("contacts").findOne({ _id: insertContact.insertedId }))!;
-  }
-
-  const confirmationCode = generateConfirmationCode();
+  const code = generateConfirmationCode();
 
   const newBooking: DbBooking = {
     organizationId: orgId,
     publicSiteId: args.publicSiteId,
-    contactId: contact._id!.toString(),
     offeringId: offering._id!.toString(),
     teamMemberId: teamMember._id!.toString(),
+    confirmationCode: code,
+    status: "confirmed",
+    source: args.source ?? "dashboard",
     startAt: args.startAt,
     endAt,
     reservedStartAt,
     reservedEndAt,
-    status: "confirmed",
-    source: args.source ?? "dashboard",
-    notes: optionalTrimmed(args.notes, "notes", 1_000),
-    confirmationCode,
+    notes: optionalTrimmed(args.notes, "notes", 1000),
     idempotencyKey: args.idempotencyKey,
     offeringSnapshot: {
       name: offering.name,
@@ -186,7 +163,7 @@ export async function createBooking(
       title: teamMember.title,
     },
     customerSnapshot: {
-      name: customerName,
+      name: args.customer.name,
       email: args.customer.email,
       phone: args.customer.phone,
     },
@@ -279,7 +256,6 @@ export async function getPublicAvailableSlots(
   });
   if (!offering) throw new Error("Offering not found");
 
-  // Calculate day bounds and availability rules
   const [year, month, day] = dateStr.split("-").map(Number);
   const targetDate = { year, month, day };
   const dayIndex = dayOfWeek(targetDate);
@@ -300,7 +276,7 @@ export async function getPublicAvailableSlots(
 
   const slotIntervalMinutes = site.published.booking.slotIntervalMinutes || 30;
   const durationMs = offering.durationMinutes * 60_000;
-  const slots: Array<{ startAt: number; endAt: number; teamMemberId: string }> = [];
+  const slots: Array<{ startAt: number; endAt: number; teamMemberId: string; startTimeISO: string; endTimeISO: string; teamMemberName: string }> = [];
 
   const now = Date.now();
   const minNoticeMs = (site.published.booking.minimumNoticeMinutes || 60) * 60_000;
@@ -317,11 +293,10 @@ export async function getPublicAvailableSlots(
     for (let min = rule.startMinute; min + offering.durationMinutes <= rule.endMinute; min += slotIntervalMinutes) {
       const hour = Math.floor(min / 60);
       const minute = min % 60;
-      const startAt = Date.UTC(year, month - 1, day, hour, minute); // approximate wall clock
+      const startAt = Date.UTC(year, month - 1, day, hour, minute);
 
       if (startAt < now + minNoticeMs) continue;
 
-      // Check collision with existing bookings
       const reservedStartAt = startAt - offering.bufferBeforeMinutes * 60_000;
       const reservedEndAt = startAt + durationMs + offering.bufferAfterMinutes * 60_000;
 
@@ -337,11 +312,122 @@ export async function getPublicAvailableSlots(
         slots.push({
           startAt,
           endAt: startAt + durationMs,
+          startTimeISO: new Date(startAt).toISOString(),
+          endTimeISO: new Date(startAt + durationMs).toISOString(),
           teamMemberId: member._id!.toString(),
+          teamMemberName: member.name,
         });
       }
     }
   }
 
   return slots;
+}
+
+export { getPublicAvailableSlots as getAvailableSlots };
+
+export async function createPublicBooking(args: {
+  siteSlug: string;
+  offeringId: string;
+  teamMemberId?: string;
+  startAt: number;
+  customer: { name: string; email?: string; phone?: string };
+  notes?: string;
+  idempotencyKey?: string;
+}) {
+  const db = await getDb();
+  const site = await db.collection<DbPublicSite>("publicSites").findOne({ siteSlug: args.siteSlug });
+  if (!site?.published) throw new Error("Site not found or not published.");
+
+  return createBooking(site.organizationId, {
+    ...args,
+    publicSiteId: site._id!.toString(),
+    source: "public_site",
+  });
+}
+
+export async function lookupBooking(siteSlug: string, confirmationCode: string, phone: string) {
+  const db = await getDb();
+  const site = await db.collection<DbPublicSite>("publicSites").findOne({ siteSlug });
+  if (!site) return { success: false, message: "Site not found." };
+
+  const booking = await db.collection<DbBooking>("bookings").findOne({
+    organizationId: site.organizationId,
+    confirmationCode: confirmationCode.trim().toUpperCase(),
+    "customerSnapshot.phone": phone.trim(),
+  });
+
+  if (!booking) return { success: false, message: "Booking not found." };
+
+  return {
+    success: true,
+    booking: {
+      bookingId: booking._id!.toString(),
+      status: booking.status,
+      startAt: booking.startAt,
+      endAt: booking.endAt,
+      startTimeISO: new Date(booking.startAt).toISOString(),
+      confirmationCode: booking.confirmationCode,
+      offering: booking.offeringSnapshot,
+      teamMember: booking.teamMemberSnapshot,
+      customer: booking.customerSnapshot,
+    },
+  };
+}
+
+export async function rescheduleBooking(
+  siteSlug: string,
+  confirmationCode: string,
+  phone: string,
+  offeringId: string,
+  startAt: number,
+  teamMemberId?: string,
+) {
+  const lookup = await lookupBooking(siteSlug, confirmationCode, phone);
+  if (!lookup.success || !lookup.booking) return lookup;
+
+  const db = await getDb();
+  const bookingId = lookup.booking.bookingId;
+  const site = await db.collection<DbPublicSite>("publicSites").findOne({ siteSlug });
+
+  const offering = await db.collection<DbOffering>("offerings").findOne({
+    _id: new ObjectId(offeringId),
+    organizationId: site!.organizationId,
+  });
+  if (!offering) return { success: false, message: "Offering not found." };
+
+  const endAt = startAt + offering.durationMinutes * 60_000;
+  const reservedStartAt = startAt - offering.bufferBeforeMinutes * 60_000;
+  const reservedEndAt = endAt + offering.bufferAfterMinutes * 60_000;
+
+  await db.collection<DbBooking>("bookings").updateOne(
+    { _id: new ObjectId(bookingId) },
+    {
+      $set: {
+        startAt,
+        endAt,
+        reservedStartAt,
+        reservedEndAt,
+        ...(teamMemberId ? { teamMemberId } : {}),
+        updatedAt: Date.now(),
+      },
+    },
+  );
+
+  const updatedLookup = await lookupBooking(siteSlug, confirmationCode, phone);
+  return { success: true, booking: updatedLookup.booking };
+}
+
+export async function cancelBooking(siteSlug: string, confirmationCode: string, phone: string) {
+  const lookup = await lookupBooking(siteSlug, confirmationCode, phone);
+  if (!lookup.success || !lookup.booking) return lookup;
+
+  const db = await getDb();
+  await db.collection<DbBooking>("bookings").updateOne(
+    { _id: new ObjectId(lookup.booking.bookingId) },
+    { $set: { status: "canceled", updatedAt: Date.now() } },
+  );
+
+  const updatedLookup = await lookupBooking(siteSlug, confirmationCode, phone);
+  return { success: true, booking: updatedLookup.booking };
 }

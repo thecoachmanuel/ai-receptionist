@@ -161,6 +161,9 @@ export async function updateOrganizationPlan(orgId: string, plan: "free_org" | "
   });
 }
 
+export { getUserOrganizations as listUserOrganizations };
+export { createOrganizationForUser as createOrganization };
+
 function randomHex(length: number): string {
   const bytes = new Uint8Array(length / 2);
   crypto.getRandomValues(bytes);
