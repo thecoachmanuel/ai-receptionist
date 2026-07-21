@@ -1,107 +1,102 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 
-import * as organizationsService from "@/lib/services/organizations";
-import * as dashboardService from "@/lib/services/dashboard";
+import * as agentsService from "@/lib/services/agents";
+import * as availabilityService from "@/lib/services/availability";
 import * as bookingsService from "@/lib/services/bookings";
 import * as catalogService from "@/lib/services/catalog";
-import * as teamService from "@/lib/services/team";
-import * as availabilityService from "@/lib/services/availability";
-import * as publicSiteService from "@/lib/services/publicSite";
 import * as conversationsService from "@/lib/services/conversations";
-import * as agentsService from "@/lib/services/agents";
+import * as dashboardService from "@/lib/services/dashboard";
 import * as knowledgeService from "@/lib/services/knowledge";
-
-export const runtime = "nodejs";
+import * as organizationsService from "@/lib/services/organizations";
+import * as publicSiteService from "@/lib/services/publicSite";
+import * as teamService from "@/lib/services/team";
 
 export async function POST(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path } = await params;
   const endpoint = path.join("/");
-  const body = (await request.json().catch(() => ({}))) as Record<string, any>;
-
-  // Public Endpoints
-  if (endpoint === "publicSite/getPublishedBySlug") {
-    const data = await publicSiteService.getPublishedBySlug(body.siteSlug);
-    return NextResponse.json(data);
-  }
-
-  if (endpoint === "publicSite/getAgentSessionConfig") {
-    const data = await publicSiteService.getAgentSessionConfig(body.siteSlug);
-    return NextResponse.json(data);
-  }
-
-  if (endpoint === "agents/requestPublicSession") {
-    const data = await agentsService.requestPublicSession(
-      body.siteSlug,
-      body.clientKey,
-      body.mode,
-    );
-    return NextResponse.json(data);
-  }
-
-  if (endpoint === "publicBooking/getAvailableSlots") {
-    const data = await bookingsService.getPublicAvailableSlots(
-      body.siteSlug,
-      body.offeringId,
-      body.dateStr,
-      body.teamMemberId,
-    );
-    return NextResponse.json(data);
-  }
-
-  if (endpoint === "publicBooking/create") {
-    const site = await publicSiteService.getPublishedBySlug(body.siteSlug);
-    if (!site) {
-      return NextResponse.json({ error: "Site not found" }, { status: 404 });
-    }
-    const data = await bookingsService.createBooking(site.organization.clerkOrgId, {
-      offeringId: body.offeringId,
-      teamMemberId: body.teamMemberId,
-      startAt: body.startAt,
-      customer: body.customer,
-      notes: body.notes,
-      idempotencyKey: body.idempotencyKey,
-      source: "public_site",
-      publicSiteId: site.site._id,
-    });
-    return NextResponse.json(data);
-  }
-
-  // Authenticated Endpoints
-  const session = await getSession();
-  if (!session || !session.organization) {
-    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-  }
-
-  const orgId = session.organization.id;
-  const clerkOrgId = session.organization.clerkOrgId;
 
   try {
+    const body = (await request.json().catch(() => ({}))) as Record<string, any>;
+
+    // Handle public booking endpoints that don't require session auth
+    if (endpoint === "publicBooking/getAvailableSlots") {
+      const data = await bookingsService.getAvailableSlots(
+        body.siteSlug,
+        body.offeringId,
+        body.dateStr,
+        body.teamMemberId,
+      );
+      return NextResponse.json(data);
+    }
+
+    if (endpoint === "publicBooking/create") {
+      const data = await bookingsService.createPublicBooking(body as any);
+      return NextResponse.json(data);
+    }
+
+    if (endpoint === "publicBooking/lookup") {
+      const data = await bookingsService.lookupBooking(
+        body.siteSlug,
+        body.confirmationCode,
+        body.phone,
+      );
+      return NextResponse.json(data);
+    }
+
+    if (endpoint === "publicBooking/reschedule") {
+      const data = await bookingsService.rescheduleBooking(
+        body.siteSlug,
+        body.confirmationCode,
+        body.phone,
+        body.offeringId,
+        body.startAt,
+        body.teamMemberId,
+      );
+      return NextResponse.json(data);
+    }
+
+    if (endpoint === "publicBooking/cancel") {
+      const data = await bookingsService.cancelBooking(
+        body.siteSlug,
+        body.confirmationCode,
+        body.phone,
+      );
+      return NextResponse.json(data);
+    }
+
+    // Require session authentication for dashboard endpoints
+    const session = await getSession();
+    if (!session || !session.user || !session.organization) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const orgId = session.organization.id;
+
     switch (endpoint) {
       case "organizations/current": {
-        const org = await organizationsService.getOrganizationByIdOrSlug(orgId);
-        if (!org) return NextResponse.json(null);
-        return NextResponse.json(await organizationsService.viewOrganization(org, session.role));
+        return NextResponse.json(
+          await organizationsService.getOrganizationByIdOrSlug(orgId),
+        );
       }
-      case "organizations/bootstrapCurrent": {
-        const org = await organizationsService.getOrganizationByIdOrSlug(orgId);
-        if (org) {
-          return NextResponse.json(await organizationsService.viewOrganization(org, session.role));
-        }
-        const created = await organizationsService.createOrganizationForUser(
+      case "organizations/listUserOrganizations": {
+        const orgs = await organizationsService.listUserOrganizations(session.user.id);
+        return NextResponse.json(orgs);
+      }
+      case "organizations/create": {
+        const created = await organizationsService.createOrganization(
           session.user.id,
-          body.name || session.organization.name,
-          body.timezone || session.organization.timezone,
-          body.currency || session.organization.currency,
-          body.locale || session.organization.locale,
+          body.name,
+          body.timezone,
+          body.currency,
+          body.locale,
         );
         return NextResponse.json(await organizationsService.viewOrganization(created, "admin"));
       }
       case "organizations/updateCurrent": {
-        // Implement update organization settings
         return NextResponse.json(await organizationsService.getOrganizationByIdOrSlug(orgId));
       }
       case "dashboard/overview": {
@@ -109,7 +104,7 @@ export async function POST(
         return NextResponse.json(data);
       }
       case "bookings/listForCurrentOrg": {
-        const data = await bookingsService.listBookings(orgId, body);
+        const data = await bookingsService.listBookings(orgId, body as any);
         return NextResponse.json(data);
       }
       case "bookings/createForCurrentOrg": {
@@ -136,12 +131,12 @@ export async function POST(
         const data = await catalogService.createOffering(
           orgId,
           session.organization.currency,
-          body,
+          body as any,
         );
         return NextResponse.json(data);
       }
       case "catalog/updateOffering": {
-        const data = await catalogService.updateOffering(orgId, body.offeringId, body);
+        const data = await catalogService.updateOffering(orgId, body.offeringId, body as any);
         return NextResponse.json(data);
       }
       case "team/listMembers": {
@@ -149,11 +144,11 @@ export async function POST(
         return NextResponse.json(data);
       }
       case "team/createMember": {
-        const data = await teamService.createMember(orgId, body);
+        const data = await teamService.createMember(orgId, body as any);
         return NextResponse.json(data);
       }
       case "team/updateMember": {
-        const data = await teamService.updateMember(orgId, body.teamMemberId, body);
+        const data = await teamService.updateMember(orgId, body.teamMemberId, body as any);
         return NextResponse.json(data);
       }
       case "availability/listRules": {
