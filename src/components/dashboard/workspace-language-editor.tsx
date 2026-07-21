@@ -252,9 +252,11 @@ export function WorkspaceLanguageEditor({
 
     setSaving(true);
     try {
-      const updated = await updateCurrent({ terminology: normalizedDraft });
-      setDraft({ ...updated.terminology });
-      setBaseline({ ...updated.terminology });
+      const updated = (await updateCurrent({ terminology: normalizedDraft })) as any;
+      if (updated?.terminology) {
+        setDraft({ ...updated.terminology });
+        setBaseline({ ...updated.terminology });
+      }
       toast.success("Workspace language updated");
     } catch (error) {
       toast.error(
