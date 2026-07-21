@@ -6,6 +6,8 @@ export function middleware(request: NextRequest) {
     request.cookies.get("oneboard_session")?.value ||
     request.cookies.get("switchboard_session")?.value;
 
+  const { pathname } = request.nextUrl;
+
   // Protect /app routes
   if (pathname.startsWith("/app") && !sessionToken) {
     const signInUrl = new URL("/sign-in", request.url);
