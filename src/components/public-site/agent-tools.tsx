@@ -52,7 +52,6 @@ type AgentSlotSelection = {
 
 type ToolFactoryOptions = {
   siteSlug: string;
-  siteSlug: string;
   businessName: string;
   offerings: PublicOffering[];
   teamMembers: PublicTeamMember[];
