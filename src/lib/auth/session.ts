@@ -129,7 +129,7 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
     if (!organization) {
       const firstMember = await db
         .collection<DbOrgMember>("orgMembers")
-        .findOne({ userId: user._id.toString() });
+        .findOne({ userId: user._id!.toString() });
 
       if (firstMember) {
         organization = await db
@@ -138,9 +138,9 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
       }
     }
 
-    if (organization) {
+    if (organization && organization._id) {
       const orgIdStr = organization._id.toString();
-      const userIdStr = user._id.toString();
+      const userIdStr = user._id!.toString();
       orgMember = await db.collection<DbOrgMember>("orgMembers").findOne({
         organizationId: orgIdStr,
         userId: userIdStr,
@@ -157,7 +157,7 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
 
     return {
       user: {
-        id: user._id.toString(),
+        id: user._id!.toString(),
         email: user.email,
         name: user.name,
         avatarUrl: user.avatarUrl,
