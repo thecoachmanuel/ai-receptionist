@@ -256,14 +256,14 @@ export default async function Home() {
           </Link>
         </div>
         <div className="grid border-l border-t lg:grid-cols-3">
-          {plans.map((plan) => (
+          {plans.map((plan: any) => (
             <article key={plan.name} className={`relative flex min-h-[430px] flex-col border-b border-r p-7 sm:p-9 ${plan.featured ? "bg-primary text-primary-foreground" : "bg-card"}`}>
               {plan.featured ? <span className="absolute right-5 top-5 font-mono text-[9px] uppercase tracking-[0.15em] text-primary-foreground/65">Most popular</span> : null}
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-55">{plan.name}</p>
               <p className="mt-8 font-heading text-6xl font-medium tracking-[-0.06em]">{plan.price}<span className="ml-1 font-sans text-xs font-normal tracking-normal opacity-60">/mo</span></p>
               <p className="mt-4 max-w-xs text-sm leading-6 opacity-65">{plan.copy}</p>
               <div className="mt-9 space-y-3 border-t border-current/15 pt-6">
-                {plan.features.map((feature) => (
+                {plan.features.map((feature: any) => (
                   <p key={feature} className="flex items-center gap-2 text-sm"><Check className="size-3.5" /> {feature}</p>
                 ))}
               </div>

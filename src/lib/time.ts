@@ -60,8 +60,8 @@ function partsAt(utcMs: number, timeZone: string): LocalDateTime & { second: num
   const parts = formatter(timeZone).formatToParts(new Date(utcMs));
   const values = Object.fromEntries(
     parts
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, Number(part.value)]),
+      .filter((part: any) => part.type !== "literal")
+      .map((part: any) => [part.type, Number(part.value)]),
   );
   return {
     year: values.year,

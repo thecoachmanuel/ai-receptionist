@@ -33,7 +33,7 @@ function currentLocalDate(timezone: string) {
     day: "2-digit",
   }).formatToParts(new Date());
   const value = (type: "year" | "month" | "day") =>
-    parts.find((part) => part.type === type)?.value;
+    parts.find((part: any) => part.type === type)?.value;
   const year = value("year");
   const month = value("month");
   const day = value("day");
@@ -86,14 +86,14 @@ export function createAgentDynamicVariables({
     business_offerings: clamp(
       offerings
         .map(
-          (offering) =>
+          (offering: any) =>
             `${offering.name}: ${offering.description} (${offering.durationMinutes} minutes, ${formatter.format(offering.priceMinor / 100)})`,
         )
         .join("\n"),
     ),
     business_knowledge: clamp(
       knowledgeItems
-        .map((item) => `${item.title}: ${item.content}`)
+        .map((item: any) => `${item.title}: ${item.content}`)
         .join("\n"),
     ),
     booking_instruction:
