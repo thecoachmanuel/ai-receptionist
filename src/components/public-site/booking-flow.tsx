@@ -301,8 +301,8 @@ export function BookingFlow({
     if (!availability) return [];
     if (teamMemberId) return availability.slots;
     return availability.slots.filter(
-      (slot, index, slots) =>
-        slots.findIndex((candidate) => candidate.startAt === slot.startAt) ===
+      (slot: any, index: number, slots: any[]) =>
+        slots.findIndex((candidate: any) => candidate.startAt === slot.startAt) ===
         index,
     );
   }, [availability, teamMemberId]);
@@ -324,7 +324,7 @@ export function BookingFlow({
 
   const currentStepIndex = Math.max(
     0,
-    steps.findIndex((item) => item.key === step),
+    steps.findIndex((item: any) => item.key === step),
   );
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
 
@@ -466,7 +466,7 @@ export function BookingFlow({
               className="mt-7 hidden space-y-1 lg:block"
               aria-label={`${terminology.bookingSingular} steps`}
             >
-              {steps.map((item, index) => {
+              {steps.map((item: any, index: number) => {
                 const isActive = item.key === step;
                 const isComplete = index < currentStepIndex;
                 const canNavigate = isComplete && step !== "confirmation";
@@ -548,7 +548,7 @@ export function BookingFlow({
                   description={`Select one ${terminology.offeringSingular.toLowerCase()} to see the right people and available times.`}
                 />
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {offerings.map((offering) => (
+                  {offerings.map((offering: any) => (
                     <StepOption
                       key={offering._id}
                       selected={offering._id === offeringId}
@@ -621,7 +621,7 @@ export function BookingFlow({
                       </div>
                     </div>
                   </StepOption>
-                  {eligibleTeamMembers.map((member) => (
+                  {eligibleTeamMembers.map((member: any) => (
                     <StepOption
                       key={member._id}
                       selected={member._id === teamMemberId}
@@ -713,7 +713,7 @@ export function BookingFlow({
                   </Alert>
                 ) : (
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {availableSlots.map((slot) => {
+                    {availableSlots.map((slot: any) => {
                       const isSelected = selectedSlot?.startAt === slot.startAt;
                       return (
                         <Button
