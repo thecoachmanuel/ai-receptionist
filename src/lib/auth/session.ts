@@ -162,7 +162,7 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
         name: user.name,
         avatarUrl: user.avatarUrl,
       },
-      organization: organization
+      organization: organization && organization._id
         ? {
             id: organization._id.toString(),
             clerkOrgId: organization.clerkOrgId,
