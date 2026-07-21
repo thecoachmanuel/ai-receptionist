@@ -253,7 +253,7 @@ export function AvailabilityScreen() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent align="end">
-                {bookableMembers.map((entry) => (
+                {bookableMembers.map((entry: any) => (
                   <SelectItem key={entry._id} value={entry._id}>
                     {entry.name}
                   </SelectItem>
