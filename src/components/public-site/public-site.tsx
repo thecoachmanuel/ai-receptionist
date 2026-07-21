@@ -269,7 +269,7 @@ export function PublicSite({
               isGallery ? "md:grid-cols-2 xl:grid-cols-3" : "md:grid-cols-2",
             )}
           >
-            {offerings.map((offering, index) => (
+            {offerings.map((offering: any, index: number) => (
               <article
                 key={offering._id}
                 className="group relative flex min-h-56 flex-col bg-background p-6 transition-colors hover:bg-card sm:p-7"
@@ -325,7 +325,7 @@ export function PublicSite({
           description={`Get to know the ${terminology.teamMemberPlural.toLowerCase()} who make ${config.businessName} what it is.`}
         />
         <div className={cn("mt-12 grid gap-4", teamMembers.length === 2 ? "md:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3")}>
-          {teamMembers.map((member) => (
+          {teamMembers.map((member: any) => (
             <Card key={member._id} className="group bg-background/75 transition duration-300 hover:-translate-y-1 hover:shadow-lg">
               <CardHeader className="flex-row items-center gap-4">
                 <Avatar className="size-16 ring-1 ring-border">
@@ -388,7 +388,7 @@ export function PublicSite({
             description={`A few helpful details from ${config.businessName}.`}
           />
           <Accordion type="single" collapsible className="border-t">
-            {knowledgeItems.map((item) => (
+            {knowledgeItems.map((item: any) => (
               <AccordionItem key={item._id} value={item._id}>
                 <AccordionTrigger className="text-left font-heading text-base hover:no-underline">
                   <span className="pe-4">{item.title}</span>
@@ -668,7 +668,7 @@ export function PublicSite({
           </div>
         </section>
 
-        {config.sections.map((section) => (
+        {config.sections.map((section: any) => (
           <div key={section}>{sections[section]()}</div>
         ))}
       </main>
@@ -685,7 +685,7 @@ export function PublicSite({
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
-            {config.socialLinks.map((link) => {
+            {config.socialLinks.map((link: any) => {
               const href = safeHttpUrl(link.url);
               return href ? (
                 <a key={`${link.label}-${href}`} href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 transition hover:text-foreground">
