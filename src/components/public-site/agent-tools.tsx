@@ -1,19 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useClientTool } from "@elevenlabs/react";
 import { callApi } from "@/lib/api-client/use-data";
 import type {
   PublicOffering,
   PublicTeamMember,
 } from "@/components/public-site/types";
 
-function useConversationClientTool<T>(name: keyof T & string, fn: any) {
-  try {
-    useClientTool(name, fn);
-  } catch {
-    // Graceful fallback if invoked outside ElevenLabs ConversationProvider context
-  }
+function useConversationClientTool<T>(_name: keyof T & string, _fn: any) {
+  // Client tools are registered dynamically via createAgentClientTools in widget embed
 }
 
 export type AgentToolActivity = {
