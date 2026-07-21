@@ -1,19 +1,96 @@
-import type { FunctionReturnType } from "convex/server";
+export type PublicTerminology = {
+  offeringSingular: string;
+  offeringPlural: string;
+  teamMemberSingular: string;
+  teamMemberPlural: string;
+  customerSingular: string;
+  customerPlural: string;
+  bookingSingular: string;
+  bookingPlural: string;
+};
 
-import { api } from "../../../convex/_generated/api";
+export type PublicOffering = {
+  _id: string;
+  name: string;
+  description?: string;
+  durationMinutes: number;
+  priceMinor: number;
+  currency: string;
+  category?: string;
+  bookableOnline?: boolean;
+  active?: boolean;
+};
 
-export type PublishedSite = NonNullable<
-  FunctionReturnType<typeof api.publicSite.getPublishedBySlug>
->;
+export type PublicTeamMember = {
+  _id: string;
+  name: string;
+  title?: string;
+  bio?: string;
+  imageUrl?: string;
+  offeringIds: string[];
+  active?: boolean;
+  acceptingBookings?: boolean;
+};
 
-export type PublicOffering = PublishedSite["offerings"][number];
-export type PublicTeamMember = PublishedSite["teamMembers"][number];
-export type PublicTerminology = PublishedSite["organization"]["terminology"];
+export type PublishedSite = {
+  site: {
+    _id: string;
+    siteSlug: string;
+    businessName: string;
+    heroHeadline?: string;
+    heroSubheadline?: string;
+    about?: string;
+    sections: string[];
+    layoutStyle: string;
+    primaryColor: string;
+    contact: {
+      phone?: string;
+      email?: string;
+      address?: string;
+    };
+    socialLinks: Array<{ label: string; url: string }>;
+    updatedAt: number;
+    publishedAt?: number;
+  };
+  organization: {
+    name: string;
+    slug: string;
+    timezone: string;
+    currency: string;
+    locale: string;
+    terminology: PublicTerminology;
+  };
+  offerings: PublicOffering[];
+  teamMembers: PublicTeamMember[];
+  knowledgeItems: Array<{ _id: string; title: string; content: string }>;
+  agentEmbed?: {
+    agentId: string;
+    publicApiKey?: string;
+  };
+};
 
-export type Availability = FunctionReturnType<
-  typeof api.publicBooking.getAvailability
->;
-export type AvailabilitySlot = Availability["slots"][number];
-export type BookingConfirmation = FunctionReturnType<
-  typeof api.publicBooking.create
->;
+export type AvailabilitySlot = {
+  startAt: number;
+  startTimeISO: string;
+  endTimeISO: string;
+  teamMemberId: string;
+  teamMemberName: string;
+};
+
+export type Availability = {
+  timezone: string;
+  dateStr: string;
+  slots: AvailabilitySlot[];
+};
+
+export type BookingConfirmation = {
+  _id: string;
+  confirmationCode: string;
+  status: string;
+  startAt: number;
+  startTimeISO: string;
+  endTimeISO: string;
+  offering: { name: string };
+  teamMember: { name: string };
+  replayed?: boolean;
+};
