@@ -269,18 +269,18 @@ export function BookingFlow({
   const bookingToday = useMemo(() => todayInTimezone(timezone), [timezone]);
 
   const createBooking = useMutation<any, any>("publicBooking/create");
-  const selectedOffering = offerings.find((item) => item._id === offeringId);
+  const selectedOffering = offerings.find((item: any) => item._id === offeringId);
   const eligibleTeamMembers = useMemo(
     () =>
       offeringId
-        ? teamMembers.filter((member) =>
-            member.offeringIds.some((id) => id === offeringId),
+        ? teamMembers.filter((member: any) =>
+            member.offeringIds.some((id: any) => id === offeringId),
           )
         : teamMembers,
     [offeringId, teamMembers],
   );
   const selectedTeamMember = teamMembers.find(
-    (member) => member._id === teamMemberId,
+    (member: any) => member._id === teamMemberId,
   );
   const dateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
 

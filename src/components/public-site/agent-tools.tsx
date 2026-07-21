@@ -89,20 +89,20 @@ function resolveByName<T extends { name: string }>(
 ) {
   const name = requiredText(rawName, label);
   const normalized = normalizedName(name);
-  const exact = items.find((item) => normalizedName(item.name) === normalized);
+  const exact = items.find((item: any) => normalizedName(item.name) === normalized);
   if (exact) return exact;
 
-  const partial = items.filter((item) => {
+  const partial = items.filter((item: any) => {
     const candidate = normalizedName(item.name);
     return candidate.includes(normalized) || normalized.includes(candidate);
   });
   if (partial.length === 1) return partial[0];
 
-  const choices = items.map((item) => item.name).join(", ");
+  const choices = items.map((item: any) => item.name).join(", ");
   throw new Error(
     partial.length > 1
       ? `${label} is ambiguous. Ask the customer to choose from: ${partial
-          .map((item) => item.name)
+          .map((item: any) => item.name)
           .join(", ")}.`
       : `${label} was not found. Available choices: ${choices || "none"}.`,
   );
@@ -291,7 +291,7 @@ function trackTool(
 ): AgentClientTool {
   if (!onToolEvent) return handler;
 
-  return async (parameters) => {
+  return async (parameters: any) => {
     const id = randomReference("tool");
     const startedAt = Date.now();
     const inputSummary = toolInputSummary(
@@ -394,24 +394,24 @@ export function createAgentClientTools({
         success: true,
         business_name: businessName,
         timezone,
-        offerings: offerings.map((offering) => ({
+        offerings: offerings.map((offering: any) => ({
           name: offering.name,
           description: offering.description,
           duration_minutes: offering.durationMinutes,
           price: formatPrice(offering.priceMinor, offering.currency, locale),
         })),
-        team_members: teamMembers.map((member) => ({
+        team_members: teamMembers.map((member: any) => ({
           name: member.name,
           title: member.title,
           offerings: offerings
-            .filter((offering) =>
-              member.offeringIds.some((id) => id === offering._id),
+            .filter((offering: any) =>
+              member.offeringIds.some((id: any) => id === offering._id),
             )
-            .map((offering) => offering.name),
+            .map((offering: any) => offering.name),
         })),
       }),
 
-    get_availability: async (parameters) => {
+    get_availability: async (parameters: any) => {
       try {
         const offering = resolveOffering(parameters.offering_name);
         const date = requiredText(parameters.date, "date");
@@ -429,7 +429,7 @@ export function createAgentClientTools({
         const availability = { slots: rawSlots || [] };
         const groupedSlots = Array.from(
           availability.slots.reduce(
-            (groups, slot) => {
+            (groups: any, slot: any) => {
               const current = groups.get(slot.startTimeISO) ?? {
                 start_time_iso: slot.startTimeISO,
                 end_time_iso: slot.endTimeISO,
@@ -458,15 +458,15 @@ export function createAgentClientTools({
             >(),
           ).values(),
         );
-        const publishedTimes = groupedSlots.slice(0, 12).map((slot) => ({
+        const publishedTimes = groupedSlots.slice(0, 12).map((slot: any) => ({
           start_time_iso: slot.start_time_iso,
           end_time_iso: slot.end_time_iso,
           local_time: slot.local_time,
-          team_members: slot.team_members.map((selection) => ({
+          team_members: slot.team_members.map((selection: any) => ({
             slot_id: rememberAgentSlot(slotRegistry, selection),
             team_member_name: selection.teamMemberName,
             team_member_title: teamMembers.find(
-              (candidate) => candidate._id === selection.teamMemberId,
+              (candidate: any) => candidate._id === selection.teamMemberId,
             )?.title,
           })),
         }));
@@ -487,7 +487,7 @@ export function createAgentClientTools({
       }
     },
 
-    book_appointment: async (parameters) => {
+    book_appointment: async (parameters: any) => {
       try {
         const offering = resolveOffering(parameters.offering_name);
         const { slotId, selection } = requireAgentSlot(
@@ -549,9 +549,9 @@ export function createAgentClientTools({
       }
     },
 
-    lookup_appointment: async (parameters) => {
+    lookup_appointment: async (parameters: any) => {
       try {
-        const result = await convex.mutation(api.publicBooking.lookup, {
+        const result = await callApi("publicBooking/lookup", {
           siteSlug,
           confirmationCode: requiredText(
             parameters.confirmation_code,
@@ -576,13 +576,13 @@ export function createAgentClientTools({
       }
     },
 
-    reschedule_appointment: async (parameters) => {
+    reschedule_appointment: async (parameters: any) => {
       try {
         const { selection } = requireAgentSlot(
           slotRegistry,
           parameters.slot_id,
         );
-        const result = await convex.mutation(api.publicBooking.reschedule, {
+        const result = await callApi("publicBooking/reschedule", {
           siteSlug,
           confirmationCode: requiredText(
             parameters.confirmation_code,
@@ -613,9 +613,9 @@ export function createAgentClientTools({
       }
     },
 
-    cancel_appointment: async (parameters) => {
+    cancel_appointment: async (parameters: any) => {
       try {
-        const result = await convex.mutation(api.publicBooking.cancel, {
+        const result = await callApi("publicBooking/cancel", {
           siteSlug,
           confirmationCode: requiredText(
             parameters.confirmation_code,

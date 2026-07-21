@@ -40,7 +40,7 @@ function isDynamicVariables(
 ): value is Record<string, DynamicValue> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   return Object.values(value).every(
-    (entry) =>
+    (entry: any) =>
       typeof entry === "string" ||
       typeof entry === "number" ||
       typeof entry === "boolean",
