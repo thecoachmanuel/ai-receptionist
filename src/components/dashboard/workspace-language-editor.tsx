@@ -190,7 +190,7 @@ function terminologyMatches(
   second: BackendTerminology,
 ) {
   return (Object.keys(first) as TerminologyKey[]).every(
-    (key) => first[key] === second[key],
+    (key: any) => first[key] === second[key],
   );
 }
 
@@ -222,7 +222,7 @@ export function WorkspaceLanguageEditor({
     organization.terminology,
     baseline,
   );
-  const activePreset = terminologyPresets.find((preset) =>
+  const activePreset = terminologyPresets.find((preset: any) =>
     terminologyMatches(normalizedDraft, preset.terminology),
   );
 

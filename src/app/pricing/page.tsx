@@ -33,13 +33,13 @@ export default async function PricingPage() {
         </div>
 
         <div className="grid border-l border-t lg:grid-cols-3">
-          {publicPlans.map((plan) => (
+          {publicPlans.map((plan: any) => (
             <article key={plan.name} className={`flex min-h-[410px] flex-col border-b border-r p-8 ${plan.featured ? "bg-primary text-primary-foreground" : "bg-card"}`}>
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-60">{plan.name}</p>
               <p className="mt-8 font-heading text-6xl tracking-[-0.06em]">{plan.price}<span className="ml-1 font-sans text-xs tracking-normal opacity-60">/mo</span></p>
               <p className="mt-4 text-sm leading-6 opacity-65">{plan.description}</p>
               <div className="mt-8 space-y-3 border-t border-current/15 pt-6">
-                {plan.features.map((feature) => <p key={feature} className="flex items-center gap-2 text-sm"><Check className="size-3.5" /> {feature}</p>)}
+                {plan.features.map((feature: any) => <p key={feature} className="flex items-center gap-2 text-sm"><Check className="size-3.5" /> {feature}</p>)}
               </div>
               <Button asChild variant={plan.featured ? "secondary" : "outline"} className="mt-auto shadow-none">
                 <Link href={userId ? "/app" : "/sign-up"}>{userId ? "Manage in workspace" : "Create an organization"}</Link>
