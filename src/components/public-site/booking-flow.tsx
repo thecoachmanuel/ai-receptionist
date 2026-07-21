@@ -295,7 +295,7 @@ export function BookingFlow({
         }
       : "skip",
   );
-  const availability = useMemo(() => (rawSlots ? { slots: rawSlots } : null), [rawSlots]);
+  const availability = useMemo<any>(() => (rawSlots ? { slots: rawSlots, timezone } : null), [rawSlots, timezone]);
 
   const availableSlots = useMemo(() => {
     if (!availability) return [];
@@ -733,7 +733,7 @@ export function BookingFlow({
                           }}
                           className="h-auto min-h-12 flex-col gap-0.5 py-2"
                         >
-                          <span>{formatTime(slot.startAt, locale, availability?.timezone ?? timezone)}</span>
+                          <span>{formatTime(slot.startAt, locale, (availability as any)?.timezone ?? timezone)}</span>
                           <span
                             className={cn(
                               "max-w-full truncate text-[0.66rem] font-normal opacity-65",
