@@ -26,7 +26,7 @@ export default async function AppIndexPage() {
                 <Sparkles className="size-4" />
               </span>
               <span className="font-heading text-xl font-semibold tracking-tight">
-                Switchboard
+                Oneboard
               </span>
             </div>
 

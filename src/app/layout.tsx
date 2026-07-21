@@ -29,8 +29,8 @@ const newsreader = Newsreader({
 
 export const metadata: Metadata = {
   title: {
-    default: "Switchboard — AI front desk for modern teams",
-    template: "%s · Switchboard",
+    default: "Oneboard — AI front desk for modern teams",
+    template: "%s · Oneboard",
   },
   description:
     "Run bookings, customer conversations, and a text-and-audio web concierge from one multi-tenant workspace.",

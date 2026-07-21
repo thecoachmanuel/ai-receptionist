@@ -16,6 +16,13 @@ type OfferingContext = {
   priceMinor: number;
 };
 
+type TeamMemberContext = {
+  name: string;
+  title: string;
+  bio?: string;
+  offeringIds?: string[];
+};
+
 type KnowledgeContext = {
   title: string;
   content: string;
@@ -43,6 +50,11 @@ function currentLocalDate(timezone: string) {
   return `${year}-${month}-${day}`;
 }
 
+/**
+ * Builds the dynamic variables injected into each ElevenLabs agent session.
+ * Every variable is scoped strictly to the requesting organization — the agent
+ * has no knowledge of any other business's data.
+ */
 export function createAgentDynamicVariables({
   siteSlug,
   businessName,
@@ -52,6 +64,7 @@ export function createAgentDynamicVariables({
   currency,
   terminology,
   offerings,
+  teamMembers,
   knowledgeItems,
   bookingInstruction,
 }: {
@@ -63,6 +76,7 @@ export function createAgentDynamicVariables({
   currency: string;
   terminology: Terminology;
   offerings: OfferingContext[];
+  teamMembers?: TeamMemberContext[];
   knowledgeItems: KnowledgeContext[];
   bookingInstruction?: string;
 }) {
@@ -71,6 +85,20 @@ export function createAgentDynamicVariables({
     currency,
   });
   const localDate = currentLocalDate(timezone);
+
+  // Build a human-readable team roster so the AI knows exactly who works here
+  const teamRoster =
+    teamMembers && teamMembers.length > 0
+      ? clamp(
+          teamMembers
+            .map(
+              (m) =>
+                `${m.name} (${m.title || "Team member"})${m.bio ? ": " + m.bio : ""}`,
+            )
+            .join("\n"),
+          3_000,
+        )
+      : "No team members are currently listed.";
 
   return {
     site_slug: siteSlug,
@@ -91,6 +119,7 @@ export function createAgentDynamicVariables({
         )
         .join("\n"),
     ),
+    business_team: teamRoster,
     business_knowledge: clamp(
       knowledgeItems
         .map((item: any) => `${item.title}: ${item.content}`)

@@ -129,7 +129,7 @@ export default async function Home() {
               <span className="mt-3 block text-primary italic">one front door.</span>
             </h1>
             <p className="mt-9 max-w-xl text-lg leading-7 text-muted-foreground sm:text-xl sm:leading-8">
-              Switchboard answers questions, chats with clients, and organizes
+              Oneboard answers questions, chats with clients, and organizes
               bookings for any service business—using your language, hours,
               people, and brand.
             </p>
@@ -226,7 +226,7 @@ export default async function Home() {
             </h2>
             <p className="mt-6 max-w-lg text-base leading-7 text-white/58">
               A salon calls it a treatment. A consultant calls it a session. A
-              support team calls it a case. Switchboard’s terminology, forms,
+              support team calls it a case. Oneboard’s terminology, forms,
               availability, and public page adapt without changing the core.
             </p>
           </div>

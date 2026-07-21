@@ -8,6 +8,7 @@ import * as agentsService from "@/lib/services/agents";
 import * as publicSiteService from "@/lib/services/publicSite";
 import * as catalogService from "@/lib/services/catalog";
 import * as knowledgeService from "@/lib/services/knowledge";
+import * as teamService from "@/lib/services/team";
 
 export const runtime = "nodejs";
 
@@ -44,13 +45,14 @@ export async function POST() {
   }
 
   try {
-    const [organization, agent, site, offerings, knowledgeItems] =
+    const [organization, agent, site, offerings, knowledgeItems, teamMembers] =
       await Promise.all([
         organizationsService.getOrganizationByIdOrSlug(orgId),
         agentsService.getCurrentAgent(orgId),
         publicSiteService.getCurrentDraft(orgId),
         catalogService.listOfferings(orgId, false),
         knowledgeService.listKnowledgeItems(orgId, false),
+        teamService.listMembers(orgId, false),
       ]);
 
     if (!organization || !agent.integration?.webEnabled) {
@@ -71,13 +73,14 @@ export async function POST() {
         signedUrl,
         dynamicVariables: createAgentDynamicVariables({
           siteSlug: site.site.siteSlug,
-          businessName: site.site.draft.businessName,
-          description: site.site.draft.about,
+          businessName: (site.site.draft as any)?.businessName ?? organization.name ?? "",
+          description: (site.site.draft as any)?.about ?? "",
           timezone: organization.timezone,
           locale: organization.locale,
           currency: organization.currency,
           terminology: organization.terminology,
           offerings,
+          teamMembers,
           knowledgeItems,
         }),
       },

@@ -1,4 +1,4 @@
-# Switchboard — AI Receptionist & Front-Desk SaaS (ElevenLabs Voice Agents)
+# Oneboard — AI Receptionist & Front-Desk SaaS (ElevenLabs Voice Agents)
 
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![Convex](https://img.shields.io/badge/Convex-Backend-ff6b35?logo=convex)](https://convex.dev/referral/SONNYS4371)
@@ -7,7 +7,7 @@
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind%20CSS-v4-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178c6?logo=typescript)](https://www.typescriptlang.org/)
 
-> **⚠️ Disclaimer:** This is an **educational project** built live on YouTube for learning purposes only. "Switchboard" is a fictional name used for this demo — we do not claim any trademark or intellectual property rights over it. This project is **not affiliated with, endorsed by, or connected to** any real receptionist, scheduling, or customer-support company. All organization names, offerings, bookings, contacts, and seed data are entirely fictional. Third-party service names (Clerk, Convex, ElevenLabs, Vercel, Next.js, Tailwind CSS, etc.) are trademarks of their respective owners and are used here solely to describe the technologies used in this project.
+> **⚠️ Disclaimer:** This is an **educational project** built live on YouTube for learning purposes only. "Oneboard" is a fictional name used for this demo — we do not claim any trademark or intellectual property rights over it. This project is **not affiliated with, endorsed by, or connected to** any real receptionist, scheduling, or customer-support company. All organization names, offerings, bookings, contacts, and seed data are entirely fictional. Third-party service names (Clerk, Convex, ElevenLabs, Vercel, Next.js, Tailwind CSS, etc.) are trademarks of their respective owners and are used here solely to describe the technologies used in this project.
 
 A full-stack, real-time **AI front-desk / receptionist SaaS** — a B2B multi-tenant app where any appointment-based business (barber shop, salon, clinic, consultancy, support team) gets a **branded public booking page** with a built-in **ElevenLabs voice + text concierge** that answers questions and **books, reschedules, and cancels appointments** in a live conversation, while staff manage everything from a **tenant-scoped dashboard**.
 
@@ -45,7 +45,7 @@ This project uses **[Clerk](https://go.clerk.com/IVUd0XO)** for authentication, 
 
 ## 🤔 What Is This App?
 
-Think of Switchboard as **your own AI receptionist platform** — a branded booking page plus a talking concierge, plus a back-office dashboard, built from scratch as a learning project.
+Think of Oneboard as **your own AI receptionist platform** — a branded booking page plus a talking concierge, plus a back-office dashboard, built from scratch as a learning project.
 
 It's a multi-tenant workspace app built on **two identity worlds** (the whole point):
 
@@ -354,7 +354,7 @@ Open [http://localhost:3000](http://localhost:3000), sign up, create an organiza
 
 ## 🗄️ Database Schema Overview
 
-Switchboard uses **Convex** with a flat, relational, tenant-scoped schema. All tables are defined in [`convex/schema.ts`](convex/schema.ts). Every operational table carries an `organizationId` and is indexed by it.
+Oneboard uses **Convex** with a flat, relational, tenant-scoped schema. All tables are defined in [`convex/schema.ts`](convex/schema.ts). Every operational table carries an `organizationId` and is indexed by it.
 
 | Table                       | Purpose                                                    | Key Fields                                                                        |
 | --------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------- |
@@ -542,4 +542,4 @@ This project is shared for **educational purposes only**.
 
 ### Trademark Notice
 
-"Switchboard" is a fictional name used for this educational demo. We do not claim any trademark, copyright, or intellectual property rights over this name. This project is **not affiliated with, endorsed by, or connected to** any real receptionist, scheduling, or customer-support company. All third-party names and logos (Clerk, Convex, ElevenLabs, Vercel, Next.js, React, Tailwind CSS, TypeScript, etc.) are trademarks of their respective owners.
+"Oneboard" is a fictional name used for this educational demo. We do not claim any trademark, copyright, or intellectual property rights over this name. This project is **not affiliated with, endorsed by, or connected to** any real receptionist, scheduling, or customer-support company. All third-party names and logos (Clerk, Convex, ElevenLabs, Vercel, Next.js, React, Tailwind CSS, TypeScript, etc.) are trademarks of their respective owners.

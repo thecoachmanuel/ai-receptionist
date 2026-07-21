@@ -2,9 +2,11 @@ import crypto from "node:crypto";
 import { getDb } from "@/lib/db/mongodb";
 import type { DbOrganization, PlanType } from "@/lib/db/types";
 import { ObjectId } from "mongodb";
+import { getPlatformSettings } from "@/lib/services/settings";
 
 export const USD_TO_NGN_RATE = Number(process.env.USD_TO_NGN_RATE || "1500");
 
+/** Compile-time defaults — the live values come from getPlatformSettings() at runtime. */
 export const PAYSTACK_PLANS: Record<
   "engage" | "voice",
   { name: string; usdPrice: number }
@@ -56,13 +58,16 @@ export async function initializePaystackTransaction({
     );
   }
 
-  const planConfig = PAYSTACK_PLANS[planId];
-  if (!planConfig) {
+  // Load live admin-configurable prices from MongoDB
+  const settings = await getPlatformSettings();
+  const planName = PAYSTACK_PLANS[planId]?.name;
+  if (!planName) {
     throw new Error("Invalid plan selected for Paystack checkout.");
   }
 
-  const usdPrice = planConfig.usdPrice;
-  const ngnAmount = usdPrice * USD_TO_NGN_RATE;
+  const usdPrice = settings.planPrices[planId] ?? PAYSTACK_PLANS[planId].usdPrice;
+  const exchangeRate = settings.usdToNgnRate ?? USD_TO_NGN_RATE;
+  const ngnAmount = usdPrice * exchangeRate;
   const amountInKobo = Math.round(ngnAmount * 100);
 
   const response = await fetch("https://api.paystack.co/transaction/initialize", {
@@ -80,13 +85,13 @@ export async function initializePaystackTransaction({
         orgId,
         planId,
         usdPrice,
-        exchangeRate: USD_TO_NGN_RATE,
+        exchangeRate,
         ngnAmount,
         custom_fields: [
           {
             display_name: "Plan Name",
             variable_name: "plan_name",
-            value: `${planConfig.name} ($${usdPrice} USD / ₦${ngnAmount.toLocaleString()} NGN)`,
+            value: `${planName} ($${usdPrice} USD / ₦${ngnAmount.toLocaleString()} NGN)`,
           },
           {
             display_name: "Organization ID",

@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
           updatedAt: now,
         });
         const userId = insertUserResult.insertedId.toString();
-        const org = await createOrganizationForUser(userId, "Switchboard Admin Workspace");
+        const org = await createOrganizationForUser(userId, "Oneboard Admin Workspace");
         const activeOrgId = org._id.toString();
 
         await db.collection<DbUser>("users").updateOne(

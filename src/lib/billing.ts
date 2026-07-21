@@ -2,14 +2,16 @@ import { getDb } from "@/lib/db/mongodb";
 import type { DbOrganization, PlanType } from "@/lib/db/types";
 import { ObjectId } from "mongodb";
 
-export type SwitchboardFeature =
+export type OneboardFeature =
   | "operations_hub"
   | "custom_public_page"
   | "web_agent"
   | "browser_voice"
   | "advanced_analytics";
 
-export const PLAN_FEATURES: Record<PlanType, SwitchboardFeature[]> = {
+export type SwitchboardFeature = OneboardFeature;
+
+export const PLAN_FEATURES: Record<PlanType, OneboardFeature[]> = {
   free_org: ["operations_hub", "custom_public_page"],
   engage: ["operations_hub", "custom_public_page", "web_agent"],
   voice: [
@@ -29,7 +31,7 @@ export const PLAN_NAMES: Record<PlanType, string> = {
 
 export async function organizationHasFeature(
   orgIdOrClerkId: string,
-  feature: SwitchboardFeature,
+  feature: OneboardFeature,
 ): Promise<boolean> {
   try {
     const db = await getDb();

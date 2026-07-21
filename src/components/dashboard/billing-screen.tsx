@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Check, CreditCard, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 import { toast } from "sonner";
@@ -12,47 +12,16 @@ import { FeatureEntitlementCard } from "@/components/dashboard/feature-gates";
 import { ScreenHeader } from "@/components/dashboard/screen-kit";
 import { useWorkspace } from "@/components/dashboard/workspace-context";
 
-const dashboardPlans = [
-  {
-    id: "free_org" as const,
-    name: "Core",
-    price: "$0",
-    ngnPrice: "₦0",
-    description: "The operational home for a new organization.",
-    features: [
-      "Operations hub (Bookings, team, availability)",
-      "Custom public page with online booking",
-      "Standard email & phone contacts",
-    ],
-  },
-  {
-    id: "engage" as const,
-    name: "Engage",
-    price: "$49",
-    ngnPrice: "≈ ₦73,500 NGN",
-    description: "Add an ElevenLabs web concierge to every customer touchpoint.",
-    features: [
-      "Everything in Core",
-      "AI text concierge (Web agent)",
-      "Paystack secure checkout in NGN ($1 = ₦1,500)",
-      "Conversation history & summaries",
-    ],
-    featured: true,
-  },
-  {
-    id: "voice" as const,
-    name: "Voice",
-    price: "$149",
-    ngnPrice: "≈ ₦223,500 NGN",
-    description: "Add live browser audio to the web concierge and measure every outcome.",
-    features: [
-      "Everything in Engage",
-      "Live browser audio (Microphone chat)",
-      "Advanced analytics & outcome reporting",
-      "Priority ElevenLabs agent routing",
-    ],
-  },
-];
+type PlanPrices = { engage: number; voice: number };
+type PriceState = { prices: PlanPrices; rate: number; loaded: boolean };
+
+const PRICE_DEFAULTS: PlanPrices = { engage: 49, voice: 149 };
+
+function PriceSkeleton() {
+  return (
+    <span className="inline-block h-5 w-14 animate-pulse rounded bg-muted" />
+  );
+}
 
 export function BillingScreen() {
   const searchParams = useSearchParams();
@@ -60,6 +29,72 @@ export function BillingScreen() {
   const { has, isLoaded, organization: authOrg, updatePlan } = useAuth();
   const { organization } = useWorkspace();
   const [updating, setUpdating] = useState<string | null>(null);
+  const [priceState, setPriceState] = useState<PriceState>({
+    prices: PRICE_DEFAULTS,
+    rate: 1500,
+    loaded: false,
+  });
+
+  // Load live plan prices — no layout shift because we reserve space via PriceSkeleton
+  useEffect(() => {
+    fetch("/api/settings/public")
+      .then((r) => r.json())
+      .then((data) => {
+        setPriceState({
+          prices: data.planPrices ?? PRICE_DEFAULTS,
+          rate: data.usdToNgnRate ?? 1500,
+          loaded: true,
+        });
+      })
+      .catch(() => {
+        // Fall back to defaults silently — never show $0
+        setPriceState((prev) => ({ ...prev, loaded: true }));
+      });
+  }, []);
+
+  const { prices, rate, loaded } = priceState;
+
+  const dashboardPlans = [
+    {
+      id: "free_org" as const,
+      name: "Core",
+      price: "$0",
+      ngnPrice: null,
+      description: "The operational home for a new organization.",
+      features: [
+        "Operations hub (Bookings, team, availability)",
+        "Custom public page with online booking",
+        "Standard email & phone contacts",
+      ],
+    },
+    {
+      id: "engage" as const,
+      name: "Engage",
+      price: loaded ? `$${prices.engage}` : null,
+      ngnPrice: loaded ? `≈ ₦${(prices.engage * rate).toLocaleString()} NGN` : null,
+      description: "Add an ElevenLabs web concierge to every customer touchpoint.",
+      features: [
+        "Everything in Core",
+        "AI text concierge (Web agent)",
+        `Paystack checkout in NGN ($1 = ₦${rate.toLocaleString()})`,
+        "Conversation history & summaries",
+      ],
+      featured: true,
+    },
+    {
+      id: "voice" as const,
+      name: "Voice",
+      price: loaded ? `$${prices.voice}` : null,
+      ngnPrice: loaded ? `≈ ₦${(prices.voice * rate).toLocaleString()} NGN` : null,
+      description: "Add live browser audio to the web concierge and measure every outcome.",
+      features: [
+        "Everything in Engage",
+        "Live browser audio (Microphone chat)",
+        "Advanced analytics & outcome reporting",
+        "Priority ElevenLabs agent routing",
+      ],
+    },
+  ];
 
   const currentTier = has({ plan: "voice" })
     ? "Voice"
@@ -171,7 +206,9 @@ export function BillingScreen() {
 
         <div className="grid gap-4 md:grid-cols-3">
           {dashboardPlans.map((plan) => {
-            const isCurrent = authOrg?.plan === plan.id || (!authOrg?.plan && plan.id === "free_org");
+            const isCurrent =
+              authOrg?.plan === plan.id ||
+              (!authOrg?.plan && plan.id === "free_org");
             return (
               <div
                 key={plan.id}
@@ -193,12 +230,17 @@ export function BillingScreen() {
                     )}
                   </div>
                   <p className="mt-4 font-heading text-4xl font-semibold">
-                    {plan.price}
+                    {plan.price ?? <PriceSkeleton />}
                     <span className="text-xs font-normal text-muted-foreground">/mo</span>
                   </p>
-                  {plan.ngnPrice !== "₦0" && (
+                  {plan.ngnPrice && (
                     <p className="mt-1 text-[11px] font-medium text-emerald-700">
-                      {plan.ngnPrice} (@ ₦1,500/$)
+                      {plan.ngnPrice}
+                    </p>
+                  )}
+                  {plan.id !== "free_org" && !loaded && (
+                    <p className="mt-1">
+                      <PriceSkeleton />
                     </p>
                   )}
                   <p className="mt-2 text-xs text-muted-foreground">{plan.description}</p>
@@ -213,14 +255,16 @@ export function BillingScreen() {
                 <Button
                   className="mt-8 w-full"
                   variant={isCurrent ? "outline" : plan.featured ? "default" : "secondary"}
-                  disabled={isCurrent || updating !== null}
+                  disabled={isCurrent || updating !== null || !loaded}
                   onClick={() => handlePlanSelect(plan.id)}
                 >
                   {updating === plan.id
                     ? "Connecting to Paystack..."
                     : isCurrent
                       ? "Current Plan"
-                      : `Pay with Paystack (${plan.price})`}
+                      : plan.price
+                        ? `Pay with Paystack (${plan.price})`
+                        : "Loading..."}
                 </Button>
               </div>
             );
@@ -230,7 +274,7 @@ export function BillingScreen() {
 
       <div className="mt-6 flex items-start gap-2 rounded-lg border border-black/10 bg-white p-3 text-[11px] leading-5 text-muted-foreground">
         <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" />
-        Switchboard gates capabilities by MongoDB feature entitlement, backed by Paystack payment verification.
+        Oneboard gates capabilities by MongoDB feature entitlement, backed by Paystack payment verification.
       </div>
     </>
   );

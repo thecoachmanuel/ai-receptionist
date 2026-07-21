@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -14,7 +14,9 @@ import {
   Layers,
   Plus,
   RefreshCw,
+  Save,
   Search,
+  Settings2,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
@@ -25,7 +27,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +53,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+type PlatformPrices = { engage: number; voice: number; usdToNgnRate: number };
 
 type AdminOrgStat = {
   _id: string;
@@ -87,6 +91,62 @@ export function SuperAdminScreen() {
   const [name, setName] = useState("");
   const [timezone, setTimezone] = useState("UTC");
   const [currency, setCurrency] = useState("USD");
+
+  // Platform pricing state
+  const [prices, setPrices] = useState<PlatformPrices>({ engage: 49, voice: 149, usdToNgnRate: 1500 });
+  const [pricesLoaded, setPricesLoaded] = useState(false);
+  const [savingPrices, setSavingPrices] = useState(false);
+  const priceFormRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    fetch("/api/settings/public")
+      .then((r) => r.json())
+      .then((data) => {
+        setPrices({
+          engage: data.planPrices?.engage ?? 49,
+          voice: data.planPrices?.voice ?? 149,
+          usdToNgnRate: data.usdToNgnRate ?? 1500,
+        });
+        setPricesLoaded(true);
+      })
+      .catch(() => setPricesLoaded(true));
+  }, []);
+
+  const handleSavePrices = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingPrices(true);
+    try {
+      // Update engage price
+      const r1 = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: "engage", usdPrice: prices.engage }),
+      });
+      if (!r1.ok) throw new Error("Failed to save Engage price.");
+
+      // Update voice price
+      const r2 = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: "voice", usdPrice: prices.voice }),
+      });
+      if (!r2.ok) throw new Error("Failed to save Voice price.");
+
+      // Update exchange rate
+      const r3 = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usdToNgnRate: prices.usdToNgnRate }),
+      });
+      if (!r3.ok) throw new Error("Failed to save exchange rate.");
+
+      toast.success("Platform pricing updated — all plan cards and checkout will reflect the new prices immediately.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save settings.");
+    } finally {
+      setSavingPrices(false);
+    }
+  };
 
   const fetchOrganizations = async () => {
     setLoading(true);
@@ -190,6 +250,105 @@ export function SuperAdminScreen() {
 
   return (
     <div className="space-y-8">
+      {/* Platform Pricing Settings */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Settings2 className="size-4 text-primary" />
+            Platform Pricing Settings
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Set the USD price for each paid plan. Changes take effect immediately on billing pages, pricing page, and Paystack checkout.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <form ref={priceFormRef} onSubmit={handleSavePrices}>
+            <div className="grid gap-5 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="engage-price" className="text-xs font-semibold">
+                  Engage Plan — USD Price
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
+                  <Input
+                    id="engage-price"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={prices.engage}
+                    onChange={(e) => setPrices((p) => ({ ...p, engage: Number(e.target.value) }))}
+                    className="pl-6 text-sm"
+                    disabled={!pricesLoaded}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  ≈ ₦{(prices.engage * prices.usdToNgnRate).toLocaleString()} NGN
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="voice-price" className="text-xs font-semibold">
+                  Voice Plan — USD Price
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
+                  <Input
+                    id="voice-price"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={prices.voice}
+                    onChange={(e) => setPrices((p) => ({ ...p, voice: Number(e.target.value) }))}
+                    className="pl-6 text-sm"
+                    disabled={!pricesLoaded}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  ≈ ₦{(prices.voice * prices.usdToNgnRate).toLocaleString()} NGN
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="ngn-rate" className="text-xs font-semibold">
+                  Exchange Rate (₦ per $1 USD)
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">₦</span>
+                  <Input
+                    id="ngn-rate"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={prices.usdToNgnRate}
+                    onChange={(e) => setPrices((p) => ({ ...p, usdToNgnRate: Number(e.target.value) }))}
+                    className="pl-6 text-sm"
+                    disabled={!pricesLoaded}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Used for Paystack NGN conversion
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-[11px] text-muted-foreground">
+                Prices update immediately on billing, pricing, and checkout pages.
+              </p>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={savingPrices || !pricesLoaded}
+                className="gap-2"
+              >
+                <Save className="size-3.5" />
+                {savingPrices ? "Saving..." : "Save Prices"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -357,13 +516,13 @@ export function SuperAdminScreen() {
                           handlePlanChange(org._id, val)
                         }
                       >
-                        <SelectTrigger className="h-7 w-28 text-[11px] capitalize">
+                        <SelectTrigger className="h-7 w-32 text-[11px] capitalize">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="free_org">Core (Free)</SelectItem>
-                          <SelectItem value="engage">Engage ($49)</SelectItem>
-                          <SelectItem value="voice">Voice ($149)</SelectItem>
+                          <SelectItem value="engage">Engage (${prices.engage})</SelectItem>
+                          <SelectItem value="voice">Voice (${prices.voice})</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>

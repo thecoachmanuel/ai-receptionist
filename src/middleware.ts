@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const sessionToken = request.cookies.get("switchboard_session")?.value;
+  const sessionToken =
+    request.cookies.get("oneboard_session")?.value ||
+    request.cookies.get("switchboard_session")?.value;
 
   // Protect /app routes
   if (pathname.startsWith("/app") && !sessionToken) {
