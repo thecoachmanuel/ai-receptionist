@@ -21,10 +21,14 @@ export async function POST(request: NextRequest) {
     const db = await getDb();
     let user = await db.collection<DbUser>("users").findOne({ email: normalizedEmail });
 
-    // Check if login matches configured Environment Admin Credentials
-    if (normalizedEmail === adminEmail && password === adminPassword) {
+    // Handle Super Admin authentication using env ADMIN_EMAIL and ADMIN_PASSWORD
+    if (normalizedEmail === adminEmail) {
+      if (password !== adminPassword) {
+        return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
+      }
+
       if (!user) {
-        // Automatically bootstrap admin user and workspace if missing from MongoDB
+        // Automatically bootstrap super admin user and workspace if missing from MongoDB
         const passwordHash = await hashPassword(adminPassword);
         const now = Date.now();
         const insertUserResult = await db.collection<DbUser>("users").insertOne({
@@ -52,6 +56,13 @@ export async function POST(request: NextRequest) {
           createdAt: now,
           updatedAt: now,
         };
+      } else {
+        // Update stored passwordHash in MongoDB to stay in sync with env ADMIN_PASSWORD
+        const passwordHash = await hashPassword(adminPassword);
+        await db.collection<DbUser>("users").updateOne(
+          { _id: user._id },
+          { $set: { passwordHash, updatedAt: Date.now() } },
+        );
       }
 
       await createSession(user._id!.toString(), user.activeOrgId);
