@@ -49,7 +49,7 @@ export default async function PricingPage() {
             </article>
           ))}
         </div>
-        <p className="mt-5 text-center text-xs text-muted-foreground">Create your organization first, then manage its plan securely inside your workspace billing page.</p>
+        <p className="mt-5 text-center text-xs text-muted-foreground">Create your organization first, then manage its plan securely inside your workspace billing page. Payments are processed via Paystack in NGN at $1 = ₦1,500 NGN.</p>
       </section>
     </main>
   );

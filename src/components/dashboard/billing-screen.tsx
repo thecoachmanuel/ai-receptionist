@@ -17,6 +17,7 @@ const dashboardPlans = [
     id: "free_org" as const,
     name: "Core",
     price: "$0",
+    ngnPrice: "₦0",
     description: "The operational home for a new organization.",
     features: [
       "Operations hub (Bookings, team, availability)",
@@ -28,11 +29,12 @@ const dashboardPlans = [
     id: "engage" as const,
     name: "Engage",
     price: "$49",
+    ngnPrice: "≈ ₦73,500 NGN",
     description: "Add an ElevenLabs web concierge to every customer touchpoint.",
     features: [
       "Everything in Core",
       "AI text concierge (Web agent)",
-      "Paystack secure checkout",
+      "Paystack secure checkout in NGN ($1 = ₦1,500)",
       "Conversation history & summaries",
     ],
     featured: true,
@@ -41,6 +43,7 @@ const dashboardPlans = [
     id: "voice" as const,
     name: "Voice",
     price: "$149",
+    ngnPrice: "≈ ₦223,500 NGN",
     description: "Add live browser audio to the web concierge and measure every outcome.",
     features: [
       "Everything in Engage",
@@ -193,6 +196,11 @@ export function BillingScreen() {
                     {plan.price}
                     <span className="text-xs font-normal text-muted-foreground">/mo</span>
                   </p>
+                  {plan.ngnPrice !== "₦0" && (
+                    <p className="mt-1 text-[11px] font-medium text-emerald-700">
+                      {plan.ngnPrice} (@ ₦1,500/$)
+                    </p>
+                  )}
                   <p className="mt-2 text-xs text-muted-foreground">{plan.description}</p>
                   <div className="mt-6 space-y-2 border-t pt-4 text-xs">
                     {plan.features.map((f) => (

@@ -138,6 +138,13 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
       }
     }
 
+    const adminEmail = (process.env.ADMIN_EMAIL || "admin@admin.com").trim().toLowerCase();
+    const isSiteAdmin = user.email.trim().toLowerCase() === adminEmail;
+
+    if (!organization && isSiteAdmin) {
+      organization = await db.collection<DbOrganization>("organizations").findOne({});
+    }
+
     if (organization && organization._id) {
       const orgIdStr = organization._id.toString();
       const userIdStr = user._id!.toString();
@@ -147,12 +154,19 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
       });
     }
 
-    const role = orgMember?.role || "member";
+    let role: "admin" | "operator" | "member" = orgMember?.role || "member";
+    if (isSiteAdmin) {
+      role = "admin";
+    }
+
     const features = PLAN_FEATURES[organization?.plan || "free_org"] || PLAN_FEATURES.free_org;
     const permissions: string[] = [];
 
     if (role === "admin" || role === "operator" || features.includes("operations_hub")) {
       permissions.push("org:operations_hub:manage");
+    }
+    if (isSiteAdmin) {
+      permissions.push("admin:all", "admin:full_control");
     }
 
     return {
@@ -193,7 +207,7 @@ export async function requireAuth(): Promise<ActiveAuthContext> {
 
 export async function requireOrgAdmin(): Promise<ActiveAuthContext> {
   const session = await requireAuth();
-  if (session.role !== "admin") {
+  if (session.role !== "admin" && !session.permissions.includes("admin:all")) {
     throw new Error("Organization admin access required.");
   }
   return session;
