@@ -1,22 +1,28 @@
-import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
+import { OrganizationSwitcher } from "@/components/auth/org-switcher";
+import { UserButton } from "@/components/auth/user-button";
 import { Brand } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { getSession } from "@/lib/auth/session";
 
 export default async function AccessRequiredPage() {
-  const session = await auth.protect();
+  const session = await getSession();
+
+  if (!session || !session.user) {
+    redirect("/sign-in");
+  }
 
   const canOperate =
-    session.has({ permission: "org:operations_hub:manage" }) ||
-    session.has({ role: "org:admin" }) ||
-    session.has({ role: "org:owner" });
-  if (canOperate && session.orgSlug) {
-    redirect(`/app/${session.orgSlug}`);
+    session.role === "admin" ||
+    session.role === "operator" ||
+    session.permissions.includes("org:operations_hub:manage");
+
+  if (canOperate && session.organization?.slug) {
+    redirect(`/app/${session.organization.slug}`);
   }
 
   return (
@@ -24,11 +30,7 @@ export default async function AccessRequiredPage() {
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4">
         <Brand />
         <div className="flex items-center gap-3">
-          <OrganizationSwitcher
-            hidePersonal
-            afterCreateOrganizationUrl="/app/:slug"
-            afterSelectOrganizationUrl="/app/:slug"
-          />
+          <OrganizationSwitcher />
           <UserButton />
         </div>
       </div>

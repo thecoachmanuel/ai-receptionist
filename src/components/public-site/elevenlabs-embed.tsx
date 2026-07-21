@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { useConvex } from "convex/react";
 
 import {
   createAgentClientTools,
@@ -77,7 +76,6 @@ export function ElevenLabsEmbed({
   timezone: string;
   locale: string;
 }) {
-  const convex = useConvex();
   const [embedLoaded, setEmbedLoaded] = useState(false);
   const [session, setSession] = useState<WidgetSession | null>(null);
   const sessionRef = useRef<WidgetSession | null>(null);
@@ -87,7 +85,6 @@ export function ElevenLabsEmbed({
   const clientTools = useMemo(
     () =>
       createAgentClientTools({
-        convex,
         siteSlug,
         businessName,
         offerings,
@@ -97,7 +94,6 @@ export function ElevenLabsEmbed({
       }),
     [
       businessName,
-      convex,
       locale,
       offerings,
       siteSlug,
