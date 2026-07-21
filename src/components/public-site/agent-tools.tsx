@@ -1,11 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useClientTool } from "@elevenlabs/react";
 import { callApi } from "@/lib/api-client/use-data";
 import type {
   PublicOffering,
   PublicTeamMember,
 } from "@/components/public-site/types";
+
+function useConversationClientTool<T>(name: keyof T & string, fn: any) {
+  try {
+    useClientTool(name, fn);
+  } catch {
+    // Graceful fallback if invoked outside ElevenLabs ConversationProvider context
+  }
+}
 
 export type AgentToolActivity = {
   kind: "booked" | "found" | "rescheduled" | "canceled";
