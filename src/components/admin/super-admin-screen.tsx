@@ -1,0 +1,514 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  ArrowUpRight,
+  Bot,
+  Building2,
+  CalendarDays,
+  Check,
+  CircleDollarSign,
+  ExternalLink,
+  Layers,
+  Plus,
+  RefreshCw,
+  Search,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  UsersRound,
+} from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "@/lib/auth/context";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+type AdminOrgStat = {
+  _id: string;
+  clerkOrgId: string;
+  name: string;
+  slug: string;
+  timezone: string;
+  currency: string;
+  locale: string;
+  plan: "free_org" | "engage" | "voice";
+  planStatus: string;
+  createdAt: number;
+  updatedAt: number;
+  stats: {
+    offeringsCount: number;
+    teamMembersCount: number;
+    bookingsCount: number;
+    conversationsCount: number;
+    knowledgeCount: number;
+  };
+};
+
+export function SuperAdminScreen() {
+  const router = useRouter();
+  const { switchOrganization } = useAuth();
+  const [organizations, setOrganizations] = useState<AdminOrgStat[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // New org form state
+  const [name, setName] = useState("");
+  const [timezone, setTimezone] = useState("UTC");
+  const [currency, setCurrency] = useState("USD");
+
+  const fetchOrganizations = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/organizations");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load admin stats.");
+      setOrganizations(data.organizations || []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load organizations.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      toast.error("Business entity name is required.");
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const res = await fetch("/api/admin/organizations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), timezone, currency }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to provision business entity.");
+
+      toast.success(`Business entity "${name}" provisioned successfully!`);
+      setName("");
+      setCreateOpen(false);
+      fetchOrganizations();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to provision entity.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handlePlanChange = async (orgId: string, newPlan: "free_org" | "engage" | "voice") => {
+    try {
+      const res = await fetch(`/api/admin/organizations/${orgId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: newPlan }),
+      });
+      if (!res.ok) throw new Error("Failed to update plan.");
+
+      toast.success("Subscription plan updated successfully.");
+      setOrganizations((prev) =>
+        prev.map((o) => (o._id === orgId ? { ...o, plan: newPlan } : o)),
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update plan.");
+    }
+  };
+
+  const handleDelete = async (orgId: string) => {
+    try {
+      const res = await fetch(`/api/admin/organizations/${orgId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete business entity.");
+
+      toast.success("Business entity deleted cleanly.");
+      setDeletingId(null);
+      setOrganizations((prev) => prev.filter((o) => o._id !== orgId));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete entity.");
+    }
+  };
+
+  const handleSwitchOrg = async (org: AdminOrgStat) => {
+    try {
+      await switchOrganization(org._id);
+      router.push(`/app/${org.slug}`);
+      toast.success(`Switched active workspace to ${org.name}`);
+    } catch (err) {
+      toast.error("Failed to switch workspace.");
+    }
+  };
+
+  const filtered = organizations.filter(
+    (o) =>
+      o.name.toLowerCase().includes(search.toLowerCase()) ||
+      o.slug.toLowerCase().includes(search.toLowerCase()) ||
+      o.clerkOrgId.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const totalBookings = organizations.reduce((sum, o) => sum + o.stats.bookingsCount, 0);
+  const totalConversations = organizations.reduce((sum, o) => sum + o.stats.conversationsCount, 0);
+  const totalOfferings = organizations.reduce((sum, o) => sum + o.stats.offeringsCount, 0);
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <Badge className="bg-primary text-primary-foreground font-mono text-[10px] uppercase tracking-widest">
+              Super Admin Platform
+            </Badge>
+            <span className="flex items-center gap-1 text-xs text-emerald-700 font-medium">
+              <ShieldCheck className="size-3.5" /> Full Entity Control
+            </span>
+          </div>
+          <h1 className="mt-2 font-heading text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
+            Business Entities Control Center
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage multi-tenant business entities with 100% data isolation, individual public URLs, and subscription overrides.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={fetchOrganizations} disabled={loading}>
+            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </Button>
+          <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-2">
+            <Plus className="size-4" /> Provision New Business
+          </Button>
+        </div>
+      </div>
+
+      {/* Overview Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                Total Business Entities
+              </p>
+              <Building2 className="size-4 text-primary" />
+            </div>
+            <p className="mt-3 font-heading text-4xl font-semibold">{organizations.length}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">Isolated database instances</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                Total Appointments
+              </p>
+              <CalendarDays className="size-4 text-sky-500" />
+            </div>
+            <p className="mt-3 font-heading text-4xl font-semibold">{totalBookings}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">Across all client public sites</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                AI Concierge Chats
+              </p>
+              <Bot className="size-4 text-purple-500" />
+            </div>
+            <p className="mt-3 font-heading text-4xl font-semibold">{totalConversations}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">Text & live voice sessions</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                Active Offerings
+              </p>
+              <CircleDollarSign className="size-4 text-emerald-500" />
+            </div>
+            <p className="mt-3 font-heading text-4xl font-semibold">{totalOfferings}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">Services bookable online</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Data Isolation Notice */}
+      <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs text-primary-foreground dark:text-foreground">
+        <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" />
+        <div>
+          <p className="font-semibold text-foreground">Strict Business Data Isolation Enforced</p>
+          <p className="mt-0.5 text-muted-foreground">
+            Every business entity has its own unique <code className="rounded bg-black/10 px-1 py-0.5 font-mono text-[11px]">organizationId</code>. Bookings, team members, availability schedules, knowledge items, and AI concierge memories are strictly scoped to ensure complete privacy and isolation between businesses.
+          </p>
+        </div>
+      </div>
+
+      {/* Business Entities Table */}
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Filter by business name, slug, or ID..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 text-xs"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Showing {filtered.length} of {organizations.length} business entities
+          </p>
+        </div>
+
+        <div className="rounded-xl border bg-card overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 text-[11px] uppercase tracking-wider">
+                <TableHead>Business Entity</TableHead>
+                <TableHead>Live Public Page</TableHead>
+                <TableHead>Region & Currency</TableHead>
+                <TableHead>Subscription Plan</TableHead>
+                <TableHead>Isolated Data Stats</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center text-xs text-muted-foreground">
+                    Loading business entities...
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center text-xs text-muted-foreground">
+                    No business entities found matching your search.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filtered.map((org) => (
+                  <TableRow key={org._id} className="text-xs">
+                    <TableCell className="font-medium">
+                      <div>
+                        <p className="font-semibold text-foreground">{org.name}</p>
+                        <p className="font-mono text-[10px] text-muted-foreground">{org.slug}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <a
+                        href={`/p/${org.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-primary hover:underline font-mono text-[11px]"
+                      >
+                        /p/{org.slug} <ExternalLink className="size-3" />
+                      </a>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-[11px] text-muted-foreground">
+                        <span className="font-medium text-foreground">{org.currency}</span> · {org.timezone}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={org.plan}
+                        onValueChange={(val: "free_org" | "engage" | "voice") =>
+                          handlePlanChange(org._id, val)
+                        }
+                      >
+                        <SelectTrigger className="h-7 w-28 text-[11px] capitalize">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="free_org">Core (Free)</SelectItem>
+                          <SelectItem value="engage">Engage ($49)</SelectItem>
+                          <SelectItem value="voice">Voice ($149)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1.5 text-[10px]">
+                        <Badge variant="outline" className="gap-1 font-mono">
+                          <CalendarDays className="size-3 text-sky-500" /> {org.stats.bookingsCount} bookings
+                        </Badge>
+                        <Badge variant="outline" className="gap-1 font-mono">
+                          <Bot className="size-3 text-purple-500" /> {org.stats.conversationsCount} chats
+                        </Badge>
+                        <Badge variant="outline" className="gap-1 font-mono">
+                          <UsersRound className="size-3 text-emerald-500" /> {org.stats.teamMembersCount} team
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleSwitchOrg(org)}
+                          className="h-7 gap-1 text-[11px]"
+                        >
+                          Manage <ArrowUpRight className="size-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setDeletingId(org._id)}
+                          className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Provision New Business Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="size-5 text-primary" /> Provision New Business Entity
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Creates a brand-new, completely isolated business entity with dedicated offerings, availability, and instant public page.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreate} className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="org-name" className="text-xs font-medium">
+                Business Name
+              </Label>
+              <Input
+                id="org-name"
+                placeholder="e.g. Apex Health Clinic"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="text-xs"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="org-tz" className="text-xs font-medium">
+                  Timezone
+                </Label>
+                <Select value={timezone} onValueChange={setTimezone}>
+                  <SelectTrigger id="org-tz" className="text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="UTC">UTC (Universal)</SelectItem>
+                    <SelectItem value="Africa/Lagos">Africa/Lagos (WAT)</SelectItem>
+                    <SelectItem value="America/New_York">America/New_York (EST)</SelectItem>
+                    <SelectItem value="Europe/London">Europe/London (GMT)</SelectItem>
+                    <SelectItem value="Asia/Dubai">Asia/Dubai (GST)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="org-currency" className="text-xs font-medium">
+                  Currency
+                </Label>
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger id="org-currency" className="text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="NGN">NGN (₦)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreateOpen(false)}
+                disabled={creating}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={creating} className="gap-2">
+                {creating ? "Provisioning..." : "Provision Entity"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={Boolean(deletingId)} onOpenChange={() => setDeletingId(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <ShieldAlert className="size-5" /> Delete Business Entity?
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              This action cannot be undone. All isolated bookings, offerings, team members, and conversations for this business will be permanently deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 pt-2">
+            <Button variant="outline" onClick={() => setDeletingId(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deletingId && handleDelete(deletingId)}
+            >
+              Confirm Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

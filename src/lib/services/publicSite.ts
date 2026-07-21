@@ -1,24 +1,65 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/db/mongodb";
 import type { DbAgentIntegration, DbKnowledgeItem, DbOffering, DbOrganization, DbPublicSite, DbTeamMember, SiteConfig } from "@/lib/db/types";
-import { slugify } from "@/lib/defaults";
+import { defaultSiteConfig, slugify } from "@/lib/defaults";
 import { sanitizeSiteConfig } from "@/lib/siteConfig";
 import { requiredTrimmed } from "@/lib/validation";
 
 export async function getPublishedBySlug(siteSlug: string) {
   const db = await getDb();
-  const site = await db.collection<DbPublicSite>("publicSites").findOne({
-    siteSlug: siteSlug.trim().toLowerCase(),
+  const normalizedSlug = siteSlug.trim().toLowerCase();
+
+  let site = await db.collection<DbPublicSite>("publicSites").findOne({
+    siteSlug: normalizedSlug,
   });
 
-  if (!site?.published || !site.publishedAt) return null;
+  let organization: DbOrganization | null = null;
 
-  const orgId = site.organizationId;
-  const orgFilter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
-  const organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
+  if (site) {
+    const orgId = site.organizationId;
+    const orgFilter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
+    organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
+  }
+
+  if (!organization) {
+    organization = await db.collection<DbOrganization>("organizations").findOne({
+      $or: [{ slug: normalizedSlug }, { clerkOrgId: normalizedSlug }],
+    });
+  }
+
   if (!organization) return null;
 
   const effectiveOrgId = organization._id!.toString();
+
+  if (!site) {
+    site = await db.collection<DbPublicSite>("publicSites").findOne({
+      organizationId: effectiveOrgId,
+    });
+  }
+
+  const now = Date.now();
+  if (!site) {
+    const defaultConfig = defaultSiteConfig(organization.name);
+    const newSiteDoc: DbPublicSite = {
+      organizationId: effectiveOrgId,
+      siteSlug: organization.slug || normalizedSlug,
+      draft: defaultConfig,
+      published: defaultConfig,
+      publishedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const res = await db.collection<DbPublicSite>("publicSites").insertOne(newSiteDoc);
+    site = { ...newSiteDoc, _id: res.insertedId };
+  } else if (!site.published || !site.publishedAt) {
+    const publishedConfig = site.draft || defaultSiteConfig(organization.name);
+    await db.collection<DbPublicSite>("publicSites").updateOne(
+      { _id: site._id as any },
+      { $set: { published: publishedConfig, publishedAt: now, updatedAt: now } },
+    );
+    site.published = publishedConfig;
+    site.publishedAt = now;
+  }
 
   const [offerings, teamMembers, knowledgeItems] = await Promise.all([
     db

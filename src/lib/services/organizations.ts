@@ -178,6 +178,76 @@ export async function updateOrganizationPlan(orgId: string, plan: "free_org" | "
   });
 }
 
+export async function getAllOrganizationsWithStats() {
+  const db = await getDb();
+  const orgs = await db
+    .collection<DbOrganization>("organizations")
+    .find({})
+    .sort({ createdAt: -1 })
+    .toArray();
+
+  const results = await Promise.all(
+    orgs.map(async (org: any) => {
+      const orgIdStr = org._id!.toString();
+      const [offeringsCount, teamMembersCount, bookingsCount, conversationsCount, knowledgeCount] =
+        await Promise.all([
+          db.collection("offerings").countDocuments({ organizationId: orgIdStr }),
+          db.collection("teamMembers").countDocuments({ organizationId: orgIdStr }),
+          db.collection("bookings").countDocuments({ organizationId: orgIdStr }),
+          db.collection("conversations").countDocuments({ organizationId: orgIdStr }),
+          db.collection("knowledgeItems").countDocuments({ organizationId: orgIdStr }),
+        ]);
+
+      return {
+        _id: orgIdStr,
+        clerkOrgId: org.clerkOrgId,
+        name: org.name,
+        slug: org.slug,
+        timezone: org.timezone,
+        currency: org.currency,
+        locale: org.locale,
+        plan: org.plan || "free_org",
+        planStatus: org.planStatus || "active",
+        createdAt: org.createdAt,
+        updatedAt: org.updatedAt,
+        stats: {
+          offeringsCount,
+          teamMembersCount,
+          bookingsCount,
+          conversationsCount,
+          knowledgeCount,
+        },
+      };
+    }),
+  );
+
+  return results;
+}
+
+export async function deleteOrganizationData(orgId: string) {
+  const db = await getDb();
+  const filter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
+  const org = await db.collection<DbOrganization>("organizations").findOne(filter);
+  if (!org) return false;
+
+  const orgIdStr = org._id!.toString();
+
+  await Promise.all([
+    db.collection("organizations").deleteOne({ _id: org._id }),
+    db.collection("orgMembers").deleteMany({ organizationId: orgIdStr }),
+    db.collection("offerings").deleteMany({ organizationId: orgIdStr }),
+    db.collection("teamMembers").deleteMany({ organizationId: orgIdStr }),
+    db.collection("knowledgeItems").deleteMany({ organizationId: orgIdStr }),
+    db.collection("availabilityRules").deleteMany({ organizationId: orgIdStr }),
+    db.collection("bookings").deleteMany({ organizationId: orgIdStr }),
+    db.collection("conversations").deleteMany({ organizationId: orgIdStr }),
+    db.collection("publicSites").deleteMany({ organizationId: orgIdStr }),
+    db.collection("agentIntegrations").deleteMany({ organizationId: orgIdStr }),
+  ]);
+
+  return true;
+}
+
 export { getUserOrganizations as listUserOrganizations };
 export { createOrganizationForUser as createOrganization };
 

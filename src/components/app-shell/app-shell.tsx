@@ -6,8 +6,10 @@ import { usePathname } from "next/navigation";
 import { OrganizationSwitcher } from "@/components/auth/org-switcher";
 import { UserButton } from "@/components/auth/user-button";
 import { useQuery } from "@/lib/api-client/use-data";
+import { useAuth } from "@/lib/auth/context";
 import {
   Bot,
+  Building2,
   CalendarDays,
   ChevronRight,
   CircleDollarSign,
@@ -106,6 +108,8 @@ function WorkspaceNavigation({
   orgSlug: string;
 }) {
   const pathname = usePathname();
+  const { role, permissions } = useAuth();
+  const isSiteAdmin = role === "admin" || permissions.includes("admin:all");
 
   return (
     <>
@@ -152,6 +156,30 @@ function WorkspaceNavigation({
           </SidebarGroupContent>
         </SidebarGroup>
       ))}
+
+      {isSiteAdmin && (
+        <SidebarGroup className="px-3 py-2 border-t border-black/10 mt-2">
+          <SidebarGroupLabel className="px-2 text-[10px] font-semibold tracking-[0.18em] text-primary uppercase">
+            Platform Super Admin
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-0.5">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/app/admin" || pathname === "/admin"}
+                  className="h-9 rounded-md px-2.5 text-[13px] font-medium bg-primary/10 text-primary hover:bg-primary/20"
+                >
+                  <Link href="/app/admin">
+                    <Building2 className="size-4" />
+                    <span>Control Platform</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      )}
     </>
   );
 }
