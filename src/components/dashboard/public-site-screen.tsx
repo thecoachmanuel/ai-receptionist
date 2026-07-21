@@ -954,15 +954,15 @@ function SiteEditor({
 
 export function PublicSiteScreen() {
   const { organization, terminology } = useWorkspace();
-  const current = useQuery(
+  const current = useQuery<any>(
     dashboardApi.publicSite.getCurrentDraft,
     organization ? {} : "skip",
   );
-  const offerings = useQuery(
+  const offerings = useQuery<any>(
     dashboardApi.catalog.listOfferings,
     organization ? {} : "skip",
   );
-  const members = useQuery(
+  const members = useQuery<any>(
     dashboardApi.team.listMembers,
     organization ? {} : "skip",
   );

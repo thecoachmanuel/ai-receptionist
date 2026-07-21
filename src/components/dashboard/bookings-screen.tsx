@@ -65,8 +65,8 @@ const statuses: BookingStatus[] = [
 
 function CreateBookingDialog() {
   const { terminology } = useWorkspace();
-  const offerings = useQuery(dashboardApi.catalog.listOfferings, {});
-  const members = useQuery(dashboardApi.team.listMembers, {});
+  const offerings = useQuery<any>(dashboardApi.catalog.listOfferings, {});
+  const members = useQuery<any>(dashboardApi.team.listMembers, {});
   const createBooking = useMutation(
     dashboardApi.bookings.createForCurrentOrg,
   );
@@ -240,7 +240,7 @@ function BookingStatusSelect({ booking }: { booking: Booking }) {
 
 export function BookingsScreen() {
   const { organization, terminology } = useWorkspace();
-  const bookings = useQuery(
+  const bookings = useQuery<any>(
     dashboardApi.bookings.listForCurrentOrg,
     organization ? { limit: 200 } : "skip",
   );

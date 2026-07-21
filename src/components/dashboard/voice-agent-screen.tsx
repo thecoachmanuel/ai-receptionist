@@ -170,11 +170,11 @@ function WebAgentConsole() {
 export function VoiceAgentScreen() {
   const { organization, orgSlug } = useWorkspace();
   const entitlements = useFeatureEntitlements();
-  const agent = useQuery(
+  const agent = useQuery<any>(
     dashboardApi.agents.getCurrent,
     organization ? {} : "skip",
   );
-  const conversations = useQuery(
+  const conversations = useQuery<any>(
     dashboardApi.conversations.listRecent,
     organization ? { limit: 50 } : "skip",
   );

@@ -64,7 +64,7 @@ function BookingRow({ booking }: { booking: Booking }) {
 export function OverviewScreen() {
   const { organization, terminology, orgSlug } = useWorkspace();
   const [referenceTime] = useState(() => Date.now());
-  const overview = useQuery(
+  const overview = useQuery<any>(
     dashboardApi.dashboard.overview,
     organization ? {} : "skip",
   );

@@ -200,7 +200,7 @@ function OfferingDialog({ offering }: { offering?: Offering }) {
 
 export function OfferingsScreen() {
   const { organization, terminology } = useWorkspace();
-  const offerings = useQuery(
+  const offerings = useQuery<any>(
     dashboardApi.catalog.listOfferings,
     organization ? { includeInactive: true } : "skip",
   );

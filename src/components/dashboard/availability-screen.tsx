@@ -214,11 +214,11 @@ function WeeklyEditor({
 
 export function AvailabilityScreen() {
   const { organization, terminology } = useWorkspace();
-  const members = useQuery(
+  const members = useQuery<any>(
     dashboardApi.team.listMembers,
     organization ? {} : "skip",
   );
-  const rules = useQuery(
+  const rules = useQuery<any>(
     dashboardApi.availability.listRules,
     organization ? {} : "skip",
   );

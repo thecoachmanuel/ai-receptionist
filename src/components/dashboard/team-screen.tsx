@@ -50,7 +50,7 @@ function MemberDialog({ member }: { member?: TeamMember }) {
   const { terminology } = useWorkspace();
   const createMember = useMutation(dashboardApi.team.createMember);
   const updateMember = useMutation(dashboardApi.team.updateMember);
-  const offerings = useQuery(dashboardApi.catalog.listOfferings, {});
+  const offerings = useQuery<any>(dashboardApi.catalog.listOfferings, {});
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [active, setActive] = useState(member?.active ?? true);
@@ -232,7 +232,7 @@ function MemberDialog({ member }: { member?: TeamMember }) {
 
 export function TeamScreen() {
   const { organization, terminology } = useWorkspace();
-  const members = useQuery(
+  const members = useQuery<any>(
     dashboardApi.team.listMembers,
     organization ? { includeInactive: true } : "skip",
   );
