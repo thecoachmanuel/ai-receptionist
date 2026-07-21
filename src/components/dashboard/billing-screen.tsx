@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Check, CreditCard, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Check, CreditCard, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +32,7 @@ const dashboardPlans = [
     features: [
       "Everything in Core",
       "AI text concierge (Web agent)",
-      "14-day free trial included",
+      "Paystack secure checkout",
       "Conversation history & summaries",
     ],
     featured: true,
@@ -50,6 +52,8 @@ const dashboardPlans = [
 ];
 
 export function BillingScreen() {
+  const searchParams = useSearchParams();
+  const isSuccess = searchParams.get("success") === "true";
   const { has, isLoaded, organization: authOrg, updatePlan } = useAuth();
   const { organization } = useWorkspace();
   const [updating, setUpdating] = useState<string | null>(null);
@@ -63,11 +67,34 @@ export function BillingScreen() {
   const handlePlanSelect = async (planId: "free_org" | "engage" | "voice") => {
     if (authOrg?.plan === planId) return;
     setUpdating(planId);
+
+    if (planId === "free_org") {
+      try {
+        await updatePlan("free_org");
+        toast.success("Switched to Core (Free) plan.");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to switch plan.");
+      } finally {
+        setUpdating(null);
+      }
+      return;
+    }
+
     try {
-      await updatePlan(planId);
+      const res = await fetch("/api/billing/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.authorizationUrl) {
+        throw new Error(data.error || "Failed to initialize Paystack payment.");
+      }
+
+      window.location.href = data.authorizationUrl;
     } catch (err) {
-      console.error(err);
-    } finally {
+      toast.error(err instanceof Error ? err.message : "Paystack checkout failed.");
       setUpdating(null);
     }
   };
@@ -80,6 +107,12 @@ export function BillingScreen() {
         description={`Plans, features, and billing belong to ${organization?.name ?? "this organization"}—not to individual members. Upgrades take effect across the active workspace.`}
       />
 
+      {isSuccess && (
+        <div className="mb-6 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-xs font-medium text-emerald-800">
+          🎉 Payment verified successfully! Your organization subscription plan has been upgraded.
+        </div>
+      )}
+
       <section className="grid gap-4 md:grid-cols-[minmax(18rem,0.8fr)_minmax(0,1.2fr)]">
         <Card className="bg-[#20201e] text-white ring-black/15">
           <CardContent className="flex h-full flex-col justify-between pt-0">
@@ -89,7 +122,7 @@ export function BillingScreen() {
                   <CreditCard className="size-4 text-primary" />
                 </span>
                 <Badge variant="outline" className="border-white/15 bg-white/5 text-white">
-                  Active
+                  Active (Paystack)
                 </Badge>
               </div>
               <p className="mt-8 text-[10px] font-semibold tracking-[0.16em] text-white/45 uppercase">
@@ -99,12 +132,12 @@ export function BillingScreen() {
                 {isLoaded ? currentTier : "—"}
               </p>
               <p className="mt-3 text-xs leading-5 text-white/50">
-                Feature access is verified directly from MongoDB on every session.
+                Feature access is verified directly from MongoDB & Paystack on every session.
               </p>
             </div>
             <div className="mt-8 space-y-2 border-t border-white/10 pt-4 text-[11px] text-white/60">
               <p className="flex items-center gap-2">
-                <ShieldCheck className="size-3.5 text-emerald-400" /> Organization-scoped billing
+                <ShieldCheck className="size-3.5 text-emerald-400" /> Paystack Secured Billing
               </p>
               <p className="flex items-center gap-2">
                 <UsersRound className="size-3.5 text-sky-400" /> MongoDB-managed entitlements
@@ -129,7 +162,7 @@ export function BillingScreen() {
             </h2>
           </div>
           <span className="hidden items-center gap-1.5 text-[11px] text-muted-foreground sm:inline-flex">
-            <Check className="size-3.5" /> Instant plan switching
+            <Check className="size-3.5" /> Paystack Instant Checkout
           </span>
         </div>
 
@@ -176,10 +209,10 @@ export function BillingScreen() {
                   onClick={() => handlePlanSelect(plan.id)}
                 >
                   {updating === plan.id
-                    ? "Updating..."
+                    ? "Connecting to Paystack..."
                     : isCurrent
                       ? "Current Plan"
-                      : `Switch to ${plan.name}`}
+                      : `Pay with Paystack (${plan.price})`}
                 </Button>
               </div>
             );
@@ -189,7 +222,7 @@ export function BillingScreen() {
 
       <div className="mt-6 flex items-start gap-2 rounded-lg border border-black/10 bg-white p-3 text-[11px] leading-5 text-muted-foreground">
         <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" />
-        Switchboard gates capabilities by MongoDB feature entitlement, so features seamlessly adapt to plan updates without code changes.
+        Switchboard gates capabilities by MongoDB feature entitlement, backed by Paystack payment verification.
       </div>
     </>
   );
