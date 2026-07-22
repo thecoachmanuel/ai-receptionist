@@ -9,6 +9,7 @@ import * as publicSiteService from "@/lib/services/publicSite";
 import * as catalogService from "@/lib/services/catalog";
 import * as knowledgeService from "@/lib/services/knowledge";
 import * as teamService from "@/lib/services/team";
+import { getRotatedElevenLabsKey } from "@/lib/services/settings";
 
 export const runtime = "nodejs";
 
@@ -39,9 +40,13 @@ export async function POST() {
     );
   }
 
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  const agentId = process.env.ELEVENLABS_DEFAULT_AGENT_ID?.trim();
-  if (!apiKey || !agentId) {
+  let apiKey = "";
+  let agentId = "";
+  try {
+    const credentials = await getRotatedElevenLabsKey();
+    apiKey = credentials.apiKey;
+    agentId = credentials.agentId;
+  } catch (e) {
     return NextResponse.json(
       { error: "The agent test is not configured." },
       { status: 503 },

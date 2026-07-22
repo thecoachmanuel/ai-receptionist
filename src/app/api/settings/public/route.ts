@@ -26,7 +26,7 @@ export async function GET() {
     console.error("Public settings GET error", error);
     // Return safe defaults on error so the UI never shows $0
     return NextResponse.json(
-      { planPrices: { engage: 49, voice: 149 }, usdToNgnRate: 1500 },
+      { planPrices: { core: 0, engage: 49, voice: 149 }, usdToNgnRate: 1500 },
       { status: 200 },
     );
   }

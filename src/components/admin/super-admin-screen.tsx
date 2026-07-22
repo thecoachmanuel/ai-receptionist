@@ -54,7 +54,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-type PlatformPrices = { engage: number; voice: number; usdToNgnRate: number };
+type PlatformPrices = { core: number; engage: number; voice: number; usdToNgnRate: number };
 
 type AdminOrgStat = {
   _id: string;
@@ -93,20 +93,33 @@ export function SuperAdminScreen() {
   const [currency, setCurrency] = useState("USD");
 
   // Platform pricing state
-  const [prices, setPrices] = useState<PlatformPrices>({ engage: 49, voice: 149, usdToNgnRate: 1500 });
+  const [prices, setPrices] = useState<PlatformPrices>({ core: 0, engage: 49, voice: 149, usdToNgnRate: 1500 });
   const [pricesLoaded, setPricesLoaded] = useState(false);
   const [savingPrices, setSavingPrices] = useState(false);
   const priceFormRef = useRef<HTMLFormElement>(null);
 
+  // ElevenLabs multi-key auto-rotation state
+  const [apiKeys, setApiKeys] = useState<string[]>([]);
+  const [newKeyInput, setNewKeyInput] = useState("");
+  const [defaultAgentId, setDefaultAgentId] = useState("");
+  const [savingElevenLabs, setSavingElevenLabs] = useState(false);
+
   useEffect(() => {
-    fetch("/api/settings/public")
+    fetch("/api/admin/settings")
       .then((r) => r.json())
       .then((data) => {
-        setPrices({
-          engage: data.planPrices?.engage ?? 49,
-          voice: data.planPrices?.voice ?? 149,
-          usdToNgnRate: data.usdToNgnRate ?? 1500,
-        });
+        if (data.settings) {
+          setPrices({
+            core: data.settings.planPrices?.core ?? 0,
+            engage: data.settings.planPrices?.engage ?? 49,
+            voice: data.settings.planPrices?.voice ?? 149,
+            usdToNgnRate: data.settings.usdToNgnRate ?? 1500,
+          });
+        }
+        if (data.elevenlabs) {
+          setApiKeys(data.elevenlabs.apiKeys || []);
+          setDefaultAgentId(data.elevenlabs.defaultAgentId || "");
+        }
         setPricesLoaded(true);
       })
       .catch(() => setPricesLoaded(true));
@@ -116,6 +129,14 @@ export function SuperAdminScreen() {
     e.preventDefault();
     setSavingPrices(true);
     try {
+      // Update core price
+      const r0 = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: "core", usdPrice: prices.core }),
+      });
+      if (!r0.ok) throw new Error("Failed to save Core price.");
+
       // Update engage price
       const r1 = await fetch("/api/admin/settings", {
         method: "PATCH",
@@ -140,11 +161,52 @@ export function SuperAdminScreen() {
       });
       if (!r3.ok) throw new Error("Failed to save exchange rate.");
 
-      toast.success("Platform pricing updated — all plan cards and checkout will reflect the new prices immediately.");
+      toast.success("Platform pricing updated — Core, Engage, Voice, and exchange rates reflect immediately across pricing and checkout.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save settings.");
     } finally {
       setSavingPrices(false);
+    }
+  };
+
+  const handleAddApiKey = () => {
+    const trimmed = newKeyInput.trim();
+    if (!trimmed) {
+      toast.error("Please enter a valid ElevenLabs API key.");
+      return;
+    }
+    if (apiKeys.includes(trimmed)) {
+      toast.error("This ElevenLabs API key is already in the rotation list.");
+      return;
+    }
+    setApiKeys((prev) => [...prev, trimmed]);
+    setNewKeyInput("");
+    toast.success("ElevenLabs API key added to rotation list.");
+  };
+
+  const handleRemoveApiKey = (keyToRemove: string) => {
+    setApiKeys((prev) => prev.filter((k) => k !== keyToRemove));
+    toast.success("API key removed from rotation list.");
+  };
+
+  const handleSaveElevenLabs = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingElevenLabs(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          elevenLabsApiKeys: apiKeys,
+          elevenLabsDefaultAgentId: defaultAgentId.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save ElevenLabs settings.");
+      toast.success("ElevenLabs API keys and auto-rotation settings updated successfully!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save ElevenLabs settings.");
+    } finally {
+      setSavingElevenLabs(false);
     }
   };
 
@@ -250,6 +312,107 @@ export function SuperAdminScreen() {
 
   return (
     <div className="space-y-8">
+      {/* ElevenLabs API Keys & Auto-Rotation Settings */}
+      <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Bot className="size-4 text-purple-600" />
+              ElevenLabs API Keys & Auto-Rotation
+            </CardTitle>
+            <Badge variant="outline" className="border-purple-500/30 text-purple-600 font-mono text-[10px]">
+              {apiKeys.length > 1
+                ? `Auto-Rotation Active (${apiKeys.length} Keys)`
+                : apiKeys.length === 1
+                ? "1 API Key Active"
+                : "No Keys Configured"}
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Configure multiple ElevenLabs API keys. The system automatically rotates through all configured keys in round-robin order to prevent credit exhaustion.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <form onSubmit={handleSaveElevenLabs} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="elevenlabs-agent-id" className="text-xs font-semibold">
+                Default ElevenLabs Agent ID
+              </Label>
+              <Input
+                id="elevenlabs-agent-id"
+                placeholder="e.g. agent_abc123xyz..."
+                value={defaultAgentId}
+                onChange={(e) => setDefaultAgentId(e.target.value)}
+                className="font-mono text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Agent ID used for voice receptionist sessions.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Active ElevenLabs API Keys List</Label>
+              {apiKeys.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">
+                  No API keys added yet. Add one below or rely on ELEVENLABS_API_KEY environment variable.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {apiKeys.map((key, idx) => (
+                    <div
+                      key={key + idx}
+                      className="flex items-center justify-between rounded-lg border bg-card p-2.5 text-xs font-mono"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Badge variant="secondary" className="text-[10px] font-sans">
+                          Key #{idx + 1}
+                        </Badge>
+                        <span>
+                          {key.slice(0, 8)}••••••••••••••••{key.slice(-6)}
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveApiKey(key)}
+                        className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <Input
+                placeholder="Paste new ElevenLabs API Key (e.g. sk_...)"
+                value={newKeyInput}
+                onChange={(e) => setNewKeyInput(e.target.value)}
+                className="font-mono text-xs flex-1"
+              />
+              <Button type="button" variant="outline" size="sm" onClick={handleAddApiKey} className="gap-1.5 shrink-0">
+                <Plus className="size-3.5" /> Add Key
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-[11px] text-muted-foreground">
+                {apiKeys.length > 1
+                  ? "Requests will rotate round-robin across all keys automatically."
+                  : "Add 2+ keys to enable multi-key auto-rotation."}
+              </p>
+              <Button type="submit" size="sm" disabled={savingElevenLabs} className="gap-2 bg-purple-600 text-white hover:bg-purple-700">
+                <Save className="size-3.5" />
+                {savingElevenLabs ? "Saving Keys..." : "Save ElevenLabs Settings"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
       {/* Platform Pricing Settings */}
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
         <CardHeader className="pb-2">
@@ -258,12 +421,34 @@ export function SuperAdminScreen() {
             Platform Pricing Settings
           </CardTitle>
           <p className="text-xs text-muted-foreground">
-            Set the USD price for each paid plan. Changes take effect immediately on billing pages, pricing page, and Paystack checkout.
+            Set the USD price for Core, Engage, and Voice plans. Changes take effect immediately on billing pages, pricing page, and Paystack checkout.
           </p>
         </CardHeader>
         <CardContent>
           <form ref={priceFormRef} onSubmit={handleSavePrices}>
-            <div className="grid gap-5 sm:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="core-price" className="text-xs font-semibold">
+                  Core Plan — USD Price
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
+                  <Input
+                    id="core-price"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={prices.core}
+                    onChange={(e) => setPrices((p) => ({ ...p, core: Number(e.target.value) }))}
+                    className="pl-6 text-sm"
+                    disabled={!pricesLoaded}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {prices.core === 0 ? "Free plan" : `≈ ₦${(prices.core * prices.usdToNgnRate).toLocaleString()} NGN`}
+                </p>
+              </div>
+
               <div className="space-y-1.5">
                 <Label htmlFor="engage-price" className="text-xs font-semibold">
                   Engage Plan — USD Price

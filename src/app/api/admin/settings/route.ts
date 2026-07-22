@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import {
+  getElevenLabsSettings,
   getPlatformSettings,
+  updateElevenLabsSettings,
   updateExchangeRate,
   updatePlanPrice,
 } from "@/lib/services/settings";
@@ -18,8 +20,12 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
     }
 
-    const settings = await getPlatformSettings();
-    return NextResponse.json({ settings });
+    const [settings, elevenlabs] = await Promise.all([
+      getPlatformSettings(),
+      getElevenLabsSettings(),
+    ]);
+
+    return NextResponse.json({ settings, elevenlabs });
   } catch (error) {
     console.error("Admin GET settings error", error);
     return NextResponse.json(
@@ -40,7 +46,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { plan, usdPrice, usdToNgnRate } = body;
+    const { plan, usdPrice, usdToNgnRate, elevenLabsApiKeys, elevenLabsDefaultAgentId } = body;
 
     if (usdToNgnRate !== undefined) {
       const rate = Number(usdToNgnRate);
@@ -54,9 +60,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (plan !== undefined) {
-      if (plan !== "engage" && plan !== "voice") {
+      if (plan !== "core" && plan !== "engage" && plan !== "voice") {
         return NextResponse.json(
-          { error: "Plan must be 'engage' or 'voice'." },
+          { error: "Plan must be 'core', 'engage', or 'voice'." },
           { status: 400 },
         );
       }
@@ -70,8 +76,19 @@ export async function PATCH(request: NextRequest) {
       await updatePlanPrice(plan, price);
     }
 
-    const settings = await getPlatformSettings();
-    return NextResponse.json({ success: true, settings });
+    if (elevenLabsApiKeys !== undefined || elevenLabsDefaultAgentId !== undefined) {
+      await updateElevenLabsSettings({
+        apiKeys: elevenLabsApiKeys,
+        defaultAgentId: elevenLabsDefaultAgentId,
+      });
+    }
+
+    const [settings, elevenlabs] = await Promise.all([
+      getPlatformSettings(),
+      getElevenLabsSettings(),
+    ]);
+
+    return NextResponse.json({ success: true, settings, elevenlabs });
   } catch (error) {
     console.error("Admin PATCH settings error", error);
     return NextResponse.json(

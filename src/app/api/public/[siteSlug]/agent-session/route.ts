@@ -6,6 +6,7 @@ import { createAgentDynamicVariables } from "@/lib/agent-context";
 import { organizationHasFeature } from "@/lib/billing";
 import * as agentsService from "@/lib/services/agents";
 import * as publicSiteService from "@/lib/services/publicSite";
+import { getRotatedElevenLabsKey } from "@/lib/services/settings";
 
 export const runtime = "nodejs";
 
@@ -33,10 +34,13 @@ export async function POST(
     );
   }
 
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  const agentId = process.env.ELEVENLABS_DEFAULT_AGENT_ID?.trim();
-
-  if (!apiKey || !agentId) {
+  let apiKey = "";
+  let agentId = "";
+  try {
+    const credentials = await getRotatedElevenLabsKey();
+    apiKey = credentials.apiKey;
+    agentId = credentials.agentId;
+  } catch (e) {
     return NextResponse.json(
       { error: "The concierge is not configured." },
       { status: 503 },
