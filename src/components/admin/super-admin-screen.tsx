@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   LoaderCircle,
   LogOut,
+  Menu,
   Minus,
   Plus,
   RefreshCw,
@@ -62,6 +63,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Brand } from "@/components/brand";
 
 /* ─────────────────────────────────────────────
@@ -470,63 +476,82 @@ export function SuperAdminScreen() {
   const totalConversations = organizations.reduce((s, o) => s + o.stats.conversationsCount, 0);
   const totalOfferings = organizations.reduce((s, o) => s + o.stats.offeringsCount, 0);
 
+  const totalOfferings = organizations.reduce((s, o) => s + o.stats.offeringsCount, 0);
+
+  const SidebarNav = () => (
+    <>
+      {/* Logo */}
+      <div className="flex h-16 shrink-0 items-center border-b border-border/40 px-5">
+        <Brand href="/app" className="hover:opacity-80 transition-opacity" />
+      </div>
+
+      {/* Label */}
+      <div className="px-5 pt-5 pb-2">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+          Super Admin
+        </p>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 space-y-0.5 px-3">
+        {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id)}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+              activeTab === id
+                ? "bg-primary/8 text-primary shadow-[inset_0_0_0_1px] shadow-primary/10"
+                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+            )}
+          >
+            <Icon
+              className={cn("size-4 shrink-0", activeTab === id ? "text-primary" : "text-muted-foreground/70")}
+            />
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className="border-t border-border/40 p-4">
+        <Link
+          href="/app"
+          className="flex items-center gap-2 rounded-lg px-2 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+        >
+          <LogOut className="size-3.5" />
+          Back to App
+        </Link>
+      </div>
+    </>
+  );
+
   /* ── Render ─────────────────────────────── */
   return (
-    <div className="flex min-h-dvh w-full bg-[#f6f7fa]">
-      {/* ── Sidebar ── */}
-      <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-border/60 bg-white shadow-sm">
-        {/* Logo */}
-        <div className="flex h-16 shrink-0 items-center border-b border-border/40 px-5">
-          <Brand href="/app" className="hover:opacity-80 transition-opacity" />
-        </div>
-
-        {/* Label */}
-        <div className="px-5 pt-5 pb-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-            Super Admin
-          </p>
-        </div>
-
-        {/* Nav */}
-        <nav className="flex-1 space-y-0.5 px-3">
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
-                activeTab === id
-                  ? "bg-primary/8 text-primary shadow-[inset_0_0_0_1px] shadow-primary/10"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-              )}
-            >
-              <Icon
-                className={cn("size-4 shrink-0", activeTab === id ? "text-primary" : "text-muted-foreground/70")}
-              />
-              {label}
-            </button>
-          ))}
-        </nav>
-
-        {/* Footer */}
-        <div className="border-t border-border/40 p-4">
-          <Link
-            href="/app"
-            className="flex items-center gap-2 rounded-lg px-2 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
-          >
-            <LogOut className="size-3.5" />
-            Back to App
-          </Link>
-        </div>
+    <div className="flex min-h-dvh w-full bg-[#f6f7fa] flex-col md:flex-row">
+      {/* ── Sidebar (Desktop) ── */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-border/60 bg-white shadow-sm md:flex">
+        <SidebarNav />
       </aside>
 
       {/* ── Main Content ── */}
-      <div className="flex min-h-dvh w-full flex-col pl-60">
+      <div className="flex min-h-dvh w-full flex-col md:pl-60">
         {/* Top bar */}
-        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-border/60 bg-white/90 px-8 backdrop-blur-sm">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium text-muted-foreground">Admin</span>
-            <span className="text-muted-foreground/40">/</span>
+        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-border/60 bg-white/90 px-4 md:px-8 backdrop-blur-sm">
+          <div className="flex items-center gap-3 md:gap-2 text-sm">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="size-5" />
+                  <span className="sr-only">Toggle navigation menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 p-0 flex flex-col bg-white">
+                <SidebarNav />
+              </SheetContent>
+            </Sheet>
+            <span className="font-medium text-muted-foreground hidden sm:inline-block">Admin</span>
+            <span className="text-muted-foreground/40 hidden sm:inline-block">/</span>
             <span className="font-semibold text-foreground capitalize">
               {NAV_ITEMS.find((n) => n.id === activeTab)?.label}
             </span>
@@ -540,7 +565,7 @@ export function SuperAdminScreen() {
           </Badge>
         </header>
 
-        <main className="flex-1 px-8 py-8">
+        <main className="flex-1 px-4 md:px-8 py-6 md:py-8">
           <div className="max-w-5xl space-y-7">
 
             {/* ───── OVERVIEW ───── */}
@@ -550,7 +575,7 @@ export function SuperAdminScreen() {
                   title="Platform Overview"
                   description="Live snapshot of all tenant activity across the platform."
                 />
-                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <StatCard label="Businesses" value={organizations.length} icon={Building2} accent="bg-blue-500" />
                   <StatCard label="Total Offerings" value={totalOfferings} icon={Layers} accent="bg-emerald-500" />
                   <StatCard label="Total Bookings" value={totalBookings} icon={CalendarDays} accent="bg-orange-500" />
@@ -560,7 +585,7 @@ export function SuperAdminScreen() {
                 {/* Quick breakdown table */}
                 <div>
                   <h3 className="mb-3 text-sm font-semibold text-foreground">Plan Distribution</h3>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {(["free_org", "engage", "voice"] as const).map((plan) => {
                       const count = organizations.filter((o) => o.plan === plan).length;
                       const label = { free_org: "Core (Free)", engage: "Engage", voice: "Voice" }[plan];
@@ -821,7 +846,7 @@ export function SuperAdminScreen() {
                 />
                 <form onSubmit={handleSaveAIEngine} className="space-y-6">
                   {/* Provider switcher */}
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                     {(
                       [
                         {
@@ -967,7 +992,7 @@ export function SuperAdminScreen() {
                 />
                 <div className="rounded-2xl border bg-white p-6 shadow-sm">
                   <form onSubmit={handleSaveContact} className="space-y-5">
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                       <div className="space-y-1.5">
                         <Label htmlFor="contact-phone" className="text-xs font-semibold">
                           Contact Phone
@@ -1050,7 +1075,7 @@ export function SuperAdminScreen() {
                 required
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="org-tz" className="text-xs font-semibold">Timezone</Label>
                 <Select value={timezone} onValueChange={setTimezone}>
