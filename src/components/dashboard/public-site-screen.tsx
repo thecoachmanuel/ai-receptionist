@@ -670,6 +670,37 @@ function SiteEditor({
               />
             </div>
             <div className="space-y-1.5">
+              <Label htmlFor="logoUrl">Business logo URL</Label>
+              <Input
+                id="logoUrl"
+                type="url"
+                value={config.logoUrl ?? ""}
+                onChange={(event) =>
+                  update("logoUrl", event.target.value.trim() || undefined)
+                }
+                placeholder="https://example.com/logo.png"
+              />
+              {config.logoUrl ? (
+                <div className="mt-1 flex items-center gap-3 rounded-lg border border-black/8 bg-muted/20 p-2">
+                  <img
+                    src={config.logoUrl}
+                    alt="Business logo preview"
+                    className="size-8 rounded-full object-cover border border-black/10"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = "none";
+                    }}
+                  />
+                  <span className="text-[11px] text-muted-foreground truncate max-w-xs">
+                    {config.logoUrl}
+                  </span>
+                </div>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">
+                  Direct link to your brand logo (PNG, SVG, or JPG).
+                </p>
+              )}
+            </div>
+            <div className="space-y-1.5">
               <Label htmlFor="announcement">Announcement</Label>
               <Input
                 id="announcement"

@@ -536,11 +536,13 @@ export function PublicSite({
         <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between gap-5">
           <a href="#top" className="flex min-w-0 items-center gap-3 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/35">
             {logoUrl ? (
-              <span
-                role="img"
-                aria-label={`${config.businessName} logo`}
-                className="size-10 shrink-0 rounded-full border bg-contain bg-center bg-no-repeat"
-                style={{ backgroundImage: `url(${JSON.stringify(logoUrl)})` }}
+              <img
+                src={logoUrl}
+                alt={`${config.businessName} logo`}
+                className="size-10 shrink-0 rounded-full object-cover border border-border"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = "none";
+                }}
               />
             ) : (
               <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary font-heading text-sm font-semibold text-primary-foreground">
