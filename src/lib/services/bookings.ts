@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db/mongodb";
 import type { BookingStatus, DbAvailabilityRule, DbBooking, DbContact, DbOffering, DbOrganization, DbPublicSite, DbTeamMember } from "@/lib/db/types";
 import { dayOfWeek, localPartsAt } from "@/lib/time";
 import { normalizedEmail, normalizedPhone, optionalTrimmed, requiredTrimmed } from "@/lib/validation";
+import { upsertContact } from "./contacts";
 
 function generateConfirmationCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -173,6 +174,15 @@ export async function createBooking(
   };
 
   const result = await db.collection<DbBooking>("bookings").insertOne(newBooking);
+
+  // Capture client details into contacts collection for this tenant
+  await upsertContact(orgId, {
+    name: args.customer.name,
+    email: args.customer.email,
+    phone: args.customer.phone,
+    notes: args.notes ? `Booking Note: ${args.notes}` : undefined,
+    tags: ["booking_client"],
+  }).catch(() => null);
 
   return {
     bookingId: result.insertedId.toString(),

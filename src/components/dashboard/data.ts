@@ -265,8 +265,12 @@ export const dashboardApi = {
     updateDraft: "publicSite/updateDraft" as any,
     publish: "publicSite/publish" as any,
   },
+  contacts: {
+    list: "contacts/list" as any,
+  },
   conversations: {
     listRecent: "conversations/listRecent" as any,
+    log: "conversations/log" as any,
   },
   agents: {
     getCurrent: "agents/getCurrent" as any,

@@ -5,6 +5,7 @@ import * as agentsService from "@/lib/services/agents";
 import * as availabilityService from "@/lib/services/availability";
 import * as bookingsService from "@/lib/services/bookings";
 import * as catalogService from "@/lib/services/catalog";
+import * as contactsService from "@/lib/services/contacts";
 import * as conversationsService from "@/lib/services/conversations";
 import * as dashboardService from "@/lib/services/dashboard";
 import * as knowledgeService from "@/lib/services/knowledge";
@@ -56,6 +57,11 @@ export async function POST(
         body.startAt,
         body.teamMemberId,
       );
+      return NextResponse.json(data);
+    }
+
+    if (endpoint === "publicBooking/logConversation") {
+      const data = await conversationsService.logPublicConversationBySlug(body.siteSlug, body);
       return NextResponse.json(data);
     }
 
@@ -178,6 +184,14 @@ export async function POST(
       }
       case "conversations/listRecent": {
         const data = await conversationsService.listRecentConversations(orgId, body.limit);
+        return NextResponse.json(data);
+      }
+      case "conversations/log": {
+        const data = await conversationsService.logConversation(orgId, body);
+        return NextResponse.json(data);
+      }
+      case "contacts/list": {
+        const data = await contactsService.listContacts(orgId, body.limit);
         return NextResponse.json(data);
       }
       case "agents/getCurrent": {

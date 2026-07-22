@@ -273,6 +273,24 @@ function AgentLauncherInner({
   }
 
   async function stop() {
+    if (timeline.length > 0) {
+      const messages = timeline
+        .filter((item): item is ChatMessage => item.kind === "message")
+        .map((item) => `${item.role === "user" ? "Customer" : "AI"}: ${item.text}`)
+        .join("\n");
+
+      if (messages) {
+        fetch("/api/data/publicBooking/logConversation", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            siteSlug,
+            transcript: messages,
+            summary: `Public AI concierge chat session (${timeline.filter((i) => i.kind === "message").length} messages)`,
+          }),
+        }).catch(() => null);
+      }
+    }
     await endSession();
     setMessage("");
     setSessionKind(null);

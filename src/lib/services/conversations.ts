@@ -25,4 +25,62 @@ export async function listRecentConversations(orgId: string, limit = 20) {
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
   }));
+export async function logConversation(
+  orgId: string,
+  data: {
+    externalConversationId?: string;
+    channel?: "web";
+    status?: "active" | "completed" | "failed";
+    caller?: string;
+    transcript?: string;
+    summary?: string;
+    durationSeconds?: number;
+    outcome?: string;
+  },
+) {
+  const db = await getDb();
+  const now = Date.now();
+
+  const conversationDoc: DbConversation = {
+    organizationId: orgId,
+    externalConversationId:
+      data.externalConversationId ||
+      `conv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    channel: data.channel || "web",
+    status: data.status || "completed",
+    caller: data.caller,
+    transcript: data.transcript,
+    summary: data.summary,
+    durationSeconds: data.durationSeconds || 0,
+    outcome: data.outcome || "AI Concierge Interaction",
+    startedAt: now,
+    endedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const res = await db.collection<DbConversation>("conversations").insertOne(conversationDoc);
+  return { ...conversationDoc, _id: res.insertedId.toString() };
+}
+
+export async function logPublicConversationBySlug(
+  siteSlug: string,
+  data: {
+    caller?: string;
+    transcript?: string;
+    summary?: string;
+    durationSeconds?: number;
+  },
+) {
+  const db = await getDb();
+  const normalizedSlug = siteSlug.trim().toLowerCase();
+  const site = await db.collection("publicSites").findOne({ siteSlug: normalizedSlug });
+  if (!site) throw new Error("Public site not found.");
+
+  return logConversation(site.organizationId, {
+    ...data,
+    channel: "web",
+    status: "completed",
+    outcome: "Public Site AI Concierge Session",
+  });
 }
