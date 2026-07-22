@@ -77,6 +77,7 @@ export type Booking = {
   priceCents?: number;
   currency: string;
   confirmationCode: string;
+  notes?: string;
 };
 
 export type Offering = {
@@ -314,6 +315,7 @@ export function normalizeBooking(booking: RawBooking): Booking {
     priceCents: booking.offering.priceMinor,
     currency: booking.offering.currency,
     confirmationCode: booking.confirmationCode,
+    notes: booking.notes,
   };
 }
 
