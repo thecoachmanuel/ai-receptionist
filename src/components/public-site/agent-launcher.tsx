@@ -23,6 +23,7 @@ import {
 
 import {
   AgentClientToolRegistrar,
+  createAgentClientTools,
   type AgentToolEvent,
   type AgentToolActivity,
   type AgentToolName,
@@ -155,20 +156,32 @@ function AgentLauncherInner({
   welcomeMessage,
   textEnabled,
   voiceEnabled,
+  offerings,
+  teamMembers,
+  timezone,
+  locale,
   timeline,
   toolActivity,
   clearTimeline,
   addUserMessage,
+  onActivity,
+  onToolEvent,
 }: {
   siteSlug: string;
   businessName: string;
   welcomeMessage: string;
   textEnabled: boolean;
   voiceEnabled: boolean;
+  offerings: PublicOffering[];
+  teamMembers: PublicTeamMember[];
+  timezone: string;
+  locale: string;
   timeline: ChatTimelineItem[];
   toolActivity: AgentToolActivity | null;
   clearTimeline: () => void;
   addUserMessage: (text: string) => void;
+  onActivity: (activity: AgentToolActivity) => void;
+  onToolEvent: (event: AgentToolEvent) => void;
 }) {
   const [isRequestingSession, setIsRequestingSession] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
@@ -200,6 +213,17 @@ function AgentLauncherInner({
       48;
   }
 
+  const clientTools = createAgentClientTools({
+    siteSlug,
+    businessName,
+    offerings,
+    teamMembers,
+    timezone,
+    locale,
+    onActivity,
+    onToolEvent,
+  });
+
   async function start(kind: "text" | "voice") {
     setSessionError(null);
     setIsRequestingSession(true);
@@ -230,6 +254,7 @@ function AgentLauncherInner({
 
       const session = payload as SessionResponse;
       const sharedOptions = {
+        clientTools,
         dynamicVariables: {
           site_slug: siteSlug,
           business_name: businessName,
@@ -602,6 +627,10 @@ export function AgentLauncher(props: AgentLauncherProps) {
         welcomeMessage={props.welcomeMessage}
         textEnabled={props.textEnabled}
         voiceEnabled={props.voiceEnabled}
+        offerings={props.offerings}
+        teamMembers={props.teamMembers}
+        timezone={props.timezone}
+        locale={props.locale}
         timeline={timeline}
         toolActivity={toolActivity}
         clearTimeline={() => {
@@ -619,6 +648,8 @@ export function AgentLauncher(props: AgentLauncherProps) {
             },
           ])
         }
+        onActivity={setToolActivity}
+        onToolEvent={handleToolEvent}
       />
     </ConversationProvider>
   );
