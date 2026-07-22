@@ -28,7 +28,11 @@ export async function POST() {
     );
   }
 
-  if (session.role !== "admin" && session.role !== "operator" && !session.permissions.includes("org:operations_hub:manage")) {
+  if (
+    session.role !== "admin" &&
+    session.role !== "operator" &&
+    !(session.permissions || []).includes("org:operations_hub:manage")
+  ) {
     return NextResponse.json(
       { error: "Organization operator access is required." },
       { status: 403 },

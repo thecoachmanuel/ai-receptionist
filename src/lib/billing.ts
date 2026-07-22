@@ -12,8 +12,13 @@ export type OneboardFeature =
 export type SwitchboardFeature = OneboardFeature;
 
 export const PLAN_FEATURES: Record<PlanType, OneboardFeature[]> = {
-  free_org: ["operations_hub", "custom_public_page"],
-  engage: ["operations_hub", "custom_public_page", "web_agent"],
+  free_org: [
+    "operations_hub",
+    "custom_public_page",
+    "web_agent",
+    "browser_voice",
+  ],
+  engage: ["operations_hub", "custom_public_page", "web_agent", "browser_voice"],
   voice: [
     "operations_hub",
     "custom_public_page",
