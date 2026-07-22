@@ -13,7 +13,7 @@ import { ScreenHeader } from "@/components/dashboard/screen-kit";
 import { useWorkspace } from "@/components/dashboard/workspace-context";
 
 type PlanPrices = { engage: number; voice: number };
-type PriceState = { prices: PlanPrices; rate: number; loaded: boolean };
+type PriceState = { prices: PlanPrices; rate: number; baseCurrency: "USD" | "NGN"; loaded: boolean };
 
 const PRICE_DEFAULTS: PlanPrices = { engage: 49, voice: 149 };
 
@@ -32,6 +32,7 @@ export function BillingScreen() {
   const [priceState, setPriceState] = useState<PriceState>({
     prices: PRICE_DEFAULTS,
     rate: 1500,
+    baseCurrency: "USD",
     loaded: false,
   });
 
@@ -43,6 +44,7 @@ export function BillingScreen() {
         setPriceState({
           prices: data.planPrices ?? PRICE_DEFAULTS,
           rate: data.usdToNgnRate ?? 1500,
+          baseCurrency: data.baseCurrency ?? "USD",
           loaded: true,
         });
       })
@@ -52,14 +54,20 @@ export function BillingScreen() {
       });
   }, []);
 
-  const { prices, rate, loaded } = priceState;
+  const { prices, rate, baseCurrency, loaded } = priceState;
+  const isNgn = baseCurrency === "NGN";
+  const sym = isNgn ? "₦" : "$";
+
+  // NGN computed totals
+  const engageNgn = prices.engage * rate;
+  const voiceNgn = prices.voice * rate;
 
   const dashboardPlans = [
     {
       id: "free_org" as const,
       name: "Core",
-      price: "$0",
-      ngnPrice: null,
+      price: `${sym}0`,
+      subPrice: null as string | null,
       description: "The operational home for a new organization.",
       features: [
         "Operations hub (Bookings, team, availability)",
@@ -70,13 +78,15 @@ export function BillingScreen() {
     {
       id: "engage" as const,
       name: "Engage",
-      price: loaded ? `$${prices.engage}` : null,
-      ngnPrice: loaded ? `≈ ₦${(prices.engage * rate).toLocaleString()} NGN` : null,
+      price: loaded ? (isNgn ? `₦${engageNgn.toLocaleString()}` : `$${prices.engage}`) : null,
+      subPrice: loaded && !isNgn ? `≈ ₦${engageNgn.toLocaleString()} NGN` : null,
       description: "Add an ElevenLabs web concierge to every customer touchpoint.",
       features: [
         "Everything in Core",
         "AI text concierge (Web agent)",
-        `Paystack checkout in NGN ($1 = ₦${rate.toLocaleString()})`,
+        isNgn
+          ? `Paystack checkout in NGN`
+          : `Paystack checkout in NGN ($1 = ₦${rate.toLocaleString()})`,
         "Conversation history & summaries",
       ],
       featured: true,
@@ -84,8 +94,8 @@ export function BillingScreen() {
     {
       id: "voice" as const,
       name: "Voice",
-      price: loaded ? `$${prices.voice}` : null,
-      ngnPrice: loaded ? `≈ ₦${(prices.voice * rate).toLocaleString()} NGN` : null,
+      price: loaded ? (isNgn ? `₦${voiceNgn.toLocaleString()}` : `$${prices.voice}`) : null,
+      subPrice: loaded && !isNgn ? `≈ ₦${voiceNgn.toLocaleString()} NGN` : null,
       description: "Add live browser audio to the web concierge and measure every outcome.",
       features: [
         "Everything in Engage",
@@ -233,9 +243,9 @@ export function BillingScreen() {
                     {plan.price ?? <PriceSkeleton />}
                     <span className="text-xs font-normal text-muted-foreground">/mo</span>
                   </p>
-                  {plan.ngnPrice && (
+                  {plan.subPrice && (
                     <p className="mt-1 text-[11px] font-medium text-emerald-700">
-                      {plan.ngnPrice}
+                      {plan.subPrice}
                     </p>
                   )}
                   {plan.id !== "free_org" && !loaded && (
@@ -263,7 +273,7 @@ export function BillingScreen() {
                     : isCurrent
                       ? "Current Plan"
                       : plan.price
-                        ? `Pay with Paystack (${plan.price})`
+                        ? `Pay with Paystack (${plan.price}/mo)`
                         : "Loading..."}
                 </Button>
               </div>

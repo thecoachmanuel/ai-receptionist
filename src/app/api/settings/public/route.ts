@@ -14,6 +14,7 @@ export async function GET() {
       {
         planPrices: settings.planPrices,
         usdToNgnRate: settings.usdToNgnRate,
+        baseCurrency: settings.baseCurrency,
         contactPhone: settings.contactPhone,
         contactEmail: settings.contactEmail,
         clientPageUrl: settings.clientPageUrl,
