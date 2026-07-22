@@ -11,6 +11,8 @@ import {
   Check,
   CircleDollarSign,
   ExternalLink,
+  Eye,
+  EyeOff,
   KeyRound,
   Layers,
   LayoutDashboard,
@@ -289,6 +291,7 @@ export function SuperAdminScreen() {
   const [geminiApiKeys, setGeminiApiKeys] = useState<string[]>([]);
   const [apiKeys, setApiKeys] = useState<string[]>([]);
   const [defaultAgentId, setDefaultAgentId] = useState("");
+  const [showAgentId, setShowAgentId] = useState(false);
   const [savingElevenLabs, setSavingElevenLabs] = useState(false);
 
   // Platform contact state
@@ -942,13 +945,26 @@ export function SuperAdminScreen() {
                           <Label htmlFor="elevenlabs-agent-id" className="text-xs font-semibold">
                             Default Agent ID
                           </Label>
-                          <Input
-                            id="elevenlabs-agent-id"
-                            placeholder="e.g. agent_abc123xyz"
-                            value={defaultAgentId}
-                            onChange={(e) => setDefaultAgentId(e.target.value)}
-                            className="max-w-sm font-mono text-xs"
-                          />
+                          <div className="flex max-w-sm gap-2">
+                            <Input
+                              id="elevenlabs-agent-id"
+                              type={showAgentId ? "text" : "password"}
+                              placeholder="e.g. agent_abc123xyz"
+                              value={defaultAgentId}
+                              onChange={(e) => setDefaultAgentId(e.target.value)}
+                              className="font-mono text-xs"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => setShowAgentId(!showAgentId)}
+                              className="shrink-0"
+                              title={showAgentId ? "Hide Agent ID" : "Reveal Agent ID"}
+                            >
+                              {showAgentId ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                            </Button>
+                          </div>
                         </div>
                         <div className="space-y-1.5">
                           <Label className="text-xs font-semibold flex items-center gap-1.5">
