@@ -8,7 +8,7 @@ import * as agentsService from "@/lib/services/agents";
 import * as publicSiteService from "@/lib/services/publicSite";
 import {
   getElevenLabsSettings,
-  getGeminiCredentials,
+  getRotatedGeminiKey,
   getRotatedElevenLabsKey,
 } from "@/lib/services/settings";
 
@@ -100,7 +100,7 @@ export async function POST(
     });
 
     if (activeProvider === "gemini") {
-      const { model } = await getGeminiCredentials();
+      const { model } = await getRotatedGeminiKey();
       return NextResponse.json({
         provider: "gemini",
         model,
