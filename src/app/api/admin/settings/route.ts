@@ -52,7 +52,7 @@ export async function PATCH(request: NextRequest) {
       usdPrice,
       usdToNgnRate,
       activeProvider,
-      geminiApiKey,
+      geminiApiKeys,
       geminiModel,
       elevenLabsApiKeys,
       elevenLabsDefaultAgentId,
@@ -94,14 +94,14 @@ export async function PATCH(request: NextRequest) {
 
     if (
       activeProvider !== undefined ||
-      geminiApiKey !== undefined ||
+      geminiApiKeys !== undefined ||
       geminiModel !== undefined ||
       elevenLabsApiKeys !== undefined ||
       elevenLabsDefaultAgentId !== undefined
     ) {
       await updateElevenLabsSettings({
         activeProvider,
-        geminiApiKey,
+        geminiApiKeys,
         geminiModel,
         apiKeys: elevenLabsApiKeys,
         defaultAgentId: elevenLabsDefaultAgentId,

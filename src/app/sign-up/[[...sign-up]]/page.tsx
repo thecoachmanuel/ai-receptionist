@@ -78,7 +78,7 @@ export default function SignUpPage() {
           <Input
             id="org"
             type="text"
-            placeholder="e.g. PapaFam Barbershop"
+            placeholder="e.g. Oneboard Barbershop"
             value={organizationName}
             onChange={(e) => setOrganizationName(e.target.value)}
           />

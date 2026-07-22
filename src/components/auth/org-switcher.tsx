@@ -201,7 +201,7 @@ export function OrganizationList({
           <Label htmlFor="list-org-name">Organization name</Label>
           <Input
             id="list-org-name"
-            placeholder="e.g. PapaFam Barbershop"
+            placeholder="e.g. Oneboard Barbershop"
             value={newOrgName}
             onChange={(e) => setNewOrgName(e.target.value)}
             required

@@ -22,13 +22,17 @@ import {
   Sparkles,
   Trash2,
   UsersRound,
+  LayoutDashboard,
+  CreditCard,
+  Building,
+  LoaderCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +58,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarProvider,
+  SidebarInset,
+} from "@/components/ui/sidebar";
+import { Brand } from "@/components/brand";
 
 type PlatformPrices = { core: number; engage: number; voice: number; usdToNgnRate: number };
 
@@ -81,6 +98,8 @@ type AdminOrgStat = {
 export function SuperAdminScreen() {
   const router = useRouter();
   const { switchOrganization } = useAuth();
+  const [activeTab, setActiveTab] = useState<"overview" | "tenants" | "pricing" | "ai_engine" | "settings">("overview");
+
   const [organizations, setOrganizations] = useState<AdminOrgStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -99,10 +118,13 @@ export function SuperAdminScreen() {
   const [savingPrices, setSavingPrices] = useState(false);
   const priceFormRef = useRef<HTMLFormElement>(null);
 
-  // AI Provider & Credentials state (ElevenLabs vs Gemini 2.5 Flash)
+  // AI Provider & Credentials state
   const [activeProvider, setActiveProvider] = useState<"elevenlabs" | "gemini">("elevenlabs");
-  const [geminiApiKey, setGeminiApiKey] = useState("");
   const [geminiModel, setGeminiModel] = useState("gemini-2.5-flash");
+  
+  const [geminiApiKeys, setGeminiApiKeys] = useState<string[]>([]);
+  const [newGeminiKeyInput, setNewGeminiKeyInput] = useState("");
+
   const [apiKeys, setApiKeys] = useState<string[]>([]);
   const [newKeyInput, setNewKeyInput] = useState("");
   const [defaultAgentId, setDefaultAgentId] = useState("");
@@ -112,6 +134,19 @@ export function SuperAdminScreen() {
   const [contactPhone, setContactPhone] = useState("+2348168882014");
   const [contactEmail, setContactEmail] = useState("oneboardng@gmail.com");
   const [savingContact, setSavingContact] = useState(false);
+
+  function fetchOrganizations() {
+    setLoading(true);
+    fetch("/api/admin/organizations")
+      .then((r) => r.json())
+      .then((data) => setOrganizations(data.organizations || []))
+      .catch(() => toast.error("Failed to load business entities."))
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -129,7 +164,7 @@ export function SuperAdminScreen() {
         }
         if (data.elevenlabs) {
           setActiveProvider(data.elevenlabs.activeProvider || "elevenlabs");
-          setGeminiApiKey(data.elevenlabs.geminiApiKey || "");
+          setGeminiApiKeys(data.elevenlabs.geminiApiKeys || (data.elevenlabs.geminiApiKey ? [data.elevenlabs.geminiApiKey] : []));
           setGeminiModel(data.elevenlabs.geminiModel || "gemini-2.5-flash");
           setApiKeys(data.elevenlabs.apiKeys || []);
           setDefaultAgentId(data.elevenlabs.defaultAgentId || "");
@@ -149,7 +184,7 @@ export function SuperAdminScreen() {
         body: JSON.stringify({ contactPhone, contactEmail }),
       });
       if (!res.ok) throw new Error("Failed to update contact info.");
-      toast.success("Platform contact phone and email updated — changes reflect immediately on homepage and contact page.");
+      toast.success("Platform contact phone and email updated — changes reflect immediately.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save contact settings.");
     } finally {
@@ -161,31 +196,16 @@ export function SuperAdminScreen() {
     e.preventDefault();
     setSavingPrices(true);
     try {
-      // Update core price
-      const r0 = await fetch("/api/admin/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: "core", usdPrice: prices.core }),
-      });
-      if (!r0.ok) throw new Error("Failed to save Core price.");
+      const plans = ["core", "engage", "voice"] as const;
+      for (const plan of plans) {
+        const r = await fetch("/api/admin/settings", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan, usdPrice: prices[plan] }),
+        });
+        if (!r.ok) throw new Error(`Failed to save ${plan} price.`);
+      }
 
-      // Update engage price
-      const r1 = await fetch("/api/admin/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: "engage", usdPrice: prices.engage }),
-      });
-      if (!r1.ok) throw new Error("Failed to save Engage price.");
-
-      // Update voice price
-      const r2 = await fetch("/api/admin/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: "voice", usdPrice: prices.voice }),
-      });
-      if (!r2.ok) throw new Error("Failed to save Voice price.");
-
-      // Update exchange rate
       const r3 = await fetch("/api/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -193,7 +213,7 @@ export function SuperAdminScreen() {
       });
       if (!r3.ok) throw new Error("Failed to save exchange rate.");
 
-      toast.success("Platform pricing updated — Core, Engage, Voice, and exchange rates reflect immediately across pricing and checkout.");
+      toast.success("Platform pricing updated successfully.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save settings.");
     } finally {
@@ -203,22 +223,30 @@ export function SuperAdminScreen() {
 
   const handleAddApiKey = () => {
     const trimmed = newKeyInput.trim();
-    if (!trimmed) {
-      toast.error("Please enter a valid ElevenLabs API key.");
-      return;
-    }
-    if (apiKeys.includes(trimmed)) {
-      toast.error("This ElevenLabs API key is already in the rotation list.");
-      return;
-    }
+    if (!trimmed) return toast.error("Enter a valid API key.");
+    if (apiKeys.includes(trimmed)) return toast.error("API key already in rotation list.");
     setApiKeys((prev) => [...prev, trimmed]);
     setNewKeyInput("");
-    toast.success("ElevenLabs API key added to rotation list.");
+    toast.success("ElevenLabs API key added.");
   };
 
   const handleRemoveApiKey = (keyToRemove: string) => {
     setApiKeys((prev) => prev.filter((k) => k !== keyToRemove));
-    toast.success("API key removed from rotation list.");
+    toast.success("API key removed.");
+  };
+
+  const handleAddGeminiKey = () => {
+    const trimmed = newGeminiKeyInput.trim();
+    if (!trimmed) return toast.error("Enter a valid Gemini API key.");
+    if (geminiApiKeys.includes(trimmed)) return toast.error("Gemini API key already in rotation list.");
+    setGeminiApiKeys((prev) => [...prev, trimmed]);
+    setNewGeminiKeyInput("");
+    toast.success("Gemini API key added.");
+  };
+
+  const handleRemoveGeminiKey = (keyToRemove: string) => {
+    setGeminiApiKeys((prev) => prev.filter((k) => k !== keyToRemove));
+    toast.success("Gemini API key removed.");
   };
 
   const handleSaveElevenLabs = async (e: React.FormEvent) => {
@@ -230,7 +258,7 @@ export function SuperAdminScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           activeProvider,
-          geminiApiKey: geminiApiKey.trim(),
+          geminiApiKeys,
           geminiModel: geminiModel.trim(),
           elevenLabsApiKeys: apiKeys,
           elevenLabsDefaultAgentId: defaultAgentId.trim(),
@@ -238,235 +266,23 @@ export function SuperAdminScreen() {
       });
       if (!res.ok) throw new Error("Failed to save AI Provider settings.");
       toast.success(
-        `AI Voice & Chat provider updated to ${activeProvider === "gemini" ? "Google Gemini (" + geminiModel + ")" : "ElevenLabs"}.`,
+        `AI Voice & Chat provider updated to ${activeProvider === "gemini" ? "Google Gemini" : "ElevenLabs"}.`,
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save AI Provider settings.");
+      toast.error(err instanceof Error ? err.message : "Failed to save settings.");
     } finally {
       setSavingElevenLabs(false);
     }
   };
 
-      {/* AI Provider & Voice Engine Settings (ElevenLabs & Gemini 2.5 Flash) */}
-      <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Bot className="size-4 text-purple-600" />
-              AI Voice & Chat Engine Provider
-            </CardTitle>
-            <Badge variant="outline" className="border-purple-500/30 text-purple-600 font-mono text-[10px]">
-              {activeProvider === "gemini" ? `Active: Gemini (${geminiModel})` : `Active: ElevenLabs (${apiKeys.length} Keys)`}
-            </Badge>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Switch between ElevenLabs and Google Gemini for natural humanlike TTS/STT receptionist interactions. Super Admin can manage Gemini API key, model selection, and ElevenLabs multi-key auto-rotation.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form onSubmit={handleSaveElevenLabs} className="space-y-5">
-            {/* Active Provider Selector */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Select Active AI Provider</Label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setActiveProvider("elevenlabs")}
-                  className={cn(
-                    "flex flex-col items-start p-3 rounded-lg border text-left transition-all",
-                    activeProvider === "elevenlabs"
-                      ? "border-purple-600 bg-purple-50/50 dark:bg-purple-950/20 ring-1 ring-purple-600"
-                      : "border-border hover:bg-muted/50",
-                  )}
-                >
-                  <span className="text-xs font-semibold flex items-center gap-1.5">
-                    <Bot className="size-3.5 text-purple-600" /> ElevenLabs Conversational AI
-                  </span>
-                  <span className="text-[10px] text-muted-foreground mt-1">
-                    Uses ElevenLabs voice agents with multi-key auto-rotation.
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveProvider("gemini")}
-                  className={cn(
-                    "flex flex-col items-start p-3 rounded-lg border text-left transition-all",
-                    activeProvider === "gemini"
-                      ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/20 ring-1 ring-blue-600"
-                      : "border-border hover:bg-muted/50",
-                  )}
-                >
-                  <span className="text-xs font-semibold flex items-center gap-1.5 text-blue-700">
-                    <Sparkles className="size-3.5 text-blue-600" /> Google Gemini 2.5 Flash (Free / Low Cost)
-                  </span>
-                  <span className="text-[10px] text-muted-foreground mt-1">
-                    Uses Gemini API for fast, natural human receptionist chat & voice speech.
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            {/* Gemini Configuration Section */}
-            {activeProvider === "gemini" && (
-              <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 space-y-4">
-                <div className="flex items-center gap-2 text-xs font-semibold text-blue-800">
-                  <Sparkles className="size-4 text-blue-600" />
-                  Gemini API Configuration
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="gemini-api-key" className="text-xs font-semibold">
-                    Gemini API Key
-                  </Label>
-                  <Input
-                    id="gemini-api-key"
-                    type="password"
-                    placeholder="AIzaSy..."
-                    value={geminiApiKey}
-                    onChange={(e) => setGeminiApiKey(e.target.value)}
-                    className="font-mono text-xs bg-white"
-                  />
-                  <p className="text-[10px] text-muted-foreground">
-                    Google AI Studio API key used for receptionist responses.
-                  </p>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="gemini-model" className="text-xs font-semibold">
-                    Gemini Model Name
-                  </Label>
-                  <Input
-                    id="gemini-model"
-                    placeholder="gemini-2.5-flash"
-                    value={geminiModel}
-                    onChange={(e) => setGeminiModel(e.target.value)}
-                    className="font-mono text-xs bg-white"
-                  />
-                  <p className="text-[10px] text-muted-foreground">
-                    Defaults to <code className="font-semibold">gemini-2.5-flash</code> (also supports <code className="font-semibold">gemini-2.0-flash</code>, <code className="font-semibold">gemini-1.5-flash</code>).
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* ElevenLabs Configuration Section */}
-            {activeProvider === "elevenlabs" && (
-              <div className="space-y-4 border-t pt-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="elevenlabs-agent-id" className="text-xs font-semibold">
-                    Default ElevenLabs Agent ID
-                  </Label>
-                  <Input
-                    id="elevenlabs-agent-id"
-                    placeholder="e.g. agent_abc123xyz..."
-                    value={defaultAgentId}
-                    onChange={(e) => setDefaultAgentId(e.target.value)}
-                    className="font-mono text-xs"
-                  />
-                  <p className="text-[10px] text-muted-foreground">
-                    Agent ID used for voice receptionist sessions.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold">Active ElevenLabs API Keys List</Label>
-                  {apiKeys.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic">
-                      No API keys added yet. Add one below or rely on ELEVENLABS_API_KEY environment variable.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {apiKeys.map((key, idx) => (
-                        <div
-                          key={key + idx}
-                          className="flex items-center justify-between rounded-lg border bg-card p-2.5 text-xs font-mono"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <Badge variant="secondary" className="text-[10px] font-sans">
-                              Key #{idx + 1}
-                            </Badge>
-                            <span>
-                              {key.slice(0, 8)}••••••••••••••••{key.slice(-6)}
-                            </span>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveApiKey(key)}
-                            className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Paste new ElevenLabs API Key (e.g. sk_...)"
-                    value={newKeyInput}
-                    onChange={(e) => setNewKeyInput(e.target.value)}
-                    className="font-mono text-xs flex-1"
-                  />
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddApiKey} className="gap-1.5 shrink-0">
-                    <Plus className="size-3.5" /> Add Key
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-[11px] text-muted-foreground">
-                {activeProvider === "gemini"
-                  ? `Active Engine: Gemini ${geminiModel} for natural receptionist speech.`
-                  : apiKeys.length > 1
-                  ? "Requests will rotate round-robin across all keys automatically."
-                  : "Add 2+ keys to enable multi-key auto-rotation."}
-              </p>
-              <Button type="submit" size="sm" disabled={savingElevenLabs} className="gap-2 bg-purple-600 text-white hover:bg-purple-700">
-                <Save className="size-3.5" />
-                {savingElevenLabs ? "Saving AI Settings..." : "Save AI Settings"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-  const fetchOrganizations = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/organizations");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load admin stats.");
-      setOrganizations(data.organizations || []);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to load organizations.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchOrganizations();
-  }, []);
-
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
-      toast.error("Business entity name is required.");
-      return;
-    }
-
     setCreating(true);
     try {
       const res = await fetch("/api/admin/organizations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), timezone, currency }),
+        body: JSON.stringify({ name, timezone, currency }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to provision business entity.");
@@ -537,603 +353,638 @@ export function SuperAdminScreen() {
   const totalOfferings = organizations.reduce((sum, o) => sum + o.stats.offeringsCount, 0);
 
   return (
-    <div className="space-y-8">
-      {/* ElevenLabs API Keys & Auto-Rotation Settings */}
-      <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Bot className="size-4 text-purple-600" />
-              ElevenLabs API Keys & Auto-Rotation
-            </CardTitle>
-            <Badge variant="outline" className="border-purple-500/30 text-purple-600 font-mono text-[10px]">
-              {apiKeys.length > 1
-                ? `Auto-Rotation Active (${apiKeys.length} Keys)`
-                : apiKeys.length === 1
-                ? "1 API Key Active"
-                : "No Keys Configured"}
-            </Badge>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Configure multiple ElevenLabs API keys. The system automatically rotates through all configured keys in round-robin order to prevent credit exhaustion.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form onSubmit={handleSaveElevenLabs} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="elevenlabs-agent-id" className="text-xs font-semibold">
-                Default ElevenLabs Agent ID
-              </Label>
-              <Input
-                id="elevenlabs-agent-id"
-                placeholder="e.g. agent_abc123xyz..."
-                value={defaultAgentId}
-                onChange={(e) => setDefaultAgentId(e.target.value)}
-                className="font-mono text-xs"
-              />
-              <p className="text-[10px] text-muted-foreground">
-                Agent ID used for voice receptionist sessions.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Active ElevenLabs API Keys List</Label>
-              {apiKeys.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">
-                  No API keys added yet. Add one below or rely on ELEVENLABS_API_KEY environment variable.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {apiKeys.map((key, idx) => (
-                    <div
-                      key={key + idx}
-                      className="flex items-center justify-between rounded-lg border bg-card p-2.5 text-xs font-mono"
+    <SidebarProvider>
+      <div className="flex min-h-dvh w-full bg-background">
+        <Sidebar className="border-r border-border">
+          <SidebarHeader className="p-4 flex h-14 items-center">
+            <Link href="/" className="flex items-center gap-2 px-2 hover:opacity-90">
+              <Brand className="w-32" />
+            </Link>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={activeTab === "overview"}
+                      onClick={() => setActiveTab("overview")}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <Badge variant="secondary" className="text-[10px] font-sans">
-                          Key #{idx + 1}
-                        </Badge>
-                        <span>
-                          {key.slice(0, 8)}••••••••••••••••{key.slice(-6)}
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveApiKey(key)}
-                        className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
+                      <LayoutDashboard />
+                      <span>Overview</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={activeTab === "tenants"}
+                      onClick={() => setActiveTab("tenants")}
+                    >
+                      <Building2 />
+                      <span>Tenants</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={activeTab === "pricing"}
+                      onClick={() => setActiveTab("pricing")}
+                    >
+                      <CreditCard />
+                      <span>Pricing</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={activeTab === "ai_engine"}
+                      onClick={() => setActiveTab("ai_engine")}
+                    >
+                      <Bot />
+                      <span>AI & Engine</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={activeTab === "settings"}
+                      onClick={() => setActiveTab("settings")}
+                    >
+                      <Settings2 />
+                      <span>Platform Settings</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
+
+        <SidebarInset className="flex w-full flex-col">
+          <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-6">
+            <h1 className="text-sm font-semibold capitalize tracking-tight text-foreground">
+              Super Admin / {activeTab.replace("_", " ")}
+            </h1>
+          </header>
+
+          <main className="flex-1 p-6 md:p-8 overflow-y-auto">
+            <div className="mx-auto max-w-5xl space-y-8">
+              {activeTab === "overview" && (
+                <>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
+                          Total Businesses
+                          <Building2 className="size-3.5" />
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{organizations.length}</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
+                          Total Offerings
+                          <CircleDollarSign className="size-3.5" />
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{totalOfferings}</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
+                          Total Bookings
+                          <CalendarDays className="size-3.5" />
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{totalBookings}</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
+                          AI Conversations
+                          <Bot className="size-3.5" />
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{totalConversations}</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              )}
+
+              {activeTab === "tenants" && (
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="relative flex-1 max-w-sm">
+                      <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search organizations..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9 h-9 text-xs"
+                      />
                     </div>
-                  ))}
+                    <Button onClick={() => setCreateOpen(true)} className="h-9 gap-1.5" size="sm">
+                      <Plus className="size-3.5" /> Provision Business
+                    </Button>
+                  </div>
+                  
+                  <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-muted/50">
+                        <TableRow>
+                          <TableHead className="w-12 text-center text-[10px] uppercase">Clerk</TableHead>
+                          <TableHead className="text-xs font-semibold">Business Entity</TableHead>
+                          <TableHead className="text-xs font-semibold">Locale & Currency</TableHead>
+                          <TableHead className="text-xs font-semibold w-40">Subscription</TableHead>
+                          <TableHead className="text-xs font-semibold">Usage & Data</TableHead>
+                          <TableHead className="text-right text-xs font-semibold w-32">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {loading ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="h-24 text-center">
+                              <RefreshCw className="mx-auto size-5 animate-spin text-muted-foreground" />
+                            </TableCell>
+                          </TableRow>
+                        ) : filtered.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="h-24 text-center text-sm text-muted-foreground">
+                              No businesses found.
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filtered.map((org) => (
+                            <TableRow key={org._id} className="group hover:bg-muted/30">
+                              <TableCell className="text-center">
+                                <span className="font-mono text-[10px] text-muted-foreground" title={org.clerkOrgId}>
+                                  {org.clerkOrgId.replace("org_", "").slice(0, 5)}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <div className="font-semibold text-xs text-foreground mb-1">{org.name}</div>
+                                <a
+                                  href={`/p/${org.slug}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 text-primary hover:underline font-mono text-[11px]"
+                                >
+                                  /p/{org.slug} <ExternalLink className="size-3" />
+                                </a>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-[11px] text-muted-foreground">
+                                  <span className="font-medium text-foreground">{org.currency}</span> / {org.timezone}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Select
+                                  value={org.plan}
+                                  onValueChange={(val: "free_org" | "engage" | "voice") =>
+                                    handlePlanChange(org._id, val)
+                                  }
+                                >
+                                  <SelectTrigger className="h-7 w-32 text-[11px] capitalize">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="free_org">Core (Free)</SelectItem>
+                                    <SelectItem value="engage">Engage (${prices.engage})</SelectItem>
+                                    <SelectItem value="voice">Voice (${prices.voice})</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-wrap gap-1.5 text-[10px]">
+                                  <Badge variant="outline" className="gap-1 font-mono">
+                                    <CalendarDays className="size-3 text-sky-500" /> {org.stats.bookingsCount}
+                                  </Badge>
+                                  <Badge variant="outline" className="gap-1 font-mono">
+                                    <Bot className="size-3 text-purple-500" /> {org.stats.conversationsCount}
+                                  </Badge>
+                                  <Badge variant="outline" className="gap-1 font-mono">
+                                    <UsersRound className="size-3 text-emerald-500" /> {org.stats.teamMembersCount}
+                                  </Badge>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => handleSwitchOrg(org)}
+                                    className="h-7 gap-1 text-[11px]"
+                                  >
+                                    Manage <ArrowUpRight className="size-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setDeletingId(org._id)}
+                                    className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="size-3.5" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               )}
-            </div>
 
-            <div className="flex gap-2">
-              <Input
-                placeholder="Paste new ElevenLabs API Key (e.g. sk_...)"
-                value={newKeyInput}
-                onChange={(e) => setNewKeyInput(e.target.value)}
-                className="font-mono text-xs flex-1"
-              />
-              <Button type="button" variant="outline" size="sm" onClick={handleAddApiKey} className="gap-1.5 shrink-0">
-                <Plus className="size-3.5" /> Add Key
-              </Button>
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-[11px] text-muted-foreground">
-                {apiKeys.length > 1
-                  ? "Requests will rotate round-robin across all keys automatically."
-                  : "Add 2+ keys to enable multi-key auto-rotation."}
-              </p>
-              <Button type="submit" size="sm" disabled={savingElevenLabs} className="gap-2 bg-purple-600 text-white hover:bg-purple-700">
-                <Save className="size-3.5" />
-                {savingElevenLabs ? "Saving Keys..." : "Save ElevenLabs Settings"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Platform Contact Details */}
-      <Card className="border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Building2 className="size-4 text-blue-600" />
-            Platform Contact Information
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Set the official support phone number and email address for Oneboard. Updates immediately on the public website and contact page.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSaveContact} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="contact-phone" className="text-xs font-semibold">
-                  Contact Phone Number
-                </Label>
-                <Input
-                  id="contact-phone"
-                  value={contactPhone}
-                  onChange={(e) => setContactPhone(e.target.value)}
-                  placeholder="+2348168882014"
-                  className="font-mono text-xs"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="contact-email" className="text-xs font-semibold">
-                  Contact Email Address
-                </Label>
-                <Input
-                  id="contact-email"
-                  type="email"
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
-                  placeholder="oneboardng@gmail.com"
-                  className="font-mono text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-1">
-              <p className="text-[11px] text-muted-foreground">
-                Current: {contactPhone} · {contactEmail}
-              </p>
-              <Button type="submit" size="sm" disabled={savingContact} className="gap-2 bg-blue-600 text-white hover:bg-blue-700">
-                <Save className="size-3.5" />
-                {savingContact ? "Saving Contact..." : "Save Contact Info"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Platform Pricing Settings */}
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Settings2 className="size-4 text-primary" />
-            Platform Pricing Settings
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Set the USD price for Core, Engage, and Voice plans. Changes take effect immediately on billing pages, pricing page, and Paystack checkout.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <form ref={priceFormRef} onSubmit={handleSavePrices}>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="core-price" className="text-xs font-semibold">
-                  Core Plan — USD Price
-                </Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
-                  <Input
-                    id="core-price"
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={prices.core}
-                    onChange={(e) => setPrices((p) => ({ ...p, core: Number(e.target.value) }))}
-                    className="pl-6 text-sm"
-                    disabled={!pricesLoaded}
-                  />
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  {prices.core === 0 ? "Free plan" : `≈ ₦${(prices.core * prices.usdToNgnRate).toLocaleString()} NGN`}
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="engage-price" className="text-xs font-semibold">
-                  Engage Plan — USD Price
-                </Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
-                  <Input
-                    id="engage-price"
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={prices.engage}
-                    onChange={(e) => setPrices((p) => ({ ...p, engage: Number(e.target.value) }))}
-                    className="pl-6 text-sm"
-                    disabled={!pricesLoaded}
-                  />
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  ≈ ₦{(prices.engage * prices.usdToNgnRate).toLocaleString()} NGN
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="voice-price" className="text-xs font-semibold">
-                  Voice Plan — USD Price
-                </Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
-                  <Input
-                    id="voice-price"
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={prices.voice}
-                    onChange={(e) => setPrices((p) => ({ ...p, voice: Number(e.target.value) }))}
-                    className="pl-6 text-sm"
-                    disabled={!pricesLoaded}
-                  />
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  ≈ ₦{(prices.voice * prices.usdToNgnRate).toLocaleString()} NGN
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="ngn-rate" className="text-xs font-semibold">
-                  Exchange Rate (₦ per $1 USD)
-                </Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">₦</span>
-                  <Input
-                    id="ngn-rate"
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={prices.usdToNgnRate}
-                    onChange={(e) => setPrices((p) => ({ ...p, usdToNgnRate: Number(e.target.value) }))}
-                    className="pl-6 text-sm"
-                    disabled={!pricesLoaded}
-                  />
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  Used for Paystack NGN conversion
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between">
-              <p className="text-[11px] text-muted-foreground">
-                Prices update immediately on billing, pricing, and checkout pages.
-              </p>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={savingPrices || !pricesLoaded}
-                className="gap-2"
-              >
-                <Save className="size-3.5" />
-                {savingPrices ? "Saving..." : "Save Prices"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <Badge className="bg-primary text-primary-foreground font-mono text-[10px] uppercase tracking-widest">
-              Super Admin Platform
-            </Badge>
-            <span className="flex items-center gap-1 text-xs text-emerald-700 font-medium">
-              <ShieldCheck className="size-3.5" /> Full Entity Control
-            </span>
-          </div>
-          <h1 className="mt-2 font-heading text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
-            Business Entities Control Center
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Manage multi-tenant business entities with 100% data isolation, individual public URLs, and subscription overrides.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={fetchOrganizations} disabled={loading}>
-            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
-          </Button>
-          <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-2">
-            <Plus className="size-4" /> Provision New Business
-          </Button>
-        </div>
-      </div>
-
-      {/* Overview Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-                Total Business Entities
-              </p>
-              <Building2 className="size-4 text-primary" />
-            </div>
-            <p className="mt-3 font-heading text-4xl font-semibold">{organizations.length}</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">Isolated database instances</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-                Total Appointments
-              </p>
-              <CalendarDays className="size-4 text-sky-500" />
-            </div>
-            <p className="mt-3 font-heading text-4xl font-semibold">{totalBookings}</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">Across all client public sites</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-                AI Concierge Chats
-              </p>
-              <Bot className="size-4 text-purple-500" />
-            </div>
-            <p className="mt-3 font-heading text-4xl font-semibold">{totalConversations}</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">Text & live voice sessions</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-                Active Offerings
-              </p>
-              <CircleDollarSign className="size-4 text-emerald-500" />
-            </div>
-            <p className="mt-3 font-heading text-4xl font-semibold">{totalOfferings}</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">Services bookable online</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Data Isolation Notice */}
-      <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs text-primary-foreground dark:text-foreground">
-        <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" />
-        <div>
-          <p className="font-semibold text-foreground">Strict Business Data Isolation Enforced</p>
-          <p className="mt-0.5 text-muted-foreground">
-            Every business entity has its own unique <code className="rounded bg-black/10 px-1 py-0.5 font-mono text-[11px]">organizationId</code>. Bookings, team members, availability schedules, knowledge items, and AI concierge memories are strictly scoped to ensure complete privacy and isolation between businesses.
-          </p>
-        </div>
-      </div>
-
-      {/* Business Entities Table */}
-      <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
-            <Input
-              placeholder="Filter by business name, slug, or ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 text-xs"
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Showing {filtered.length} of {organizations.length} business entities
-          </p>
-        </div>
-
-        <div className="rounded-xl border bg-card overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50 text-[11px] uppercase tracking-wider">
-                <TableHead>Business Entity</TableHead>
-                <TableHead>Live Public Page</TableHead>
-                <TableHead>Region & Currency</TableHead>
-                <TableHead>Subscription Plan</TableHead>
-                <TableHead>Isolated Data Stats</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-xs text-muted-foreground">
-                    Loading business entities...
-                  </TableCell>
-                </TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-xs text-muted-foreground">
-                    No business entities found matching your search.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((org) => (
-                  <TableRow key={org._id} className="text-xs">
-                    <TableCell className="font-medium">
-                      <div>
-                        <p className="font-semibold text-foreground">{org.name}</p>
-                        <p className="font-mono text-[10px] text-muted-foreground">{org.slug}</p>
+              {activeTab === "pricing" && (
+                <Card className="border-border/60">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base">Platform Pricing & Exchange Rates</CardTitle>
+                    <CardDescription className="text-xs">
+                      Set base USD prices for SaaS tiers and global fallback exchange rates.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {!pricesLoaded ? (
+                      <div className="flex h-32 items-center justify-center">
+                        <LoaderCircle className="size-6 animate-spin text-muted-foreground" />
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <a
-                        href={`/p/${org.slug}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-primary hover:underline font-mono text-[11px]"
-                      >
-                        /p/{org.slug} <ExternalLink className="size-3" />
-                      </a>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-[11px] text-muted-foreground">
-                        <span className="font-medium text-foreground">{org.currency}</span> · {org.timezone}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={org.plan}
-                        onValueChange={(val: "free_org" | "engage" | "voice") =>
-                          handlePlanChange(org._id, val)
-                        }
-                      >
-                        <SelectTrigger className="h-7 w-32 text-[11px] capitalize">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="free_org">Core (Free)</SelectItem>
-                          <SelectItem value="engage">Engage (${prices.engage})</SelectItem>
-                          <SelectItem value="voice">Voice (${prices.voice})</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1.5 text-[10px]">
-                        <Badge variant="outline" className="gap-1 font-mono">
-                          <CalendarDays className="size-3 text-sky-500" /> {org.stats.bookingsCount} bookings
-                        </Badge>
-                        <Badge variant="outline" className="gap-1 font-mono">
-                          <Bot className="size-3 text-purple-500" /> {org.stats.conversationsCount} chats
-                        </Badge>
-                        <Badge variant="outline" className="gap-1 font-mono">
-                          <UsersRound className="size-3 text-emerald-500" /> {org.stats.teamMembersCount} team
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => handleSwitchOrg(org)}
-                          className="h-7 gap-1 text-[11px]"
-                        >
-                          Manage <ArrowUpRight className="size-3" />
+                    ) : (
+                      <form ref={priceFormRef} onSubmit={handleSavePrices} className="space-y-6">
+                        <div className="grid gap-4 sm:grid-cols-3">
+                          <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
+                            <Label htmlFor="price-core" className="text-xs font-bold text-foreground">Core Tier (USD)</Label>
+                            <Input
+                              id="price-core"
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={prices.core}
+                              onChange={(e) => setPrices((p) => ({ ...p, core: Number(e.target.value) }))}
+                              className="font-mono text-sm"
+                            />
+                            <p className="text-[10px] text-muted-foreground">Self-serve only. No AI agents.</p>
+                          </div>
+                          <div className="space-y-2 rounded-lg border bg-muted/30 p-4 border-emerald-500/30">
+                            <Label htmlFor="price-engage" className="text-xs font-bold text-emerald-600">Engage Tier (USD)</Label>
+                            <Input
+                              id="price-engage"
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={prices.engage}
+                              onChange={(e) => setPrices((p) => ({ ...p, engage: Number(e.target.value) }))}
+                              className="font-mono text-sm border-emerald-500/30 focus-visible:ring-emerald-500"
+                            />
+                            <p className="text-[10px] text-muted-foreground">Text concierge unlocked.</p>
+                          </div>
+                          <div className="space-y-2 rounded-lg border bg-muted/30 p-4 border-purple-500/30">
+                            <Label htmlFor="price-voice" className="text-xs font-bold text-purple-600">Voice Tier (USD)</Label>
+                            <Input
+                              id="price-voice"
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={prices.voice}
+                              onChange={(e) => setPrices((p) => ({ ...p, voice: Number(e.target.value) }))}
+                              className="font-mono text-sm border-purple-500/30 focus-visible:ring-purple-500"
+                            />
+                            <p className="text-[10px] text-muted-foreground">Live voice receptionist unlocked.</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 max-w-sm rounded-lg border p-4 bg-orange-500/5 border-orange-500/20">
+                          <Label htmlFor="rate-usd-ngn" className="text-xs font-bold text-orange-600 flex items-center gap-1.5">
+                            USD to NGN Fixed Rate
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-muted-foreground">1 USD = </span>
+                            <Input
+                              id="rate-usd-ngn"
+                              type="number"
+                              min="1"
+                              step="0.01"
+                              value={prices.usdToNgnRate}
+                              onChange={(e) => setPrices((p) => ({ ...p, usdToNgnRate: Number(e.target.value) }))}
+                              className="font-mono text-sm flex-1 border-orange-500/30"
+                            />
+                            <span className="text-xs font-medium text-muted-foreground">NGN</span>
+                          </div>
+                          <p className="text-[10px] text-orange-700/80">Used exclusively for Paystack checkout calculations.</p>
+                        </div>
+
+                        <Button type="submit" disabled={savingPrices} className="gap-2">
+                          {savingPrices ? "Updating..." : "Save Pricing Configuration"}
+                          <Save className="size-4" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setDeletingId(org._id)}
-                          className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </form>
+                    )}
+                  </CardContent>
+                </Card>
               )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
 
-      {/* Provision New Business Dialog */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Building2 className="size-5 text-primary" /> Provision New Business Entity
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Creates a brand-new, completely isolated business entity with dedicated offerings, availability, and instant public page.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleCreate} className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="org-name" className="text-xs font-medium">
-                Business Name
-              </Label>
-              <Input
-                id="org-name"
-                placeholder="e.g. Apex Health Clinic"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="text-xs"
-              />
+              {activeTab === "ai_engine" && (
+                <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Bot className="size-4 text-purple-600" />
+                        AI Voice & Chat Engine Provider
+                      </CardTitle>
+                      <Badge variant="outline" className="border-purple-500/30 text-purple-600 font-mono text-[10px]">
+                        {activeProvider === "gemini" ? `Active: Gemini (${geminiApiKeys.length} Keys)` : `Active: ElevenLabs (${apiKeys.length} Keys)`}
+                      </Badge>
+                    </div>
+                    <CardDescription className="text-xs">
+                      Switch between ElevenLabs and Google Gemini for natural humanlike TTS/STT receptionist interactions.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6 pt-4">
+                    <form onSubmit={handleSaveElevenLabs} className="space-y-6">
+                      
+                      {/* Active Provider Selector */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold">Select Active AI Provider</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setActiveProvider("elevenlabs")}
+                            className={cn(
+                              "flex flex-col items-start p-3 rounded-lg border text-left transition-all",
+                              activeProvider === "elevenlabs"
+                                ? "border-purple-600 bg-purple-50/50 dark:bg-purple-950/20 ring-1 ring-purple-600 shadow-sm"
+                                : "hover:bg-muted/50 text-muted-foreground"
+                            )}
+                          >
+                            <span className="font-semibold text-sm mb-1 text-foreground flex items-center justify-between w-full">
+                              ElevenLabs {activeProvider === "elevenlabs" && <Check className="size-3.5 text-purple-600" />}
+                            </span>
+                            <span className="text-[10px]">Premium ultra-realistic voices via WebSocket</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveProvider("gemini")}
+                            className={cn(
+                              "flex flex-col items-start p-3 rounded-lg border text-left transition-all",
+                              activeProvider === "gemini"
+                                ? "border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/20 ring-1 ring-emerald-600 shadow-sm"
+                                : "hover:bg-muted/50 text-muted-foreground"
+                            )}
+                          >
+                            <span className="font-semibold text-sm mb-1 text-foreground flex items-center justify-between w-full">
+                              Google Gemini {activeProvider === "gemini" && <Check className="size-3.5 text-emerald-600" />}
+                            </span>
+                            <span className="text-[10px]">Free real-time Web Speech Synthesis API</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Provider Specific Settings */}
+                      <div className={cn("space-y-6 rounded-lg border bg-card p-4", activeProvider === "gemini" ? "border-emerald-500/30" : "border-purple-500/30")}>
+                        {activeProvider === "gemini" ? (
+                          <>
+                            <div className="space-y-1.5">
+                              <Label htmlFor="gemini-model" className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                                Active Gemini Model
+                              </Label>
+                              <Input
+                                id="gemini-model"
+                                placeholder="e.g. gemini-2.5-flash"
+                                value={geminiModel}
+                                onChange={(e) => setGeminiModel(e.target.value)}
+                                className="font-mono text-xs border-emerald-500/30 focus-visible:ring-emerald-500"
+                              />
+                              <p className="text-[10px] text-muted-foreground">
+                                E.g., gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-flash
+                              </p>
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Gemini API Keys Auto-Rotation</Label>
+                              {geminiApiKeys.length === 0 ? (
+                                <p className="text-xs text-muted-foreground italic">No Gemini API keys added.</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {geminiApiKeys.map((key, idx) => (
+                                    <div key={key + idx} className="flex items-center justify-between rounded-lg border bg-background p-2.5 text-xs font-mono">
+                                      <div className="flex items-center gap-2.5">
+                                        <Badge variant="secondary" className="text-[10px] font-sans">Key #{idx + 1}</Badge>
+                                        <span>{key.slice(0, 6)}••••••••••••••••{key.slice(-4)}</span>
+                                      </div>
+                                      <Button type="button" size="sm" variant="ghost" onClick={() => handleRemoveGeminiKey(key)} className="h-6 w-6 p-0 text-destructive">
+                                        <Trash2 className="size-3" />
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="flex gap-2 pt-2">
+                                <Input
+                                  placeholder="Add new Gemini API Key..."
+                                  value={newGeminiKeyInput}
+                                  onChange={(e) => setNewGeminiKeyInput(e.target.value)}
+                                  className="text-xs font-mono"
+                                  type="password"
+                                />
+                                <Button type="button" onClick={handleAddGeminiKey} variant="secondary" size="sm" className="shrink-0 text-xs gap-1">
+                                  <Plus className="size-3.5" /> Add
+                                </Button>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="space-y-1.5">
+                              <Label htmlFor="elevenlabs-agent-id" className="text-xs font-semibold text-purple-700 dark:text-purple-400">
+                                Default ElevenLabs Agent ID
+                              </Label>
+                              <Input
+                                id="elevenlabs-agent-id"
+                                placeholder="e.g. agent_abc123xyz..."
+                                value={defaultAgentId}
+                                onChange={(e) => setDefaultAgentId(e.target.value)}
+                                className="font-mono text-xs border-purple-500/30 focus-visible:ring-purple-500"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs font-semibold text-purple-700 dark:text-purple-400">ElevenLabs API Keys Auto-Rotation</Label>
+                              {apiKeys.length === 0 ? (
+                                <p className="text-xs text-muted-foreground italic">No ElevenLabs API keys added.</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {apiKeys.map((key, idx) => (
+                                    <div key={key + idx} className="flex items-center justify-between rounded-lg border bg-background p-2.5 text-xs font-mono">
+                                      <div className="flex items-center gap-2.5">
+                                        <Badge variant="secondary" className="text-[10px] font-sans">Key #{idx + 1}</Badge>
+                                        <span>{key.slice(0, 8)}••••••••••••••••{key.slice(-6)}</span>
+                                      </div>
+                                      <Button type="button" size="sm" variant="ghost" onClick={() => handleRemoveApiKey(key)} className="h-6 w-6 p-0 text-destructive">
+                                        <Trash2 className="size-3" />
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="flex gap-2 pt-2">
+                                <Input
+                                  placeholder="Add new ElevenLabs API Key..."
+                                  value={newKeyInput}
+                                  onChange={(e) => setNewKeyInput(e.target.value)}
+                                  className="text-xs font-mono"
+                                  type="password"
+                                />
+                                <Button type="button" onClick={handleAddApiKey} variant="secondary" size="sm" className="shrink-0 text-xs gap-1">
+                                  <Plus className="size-3.5" /> Add
+                                </Button>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      <Button type="submit" disabled={savingElevenLabs} className="gap-2">
+                        {savingElevenLabs ? "Saving Provider Settings..." : "Save AI Engine Configuration"}
+                        <Save className="size-4" />
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              )}
+
+              {activeTab === "settings" && (
+                <Card className="border-border/60">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Settings2 className="size-4 text-muted-foreground" />
+                      Platform Default Contacts
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Update the default contact phone and email displayed across platform landing pages.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleSaveContact} className="space-y-5">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="contact-phone" className="text-xs font-semibold">Contact Phone Number</Label>
+                          <Input
+                            id="contact-phone"
+                            type="text"
+                            value={contactPhone}
+                            onChange={(e) => setContactPhone(e.target.value)}
+                            className="text-sm"
+                            placeholder="+2348168882014"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="contact-email" className="text-xs font-semibold">Contact Email</Label>
+                          <Input
+                            id="contact-email"
+                            type="email"
+                            value={contactEmail}
+                            onChange={(e) => setContactEmail(e.target.value)}
+                            className="text-sm"
+                            placeholder="oneboardng@gmail.com"
+                          />
+                        </div>
+                      </div>
+                      <Button type="submit" disabled={savingContact} className="gap-2">
+                        {savingContact ? "Saving Contact..." : "Save Contact Info"}
+                        <Save className="size-4" />
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
+          </main>
+        </SidebarInset>
+
+        {/* Provision New Business Dialog */}
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Building2 className="size-5 text-primary" /> Provision New Business Entity
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                Creates a brand-new, completely isolated business entity with dedicated offerings, availability, and instant public page.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCreate} className="space-y-4 py-2">
               <div className="space-y-1.5">
-                <Label htmlFor="org-tz" className="text-xs font-medium">
-                  Timezone
-                </Label>
-                <Select value={timezone} onValueChange={setTimezone}>
-                  <SelectTrigger id="org-tz" className="text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="UTC">UTC (Universal)</SelectItem>
-                    <SelectItem value="Africa/Lagos">Africa/Lagos (WAT)</SelectItem>
-                    <SelectItem value="America/New_York">America/New_York (EST)</SelectItem>
-                    <SelectItem value="Europe/London">Europe/London (GMT)</SelectItem>
-                    <SelectItem value="Asia/Dubai">Asia/Dubai (GST)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="org-name" className="text-xs font-medium">Business Name</Label>
+                <Input
+                  id="org-name"
+                  placeholder="e.g. Apex Health Clinic"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="text-xs"
+                />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="org-currency" className="text-xs font-medium">
-                  Currency
-                </Label>
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger id="org-currency" className="text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="NGN">NGN (₦)</SelectItem>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                    <SelectItem value="GBP">GBP (£)</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="org-tz" className="text-xs font-medium">Timezone</Label>
+                  <Select value={timezone} onValueChange={setTimezone}>
+                    <SelectTrigger id="org-tz" className="text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="UTC">UTC (Universal)</SelectItem>
+                      <SelectItem value="Africa/Lagos">Africa/Lagos (WAT)</SelectItem>
+                      <SelectItem value="America/New_York">America/New_York (EST)</SelectItem>
+                      <SelectItem value="Europe/London">Europe/London (GMT)</SelectItem>
+                      <SelectItem value="Asia/Dubai">Asia/Dubai (GST)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="org-currency" className="text-xs font-medium">Currency</Label>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger id="org-currency" className="text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="NGN">NGN (₦)</SelectItem>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                      <SelectItem value="GBP">GBP (£)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
-            <DialogFooter className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCreateOpen(false)}
-                disabled={creating}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={creating} className="gap-2">
-                {creating ? "Provisioning..." : "Provision Entity"}
-              </Button>
+              <DialogFooter className="pt-2">
+                <Button type="button" variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>Cancel</Button>
+                <Button type="submit" disabled={creating} className="gap-2">{creating ? "Provisioning..." : "Provision Entity"}</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={Boolean(deletingId)} onOpenChange={() => setDeletingId(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <ShieldAlert className="size-5" /> Delete Business Entity?
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                This action cannot be undone. All isolated bookings, offerings, team members, and conversations for this business will be permanently deleted.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 pt-2">
+              <Button variant="outline" onClick={() => setDeletingId(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={() => deletingId && handleDelete(deletingId)}>Confirm Delete</Button>
             </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={Boolean(deletingId)} onOpenChange={() => setDeletingId(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <ShieldAlert className="size-5" /> Delete Business Entity?
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              This action cannot be undone. All isolated bookings, offerings, team members, and conversations for this business will be permanently deleted.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 pt-2">
-            <Button variant="outline" onClick={() => setDeletingId(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => deletingId && handleDelete(deletingId)}
-            >
-              Confirm Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 }

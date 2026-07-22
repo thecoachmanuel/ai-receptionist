@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAgentDynamicVariables } from "@/lib/agent-context";
 import * as publicSiteService from "@/lib/services/publicSite";
-import { getGeminiCredentials } from "@/lib/services/settings";
+import { getRotatedGeminiKey } from "@/lib/services/settings";
 
 export const runtime = "nodejs";
 
@@ -62,9 +62,10 @@ export async function POST(
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
 
-    const { apiKey, model } = await getGeminiCredentials();
-
-    const published = await publicSiteService.getPublishedBySlug(siteSlug);
+    const [{ apiKey, model }, published] = await Promise.all([
+      getRotatedGeminiKey(),
+      publicSiteService.getPublishedBySlug(siteSlug),
+    ]);
     if (!published) {
       return NextResponse.json({ error: "Public site not found." }, { status: 404 });
     }
