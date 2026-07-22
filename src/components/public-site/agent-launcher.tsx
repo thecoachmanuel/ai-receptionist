@@ -476,7 +476,7 @@ function AgentLauncherInner({
               <p className="text-[11px] text-muted-foreground">
                 {isConnected
                   ? activeProvider === "gemini"
-                    ? "Online · Gemini AI Engine"
+                    ? "Online · AI Engine"
                     : `Online · ${sessionKind === "voice" ? "Live Voice" : "Text Chat"}`
                   : "AI Front Desk Concierge"}
               </p>
