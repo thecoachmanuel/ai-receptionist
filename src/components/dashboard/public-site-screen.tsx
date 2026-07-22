@@ -16,6 +16,8 @@ import {
   Mic,
   Save,
   Send,
+  Trash2,
+  Upload,
   UsersRound,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -476,6 +478,7 @@ function SiteEditor({
   const [publishedAt, setPublishedAt] = useState(initial.site.publishedAt);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   function update<Key extends keyof SiteConfig>(
     key: Key,
@@ -483,6 +486,40 @@ function SiteEditor({
   ) {
     setConfig((current) => ({ ...current, [key]: value }));
   }
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Logo image file size must be less than 5MB.");
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/storage/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "Failed to upload logo.");
+      }
+
+      update("logoUrl", data.url);
+      toast.success("Business logo uploaded successfully!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload logo.");
+    } finally {
+      setUploadingLogo(false);
+      event.target.value = "";
+    }
+  };
 
   async function saveDraft() {
     await updateDraft({ config, siteSlug });
@@ -669,36 +706,81 @@ function SiteEditor({
                 required
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="logoUrl">Business logo URL</Label>
-              <Input
-                id="logoUrl"
-                type="url"
-                value={config.logoUrl ?? ""}
-                onChange={(event) =>
-                  update("logoUrl", event.target.value.trim() || undefined)
-                }
-                placeholder="https://example.com/logo.png"
-              />
-              {config.logoUrl ? (
-                <div className="mt-1 flex items-center gap-3 rounded-lg border border-black/8 bg-muted/20 p-2">
-                  <img
-                    src={config.logoUrl}
-                    alt="Business logo preview"
-                    className="size-8 rounded-full object-cover border border-black/10"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = "none";
-                    }}
+            <div className="space-y-2">
+              <Label htmlFor="logoUrl">Business logo</Label>
+              <div className="flex flex-col gap-2.5">
+                <div className="flex gap-2">
+                  <Input
+                    id="logoUrl"
+                    value={config.logoUrl ?? ""}
+                    onChange={(event) =>
+                      update("logoUrl", event.target.value.trim() || undefined)
+                    }
+                    placeholder="Upload image file or paste URL..."
+                    className="text-xs font-mono flex-1"
                   />
-                  <span className="text-[11px] text-muted-foreground truncate max-w-xs">
-                    {config.logoUrl}
-                  </span>
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      onChange={handleLogoUpload}
+                      className="sr-only"
+                      disabled={uploadingLogo}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={uploadingLogo}
+                      className="gap-1.5 shrink-0 h-9"
+                      asChild
+                    >
+                      <span>
+                        {uploadingLogo ? (
+                          <LoaderCircle className="size-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="size-3.5 text-primary" />
+                        )}
+                        {uploadingLogo ? "Uploading..." : "Upload Logo"}
+                      </span>
+                    </Button>
+                  </label>
                 </div>
-              ) : (
-                <p className="text-[11px] text-muted-foreground">
-                  Direct link to your brand logo (PNG, SVG, or JPG).
-                </p>
-              )}
+
+                {config.logoUrl ? (
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-black/10 bg-muted/20 p-2.5">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img
+                        src={config.logoUrl}
+                        alt="Business logo preview"
+                        className="size-9 rounded-md object-contain border bg-white p-0.5"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = "none";
+                        }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-foreground truncate">Active Business Logo</p>
+                        <p className="text-[10px] text-muted-foreground font-mono truncate">
+                          {config.logoUrl}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => update("logoUrl", undefined)}
+                      className="h-7 px-2 text-destructive hover:bg-destructive/10 text-xs shrink-0"
+                    >
+                      <Trash2 className="size-3.5" /> Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    Upload a local image file (PNG, SVG, JPG, WebP) or paste an image link.
+                  </p>
+                )}
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="announcement">Announcement</Label>
