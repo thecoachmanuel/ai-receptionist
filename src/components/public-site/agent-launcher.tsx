@@ -17,7 +17,6 @@ import {
   Mic,
   Send,
   ShieldCheck,
-  Sparkles,
   Square,
   Wrench,
 } from "lucide-react";
@@ -467,7 +466,7 @@ function AgentLauncherInner({
                 isConnected && "bg-emerald-500/10 text-emerald-600",
               )}
             >
-              {activeProvider === "gemini" ? <Sparkles className="size-4" /> : <Bot className="size-4" />}
+              <Bot className="size-4" />
             </span>
             <div>
               <CardTitle className="text-base font-semibold">
