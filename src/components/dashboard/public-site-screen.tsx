@@ -16,14 +16,14 @@ import {
   Mic,
   Save,
   Send,
-  Trash2,
   Upload,
   UsersRound,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -487,12 +487,12 @@ function SiteEditor({
     setConfig((current) => ({ ...current, [key]: value }));
   }
 
-  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  async function handleLogoFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Logo image file size must be less than 5MB.");
+      toast.error("Logo image file size must be under 5MB.");
       return;
     }
 
@@ -501,7 +501,7 @@ function SiteEditor({
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("/api/storage/upload", {
+      const res = await fetch("/api/storage", {
         method: "POST",
         body: formData,
       });
@@ -513,13 +513,13 @@ function SiteEditor({
 
       update("logoUrl", data.url);
       toast.success("Business logo uploaded successfully!");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to upload logo.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload logo file.");
     } finally {
       setUploadingLogo(false);
       event.target.value = "";
     }
-  };
+  }
 
   async function saveDraft() {
     await updateDraft({ config, siteSlug });
@@ -708,79 +708,67 @@ function SiteEditor({
             </div>
             <div className="space-y-2">
               <Label htmlFor="logoUrl">Business logo</Label>
-              <div className="flex flex-col gap-2.5">
-                <div className="flex gap-2">
-                  <Input
-                    id="logoUrl"
-                    value={config.logoUrl ?? ""}
-                    onChange={(event) =>
-                      update("logoUrl", event.target.value.trim() || undefined)
-                    }
-                    placeholder="Upload image file or paste URL..."
-                    className="text-xs font-mono flex-1"
-                  />
-                  <label className="cursor-pointer">
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                      onChange={handleLogoUpload}
-                      className="sr-only"
-                      disabled={uploadingLogo}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={uploadingLogo}
-                      className="gap-1.5 shrink-0 h-9"
-                      asChild
-                    >
-                      <span>
-                        {uploadingLogo ? (
-                          <LoaderCircle className="size-3.5 animate-spin" />
-                        ) : (
-                          <Upload className="size-3.5 text-primary" />
-                        )}
-                        {uploadingLogo ? "Uploading..." : "Upload Logo"}
-                      </span>
-                    </Button>
-                  </label>
-                </div>
-
-                {config.logoUrl ? (
-                  <div className="flex items-center justify-between gap-3 rounded-lg border border-black/10 bg-muted/20 p-2.5">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={config.logoUrl}
-                        alt="Business logo preview"
-                        className="size-9 rounded-md object-contain border bg-white p-0.5"
-                        onError={(e) => {
-                          (e.target as HTMLElement).style.display = "none";
-                        }}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-foreground truncate">Active Business Logo</p>
-                        <p className="text-[10px] text-muted-foreground font-mono truncate">
-                          {config.logoUrl}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => update("logoUrl", undefined)}
-                      className="h-7 px-2 text-destructive hover:bg-destructive/10 text-xs shrink-0"
-                    >
-                      <Trash2 className="size-3.5" /> Remove
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="text-[11px] text-muted-foreground">
-                    Upload a local image file (PNG, SVG, JPG, WebP) or paste an image link.
-                  </p>
-                )}
+              <div className="flex items-center gap-2">
+                <Input
+                  id="logoUrl"
+                  type="url"
+                  value={config.logoUrl ?? ""}
+                  onChange={(event) =>
+                    update("logoUrl", event.target.value.trim() || undefined)
+                  }
+                  placeholder="https://... or upload local image"
+                  className="flex-1 text-xs font-mono"
+                />
+                <Label
+                  htmlFor="logo-file-upload"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "cursor-pointer shrink-0 gap-1.5 font-normal text-xs",
+                    uploadingLogo && "opacity-50 pointer-events-none",
+                  )}
+                >
+                  <Upload className="size-3.5 text-primary" />
+                  {uploadingLogo ? "Uploading..." : "Upload logo"}
+                </Label>
+                <input
+                  id="logo-file-upload"
+                  type="file"
+                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                  className="hidden"
+                  onChange={handleLogoFileUpload}
+                />
               </div>
+
+              {config.logoUrl ? (
+                <div className="mt-1 flex items-center justify-between gap-3 rounded-lg border border-black/8 bg-muted/20 p-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <img
+                      src={config.logoUrl}
+                      alt="Business logo preview"
+                      className="size-8 rounded-full object-cover border border-black/10 shrink-0 bg-white"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = "none";
+                      }}
+                    />
+                    <span className="text-[11px] text-muted-foreground truncate font-mono">
+                      {config.logoUrl}
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => update("logoUrl", undefined)}
+                    className="text-destructive h-6 px-2 text-[10px] shrink-0 hover:bg-destructive/10"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">
+                  Upload a PNG, JPG, WEBP, or SVG logo file from your device, or paste an external URL.
+                </p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="announcement">Announcement</Label>
