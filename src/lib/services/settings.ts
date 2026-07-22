@@ -9,6 +9,8 @@ export type PlanPrices = {
 export type PlatformSettings = {
   planPrices: PlanPrices;
   usdToNgnRate: number;
+  contactPhone: string;
+  contactEmail: string;
   updatedAt: number;
 };
 
@@ -22,6 +24,8 @@ export type ElevenLabsSettings = {
 const DEFAULTS: PlatformSettings = {
   planPrices: { core: 0, engage: 49, voice: 149 },
   usdToNgnRate: 1500,
+  contactPhone: "+2348168882014",
+  contactEmail: "oneboardng@gmail.com",
   updatedAt: 0,
 };
 
@@ -49,6 +53,8 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
       voice: doc.planPrices?.voice ?? DEFAULTS.planPrices.voice,
     },
     usdToNgnRate: doc.usdToNgnRate ?? DEFAULTS.usdToNgnRate,
+    contactPhone: doc.contactPhone ?? DEFAULTS.contactPhone,
+    contactEmail: doc.contactEmail ?? DEFAULTS.contactEmail,
     updatedAt: doc.updatedAt ?? 0,
   };
 }
@@ -87,6 +93,27 @@ export async function updateExchangeRate(rate: number): Promise<void> {
   await db.collection("platformSettings").updateOne(
     { key: "platform" },
     { $set: { usdToNgnRate: Math.round(rate), updatedAt: Date.now() } },
+    { upsert: true },
+  );
+}
+
+/**
+ * Updates platform contact phone and email. Super Admin only.
+ */
+export async function updatePlatformContact(phone?: string, email?: string): Promise<void> {
+  const db = await getDb();
+  const $set: Record<string, any> = { updatedAt: Date.now() };
+
+  if (phone !== undefined) {
+    $set.contactPhone = phone.trim() || DEFAULTS.contactPhone;
+  }
+  if (email !== undefined) {
+    $set.contactEmail = email.trim() || DEFAULTS.contactEmail;
+  }
+
+  await db.collection("platformSettings").updateOne(
+    { key: "platform" },
+    { $set },
     { upsert: true },
   );
 }

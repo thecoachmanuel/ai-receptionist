@@ -104,6 +104,11 @@ export function SuperAdminScreen() {
   const [defaultAgentId, setDefaultAgentId] = useState("");
   const [savingElevenLabs, setSavingElevenLabs] = useState(false);
 
+  // Platform contact info state
+  const [contactPhone, setContactPhone] = useState("+2348168882014");
+  const [contactEmail, setContactEmail] = useState("oneboardng@gmail.com");
+  const [savingContact, setSavingContact] = useState(false);
+
   useEffect(() => {
     fetch("/api/admin/settings")
       .then((r) => r.json())
@@ -115,6 +120,8 @@ export function SuperAdminScreen() {
             voice: data.settings.planPrices?.voice ?? 149,
             usdToNgnRate: data.settings.usdToNgnRate ?? 1500,
           });
+          setContactPhone(data.settings.contactPhone || "+2348168882014");
+          setContactEmail(data.settings.contactEmail || "oneboardng@gmail.com");
         }
         if (data.elevenlabs) {
           setApiKeys(data.elevenlabs.apiKeys || []);
@@ -124,6 +131,24 @@ export function SuperAdminScreen() {
       })
       .catch(() => setPricesLoaded(true));
   }, []);
+
+  const handleSaveContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingContact(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactPhone, contactEmail }),
+      });
+      if (!res.ok) throw new Error("Failed to update contact info.");
+      toast.success("Platform contact phone and email updated — changes reflect immediately on homepage and contact page.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save contact settings.");
+    } finally {
+      setSavingContact(false);
+    }
+  };
 
   const handleSavePrices = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -407,6 +432,61 @@ export function SuperAdminScreen() {
               <Button type="submit" size="sm" disabled={savingElevenLabs} className="gap-2 bg-purple-600 text-white hover:bg-purple-700">
                 <Save className="size-3.5" />
                 {savingElevenLabs ? "Saving Keys..." : "Save ElevenLabs Settings"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Platform Contact Details */}
+      <Card className="border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Building2 className="size-4 text-blue-600" />
+            Platform Contact Information
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Set the official support phone number and email address for Oneboard. Updates immediately on the public website and contact page.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSaveContact} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="contact-phone" className="text-xs font-semibold">
+                  Contact Phone Number
+                </Label>
+                <Input
+                  id="contact-phone"
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  placeholder="+2348168882014"
+                  className="font-mono text-xs"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="contact-email" className="text-xs font-semibold">
+                  Contact Email Address
+                </Label>
+                <Input
+                  id="contact-email"
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="oneboardng@gmail.com"
+                  className="font-mono text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <p className="text-[11px] text-muted-foreground">
+                Current: {contactPhone} · {contactEmail}
+              </p>
+              <Button type="submit" size="sm" disabled={savingContact} className="gap-2 bg-blue-600 text-white hover:bg-blue-700">
+                <Save className="size-3.5" />
+                {savingContact ? "Saving Contact..." : "Save Contact Info"}
               </Button>
             </div>
           </form>

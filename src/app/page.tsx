@@ -80,6 +80,9 @@ function MarketingNav({ signedIn }: { signedIn: boolean }) {
           <Link className="transition-colors hover:text-foreground" href="/pricing">
             Pricing
           </Link>
+          <Link className="transition-colors hover:text-foreground" href="/contact">
+            Contact
+          </Link>
         </nav>
         <div className="ml-auto flex items-center gap-2">
           {!signedIn ? (
@@ -294,6 +297,7 @@ export default async function Home() {
           <Brand />
           <p className="sm:ml-auto">One intelligent front desk for every organization.</p>
           <Link href="/pricing" className="hover:text-foreground">Pricing</Link>
+          <Link href="/contact" className="hover:text-foreground">Contact</Link>
           <Link href="/sign-in" className="hover:text-foreground">Sign in</Link>
         </div>
       </footer>

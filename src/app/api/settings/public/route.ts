@@ -14,19 +14,24 @@ export async function GET() {
       {
         planPrices: settings.planPrices,
         usdToNgnRate: settings.usdToNgnRate,
+        contactPhone: settings.contactPhone,
+        contactEmail: settings.contactEmail,
       },
       {
         headers: {
-          // Short cache — prices rarely change but we don't want stale data
           "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
         },
       },
     );
   } catch (error) {
     console.error("Public settings GET error", error);
-    // Return safe defaults on error so the UI never shows $0
     return NextResponse.json(
-      { planPrices: { core: 0, engage: 49, voice: 149 }, usdToNgnRate: 1500 },
+      {
+        planPrices: { core: 0, engage: 49, voice: 149 },
+        usdToNgnRate: 1500,
+        contactPhone: "+2348168882014",
+        contactEmail: "oneboardng@gmail.com",
+      },
       { status: 200 },
     );
   }

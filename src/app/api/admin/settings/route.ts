@@ -6,6 +6,7 @@ import {
   updateElevenLabsSettings,
   updateExchangeRate,
   updatePlanPrice,
+  updatePlatformContact,
 } from "@/lib/services/settings";
 
 export const runtime = "nodejs";
@@ -46,7 +47,15 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { plan, usdPrice, usdToNgnRate, elevenLabsApiKeys, elevenLabsDefaultAgentId } = body;
+    const {
+      plan,
+      usdPrice,
+      usdToNgnRate,
+      elevenLabsApiKeys,
+      elevenLabsDefaultAgentId,
+      contactPhone,
+      contactEmail,
+    } = body;
 
     if (usdToNgnRate !== undefined) {
       const rate = Number(usdToNgnRate);
@@ -74,6 +83,10 @@ export async function PATCH(request: NextRequest) {
         );
       }
       await updatePlanPrice(plan, price);
+    }
+
+    if (contactPhone !== undefined || contactEmail !== undefined) {
+      await updatePlatformContact(contactPhone, contactEmail);
     }
 
     if (elevenLabsApiKeys !== undefined || elevenLabsDefaultAgentId !== undefined) {
