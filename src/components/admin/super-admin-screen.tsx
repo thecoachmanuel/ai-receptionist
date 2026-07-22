@@ -220,6 +220,32 @@ export function SuperAdminScreen() {
     toast.success("API key removed from rotation list.");
   };
 
+  const handleSaveElevenLabs = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingElevenLabs(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          activeProvider,
+          geminiApiKey: geminiApiKey.trim(),
+          geminiModel: geminiModel.trim(),
+          elevenLabsApiKeys: apiKeys,
+          elevenLabsDefaultAgentId: defaultAgentId.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save AI Provider settings.");
+      toast.success(
+        `AI Voice & Chat provider updated to ${activeProvider === "gemini" ? "Google Gemini (" + geminiModel + ")" : "ElevenLabs"}.`,
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save AI Provider settings.");
+    } finally {
+      setSavingElevenLabs(false);
+    }
+  };
+
       {/* AI Provider & Voice Engine Settings (ElevenLabs & Gemini 2.5 Flash) */}
       <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent">
         <CardHeader className="pb-2">
