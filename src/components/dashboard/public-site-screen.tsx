@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
 import {
@@ -88,11 +88,13 @@ function SitePreview({
   config,
   offerings,
   members,
+  clientPageUrl,
 }: {
   siteSlug: string;
   config: SiteConfig;
   offerings: Offering[];
   members: TeamMember[];
+  clientPageUrl: string;
 }) {
   const { organization, terminology } = useWorkspace();
   const showTeam = config.sections.includes("team");
@@ -148,7 +150,7 @@ function SitePreview({
         <span className="size-2 rounded-full bg-amber-400" />
         <span className="size-2 rounded-full bg-emerald-400" />
         <div className="mx-auto rounded-md bg-white/80 px-8 py-1 font-mono text-[8px] text-muted-foreground">
-          /{siteSlug}
+          {clientPageUrl ? `${clientPageUrl}/${siteSlug}` : `/${siteSlug}`}
         </div>
         <span className="font-mono text-[7px] tracking-[0.12em] text-muted-foreground uppercase">
           {config.template}
@@ -478,6 +480,16 @@ function SiteEditor({
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [clientPageUrl, setClientPageUrl] = useState("");
+
+  useEffect(() => {
+    fetch("/api/settings/public")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.clientPageUrl) setClientPageUrl(data.clientPageUrl);
+      })
+      .catch(() => {});
+  }, []);
 
   function update<Key extends keyof SiteConfig>(
     key: Key,
@@ -1036,7 +1048,7 @@ function SiteEditor({
             <StatusBadge status={publishedAt ? "published" : "draft"} />
           </div>
           <Button asChild variant="ghost" size="sm">
-            <Link href={`/p/${siteSlug}`} target="_blank">
+            <Link href={clientPageUrl ? `${clientPageUrl.replace(/\/$/, "")}/${siteSlug}` : `/p/${siteSlug}`} target="_blank">
               Open page <ArrowUpRight />
             </Link>
           </Button>
@@ -1046,6 +1058,7 @@ function SiteEditor({
           config={config}
           offerings={offerings}
           members={members}
+          clientPageUrl={clientPageUrl}
         />
       </div>
     </div>
@@ -1067,6 +1080,16 @@ export function PublicSiteScreen() {
     organization ? {} : "skip",
   );
 
+  const [clientPageUrl, setClientPageUrl] = useState("");
+  useEffect(() => {
+    fetch("/api/settings/public")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.clientPageUrl) setClientPageUrl(data.clientPageUrl);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <>
       <ScreenHeader
@@ -1076,7 +1099,7 @@ export function PublicSiteScreen() {
         action={
           current ? (
             <Button asChild variant="outline" className="bg-white">
-              <Link href={`/p/${current.site.siteSlug}`} target="_blank">
+              <Link href={clientPageUrl ? `${clientPageUrl.replace(/\/$/, "")}/${current.site.siteSlug}` : `/p/${current.site.siteSlug}`} target="_blank">
                 <Globe2 /> Open public page
               </Link>
             </Button>

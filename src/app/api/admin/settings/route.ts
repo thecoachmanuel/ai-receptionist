@@ -58,6 +58,7 @@ export async function PATCH(request: NextRequest) {
       elevenLabsDefaultAgentId,
       contactPhone,
       contactEmail,
+      clientPageUrl,
     } = body;
 
     if (usdToNgnRate !== undefined) {
@@ -88,8 +89,8 @@ export async function PATCH(request: NextRequest) {
       await updatePlanPrice(plan, price);
     }
 
-    if (contactPhone !== undefined || contactEmail !== undefined) {
-      await updatePlatformContact(contactPhone, contactEmail);
+    if (contactPhone !== undefined || contactEmail !== undefined || clientPageUrl !== undefined) {
+      await updatePlatformContact(contactPhone, contactEmail, clientPageUrl);
     }
 
     if (

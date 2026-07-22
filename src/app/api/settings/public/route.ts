@@ -16,6 +16,7 @@ export async function GET() {
         usdToNgnRate: settings.usdToNgnRate,
         contactPhone: settings.contactPhone,
         contactEmail: settings.contactEmail,
+        clientPageUrl: settings.clientPageUrl,
       },
       {
         headers: {
@@ -31,6 +32,7 @@ export async function GET() {
         usdToNgnRate: 1500,
         contactPhone: "+2348168882014",
         contactEmail: "oneboardng@gmail.com",
+        clientPageUrl: "",
       },
       { status: 200 },
     );

@@ -11,6 +11,7 @@ export type PlatformSettings = {
   usdToNgnRate: number;
   contactPhone: string;
   contactEmail: string;
+  clientPageUrl: string;
   updatedAt: number;
 };
 
@@ -32,6 +33,7 @@ const DEFAULTS: PlatformSettings = {
   usdToNgnRate: 1500,
   contactPhone: "+2348168882014",
   contactEmail: "oneboardng@gmail.com",
+  clientPageUrl: "",
   updatedAt: 0,
 };
 
@@ -61,6 +63,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
     usdToNgnRate: doc.usdToNgnRate ?? DEFAULTS.usdToNgnRate,
     contactPhone: doc.contactPhone ?? DEFAULTS.contactPhone,
     contactEmail: doc.contactEmail ?? DEFAULTS.contactEmail,
+    clientPageUrl: (doc as any).clientPageUrl ?? DEFAULTS.clientPageUrl,
     updatedAt: doc.updatedAt ?? 0,
   };
 }
@@ -104,9 +107,9 @@ export async function updateExchangeRate(rate: number): Promise<void> {
 }
 
 /**
- * Updates platform contact phone and email. Super Admin only.
+ * Updates platform contact phone, email, and client page URL. Super Admin only.
  */
-export async function updatePlatformContact(phone?: string, email?: string): Promise<void> {
+export async function updatePlatformContact(phone?: string, email?: string, clientPageUrl?: string): Promise<void> {
   const db = await getDb();
   const $set: Record<string, any> = { updatedAt: Date.now() };
 
@@ -115,6 +118,9 @@ export async function updatePlatformContact(phone?: string, email?: string): Pro
   }
   if (email !== undefined) {
     $set.contactEmail = email.trim() || DEFAULTS.contactEmail;
+  }
+  if (clientPageUrl !== undefined) {
+    $set.clientPageUrl = clientPageUrl.trim();
   }
 
   await db.collection("platformSettings").updateOne(

@@ -21,6 +21,7 @@ import {
   Sparkles,
   UsersRound,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { BrandIcon } from "@/components/brand";
 import { Badge } from "@/components/ui/badge";
@@ -208,6 +209,16 @@ function ShellChrome({
   const pageLabel = routeLabels[segment] ?? "Overview";
   const organizationName = organization?.name ?? "Your organization";
 
+  const [clientPageUrl, setClientPageUrl] = useState("");
+  useEffect(() => {
+    fetch("/api/settings/public")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.clientPageUrl) setClientPageUrl(data.clientPageUrl);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <SidebarProvider
       defaultOpen
@@ -298,7 +309,7 @@ function ShellChrome({
             </Badge>
             <Button asChild variant="outline" size="sm" className="hidden sm:flex">
               <Link
-                href={`/p/${publicSite?.site?.siteSlug ?? orgSlug}`}
+                href={clientPageUrl ? `${clientPageUrl.replace(/\/$/, "")}/${publicSite?.site?.siteSlug ?? orgSlug}` : `/p/${publicSite?.site?.siteSlug ?? orgSlug}`}
                 target="_blank"
               >
                 Open public page

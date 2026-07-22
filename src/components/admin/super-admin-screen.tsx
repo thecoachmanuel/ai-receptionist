@@ -288,6 +288,7 @@ export function SuperAdminScreen() {
   // Platform contact state
   const [contactPhone, setContactPhone] = useState("+2348168882014");
   const [contactEmail, setContactEmail] = useState("oneboardng@gmail.com");
+  const [clientPageUrl, setClientPageUrl] = useState("");
   const [savingContact, setSavingContact] = useState(false);
 
   function fetchOrganizations() {
@@ -314,6 +315,7 @@ export function SuperAdminScreen() {
           });
           setContactPhone(data.settings.contactPhone || "+2348168882014");
           setContactEmail(data.settings.contactEmail || "oneboardng@gmail.com");
+          setClientPageUrl(data.settings.clientPageUrl || "");
         }
         if (data.elevenlabs) {
           setActiveProvider(data.elevenlabs.activeProvider || "elevenlabs");
@@ -338,10 +340,10 @@ export function SuperAdminScreen() {
       const res = await fetch("/api/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contactPhone, contactEmail }),
+        body: JSON.stringify({ contactPhone, contactEmail, clientPageUrl }),
       });
       if (!res.ok) throw new Error("Failed to update contact info.");
-      toast.success("Contact information updated.");
+      toast.success("Platform contact and client page settings updated.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save contact settings.");
     } finally {
@@ -994,6 +996,22 @@ export function SuperAdminScreen() {
                           className="text-sm"
                         />
                       </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="client-page-url" className="text-xs font-semibold">
+                        Client Page Redirect URL
+                      </Label>
+                      <Input
+                        id="client-page-url"
+                        type="url"
+                        value={clientPageUrl}
+                        onChange={(e) => setClientPageUrl(e.target.value)}
+                        placeholder="https://example.com/client-portal"
+                        className="text-sm max-w-lg"
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        When set, the &quot;Open public page&quot; button in the tenant dashboard will redirect to this URL instead of the default public page.
+                      </p>
                     </div>
                     <Separator />
                     <Button type="submit" disabled={savingContact} className="gap-2">
