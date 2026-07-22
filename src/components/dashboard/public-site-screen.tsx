@@ -54,7 +54,6 @@ import {
   StatusBadge,
 } from "@/components/dashboard/screen-kit";
 import { useWorkspace } from "@/components/dashboard/workspace-context";
-import { cn } from "@/lib/utils";
 
 const accentPalettes = [
   "#2446D8",
