@@ -170,6 +170,64 @@ export async function createOrganizationForUser(
   };
 }
 
+export async function updateOrganization(
+  orgId: string,
+  updates: {
+    name?: string;
+    timezone?: string;
+    currency?: string;
+    locale?: string;
+    terminology?: any;
+  },
+) {
+  const db = await getDb();
+  const filter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
+  const org = await db.collection<DbOrganization>("organizations").findOne(filter);
+  if (!org) throw new Error("Organization not found.");
+
+  const $set: Partial<DbOrganization> = { updatedAt: Date.now() };
+
+  if (updates.name !== undefined) {
+    $set.name = requiredTrimmed(updates.name, "name", 120);
+  }
+  if (updates.timezone !== undefined) {
+    const tz = optionalTrimmed(updates.timezone, "timezone", 100);
+    if (tz) {
+      assertIanaTimezone(tz);
+      $set.timezone = tz;
+    }
+  }
+  if (updates.currency !== undefined) {
+    const curr = (updates.currency || "").trim().toUpperCase();
+    if (curr !== "NGN" && curr !== "USD") {
+      throw new Error("Currency must be NGN or USD.");
+    }
+    $set.currency = curr;
+  }
+  if (updates.locale !== undefined) {
+    const loc = optionalTrimmed(updates.locale, "locale", 35);
+    if (loc) {
+      new Intl.Locale(loc);
+      $set.locale = loc;
+    }
+  }
+  if (updates.terminology !== undefined) {
+    $set.terminology = updates.terminology;
+  }
+
+  await db.collection<DbOrganization>("organizations").updateOne(filter, { $set });
+
+  if ($set.currency) {
+    await db.collection("offerings").updateMany(
+      { organizationId: org._id!.toString() },
+      { $set: { currency: $set.currency } }
+    );
+  }
+
+  const updated = await db.collection<DbOrganization>("organizations").findOne(filter);
+  return viewOrganization(updated!);
+}
+
 export async function updateOrganizationPlan(orgId: string, plan: "free_org" | "engage" | "voice") {
   const db = await getDb();
   const filter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };

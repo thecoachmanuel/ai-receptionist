@@ -16,7 +16,7 @@ import {
   Mic,
   Send,
   ShieldCheck,
-  Sparkles,
+  Bot,
   Square,
   Wrench,
 } from "lucide-react";
@@ -301,7 +301,7 @@ function AgentLauncherInner({
               {isConnected && mode === "speaking" ? (
                 <AudioLines className="size-5 animate-pulse" aria-hidden="true" />
               ) : (
-                <Sparkles className="size-5" aria-hidden="true" />
+                <Bot className="size-5" aria-hidden="true" />
               )}
             </div>
             <div>

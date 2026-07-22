@@ -5,11 +5,13 @@ import { useMutation, useQuery } from "@/lib/api-client/use-data";
 import {
   CalendarDays,
   CalendarPlus,
+  Eye,
   Search,
   SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -238,6 +240,121 @@ function BookingStatusSelect({ booking }: { booking: Booking }) {
   );
 }
 
+function BookingDetailDialog({
+  booking,
+  open,
+  onOpenChange,
+}: {
+  booking: Booking | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { organization, terminology } = useWorkspace();
+  if (!booking) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <div className="flex items-center justify-between gap-3 pr-6">
+            <Badge variant="outline" className="font-mono text-xs uppercase tracking-wider">
+              Code: {booking.confirmationCode || booking._id.slice(-6)}
+            </Badge>
+            <StatusBadge status={booking.status} />
+          </div>
+          <DialogTitle className="mt-2 font-heading text-xl tracking-tight">
+            {booking.offeringName}
+          </DialogTitle>
+          <DialogDescription className="text-xs">
+            Complete details and customer record for this {terminology.booking.toLowerCase()}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2 text-sm">
+          {/* Customer Details */}
+          <div className="rounded-xl border bg-muted/30 p-4 space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              {terminology.customer} Info
+            </h4>
+            <div className="grid gap-2 sm:grid-cols-2 pt-1">
+              <div>
+                <span className="text-[11px] text-muted-foreground block">Name</span>
+                <span className="font-semibold text-foreground">{booking.contactName || "—"}</span>
+              </div>
+              <div>
+                <span className="text-[11px] text-muted-foreground block">Email</span>
+                <span className="font-medium text-foreground">{booking.contactEmail || "—"}</span>
+              </div>
+              <div className="sm:col-span-2">
+                <span className="text-[11px] text-muted-foreground block">Phone</span>
+                <span className="font-mono text-xs font-medium text-foreground">{booking.contactPhone || "—"}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Schedule & Staff */}
+          <div className="rounded-xl border bg-muted/30 p-4 space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Schedule & Staff
+            </h4>
+            <div className="grid gap-3 sm:grid-cols-2 pt-1">
+              <div>
+                <span className="text-[11px] text-muted-foreground block">Start Time</span>
+                <span className="font-medium text-foreground">
+                  {formatDateTime(booking.startAt, organization?.timezone)}
+                </span>
+              </div>
+              <div>
+                <span className="text-[11px] text-muted-foreground block">Assigned {terminology.teamMember}</span>
+                <span className="font-medium text-foreground">{booking.teamMemberName || "Unassigned"}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment & Channel */}
+          <div className="rounded-xl border bg-muted/30 p-4 space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Service & Payment
+            </h4>
+            <div className="grid gap-3 sm:grid-cols-2 pt-1">
+              <div>
+                <span className="text-[11px] text-muted-foreground block">Amount</span>
+                <span className="font-semibold text-foreground">
+                  {formatMoney(
+                    booking.priceCents,
+                    booking.currency || organization?.currency,
+                    organization?.locale,
+                  )}
+                </span>
+              </div>
+              <div>
+                <span className="text-[11px] text-muted-foreground block">Channel Source</span>
+                <span className="font-mono text-xs uppercase tracking-wide text-foreground">
+                  {booking.source || "dashboard"}
+                </span>
+              </div>
+            </div>
+            {booking.notes && (
+              <div className="pt-2 border-t mt-2">
+                <span className="text-[11px] text-muted-foreground block">Internal Notes</span>
+                <p className="text-xs text-foreground mt-0.5 leading-relaxed bg-white p-2 rounded border">
+                  {booking.notes}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Status Change */}
+          <div className="flex items-center justify-between gap-3 pt-2 border-t">
+            <span className="text-xs font-medium text-muted-foreground">Status:</span>
+            <BookingStatusSelect booking={booking} />
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function BookingsScreen() {
   const { organization, terminology } = useWorkspace();
   const bookings = useQuery<any>(
@@ -246,6 +363,7 @@ export function BookingsScreen() {
   );
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const normalizedBookings = useMemo(
     () => (bookings ?? []).map(normalizeBooking),
@@ -323,12 +441,16 @@ export function BookingsScreen() {
                   <TableHead className="hidden md:table-cell">Source</TableHead>
                   <TableHead className="hidden sm:table-cell">Price</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Change</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((booking: any) => (
-                  <TableRow key={booking._id}>
+                  <TableRow
+                    key={booking._id}
+                    className="cursor-pointer hover:bg-muted/40 transition-colors"
+                    onClick={() => setSelectedBooking(booking)}
+                  >
                     <TableCell className="font-mono text-xs">
                       {formatDateTime(booking.startAt, organization?.timezone)}
                     </TableCell>
@@ -357,8 +479,18 @@ export function BookingsScreen() {
                     <TableCell>
                       <StatusBadge status={booking.status} />
                     </TableCell>
-                    <TableCell className="text-right">
-                      <BookingStatusSelect booking={booking} />
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          title="View booking details"
+                          onClick={() => setSelectedBooking(booking)}
+                        >
+                          <Eye className="size-4" />
+                        </Button>
+                        <BookingStatusSelect booking={booking} />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -382,6 +514,14 @@ export function BookingsScreen() {
           )}
         </CardContent>
       </Card>
+
+      <BookingDetailDialog
+        booking={selectedBooking}
+        open={Boolean(selectedBooking)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedBooking(null);
+        }}
+      />
     </>
   );
 }

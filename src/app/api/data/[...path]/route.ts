@@ -97,7 +97,8 @@ export async function POST(
         return NextResponse.json(await organizationsService.viewOrganization(created, "admin"));
       }
       case "organizations/updateCurrent": {
-        return NextResponse.json(await organizationsService.getOrganizationByIdOrSlug(orgId));
+        const updated = await organizationsService.updateOrganization(orgId, body);
+        return NextResponse.json(updated);
       }
       case "dashboard/overview": {
         const data = await dashboardService.getOverview(orgId);
