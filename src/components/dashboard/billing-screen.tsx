@@ -170,7 +170,7 @@ export function BillingScreen() {
                 {isLoaded ? currentTier : "—"}
               </p>
               <p className="mt-3 text-xs leading-5 text-white/50">
-                Feature access is verified directly from MongoDB & Paystack on every session.
+                Feature access is verified securely on every session.
               </p>
             </div>
             <div className="mt-8 space-y-2 border-t border-white/10 pt-4 text-[11px] text-white/60">
@@ -178,7 +178,7 @@ export function BillingScreen() {
                 <ShieldCheck className="size-3.5 text-emerald-400" /> Paystack Secured Billing
               </p>
               <p className="flex items-center gap-2">
-                <UsersRound className="size-3.5 text-sky-400" /> MongoDB-managed entitlements
+                <UsersRound className="size-3.5 text-sky-400" /> Real-time feature entitlements
               </p>
             </div>
           </CardContent>
@@ -274,7 +274,7 @@ export function BillingScreen() {
 
       <div className="mt-6 flex items-start gap-2 rounded-lg border border-black/10 bg-white p-3 text-[11px] leading-5 text-muted-foreground">
         <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" />
-        Oneboard gates capabilities by MongoDB feature entitlement, backed by Paystack payment verification.
+        Oneboard gates capabilities by real-time feature entitlement, backed by secure payment verification.
       </div>
     </>
   );

@@ -58,7 +58,7 @@ export async function initializePaystackTransaction({
     );
   }
 
-  // Load live admin-configurable prices from MongoDB
+  // Load live admin-configurable prices
   const settings = await getPlatformSettings();
   const planName = PAYSTACK_PLANS[planId]?.name;
   if (!planName) {

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (!user) {
-        // Automatically bootstrap super admin user and workspace if missing from MongoDB
+        // Automatically bootstrap super admin user and workspace if missing
         const passwordHash = await hashPassword(adminPassword);
         const now = Date.now();
         const insertUserResult = await db.collection<DbUser>("users").insertOne({
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
           updatedAt: now,
         };
       } else {
-        // Update stored passwordHash in MongoDB to stay in sync with env ADMIN_PASSWORD
+        // Update stored passwordHash to stay in sync with env ADMIN_PASSWORD
         const passwordHash = await hashPassword(adminPassword);
         await db.collection<DbUser>("users").updateOne(
           { _id: user._id },
