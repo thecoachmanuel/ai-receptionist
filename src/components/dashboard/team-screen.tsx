@@ -58,6 +58,42 @@ function MemberDialog({ member }: { member?: TeamMember }) {
   const [offeringIds, setOfferingIds] = useState<string[]>(
     member?.offeringIds ?? [],
   );
+  const [imageUrl, setImageUrl] = useState(member?.imageUrl || "");
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  async function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Profile picture size must be under 5MB.");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/storage", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "Failed to upload image.");
+      }
+
+      setImageUrl(data.url);
+      toast.success("Profile picture uploaded successfully!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload image.");
+    } finally {
+      setUploadingImage(false);
+      event.target.value = "";
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -73,6 +109,7 @@ function MemberDialog({ member }: { member?: TeamMember }) {
       title: String(form.get("title") ?? "").trim(),
       email: String(form.get("email") ?? "").trim() || undefined,
       bio: String(form.get("bio") ?? "").trim() || undefined,
+      imageUrl: imageUrl || undefined,
       active,
       acceptingBookings: bookable,
       offeringIds,
@@ -134,6 +171,29 @@ function MemberDialog({ member }: { member?: TeamMember }) {
                 required
                 autoFocus
               />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor={`member-image-${member?._id ?? "new"}`}>Profile Picture (Optional)</Label>
+              <div className="flex items-center gap-4">
+                <Avatar className="size-12">
+                  {imageUrl ? (
+                    <img src={imageUrl} alt="Profile" className="object-cover" />
+                  ) : (
+                    <AvatarFallback>{member ? initials(member.name) : <UserRoundPlus className="size-5" />}</AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="flex-1">
+                  <Input
+                    id={`member-image-${member?._id ?? "new"}`}
+                    type="file"
+                    accept="image/png, image/jpeg, image/webp"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    className="text-xs"
+                  />
+                  {uploadingImage && <p className="text-[10px] text-muted-foreground mt-1">Uploading...</p>}
+                </div>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor={`member-title-${member?._id ?? "new"}`}>Title or role</Label>
@@ -255,12 +315,16 @@ export function TeamScreen() {
               <CardContent className="flex h-full flex-col pt-0">
                 <div className="flex items-start gap-3">
                   <Avatar className="size-12 rounded-lg">
-                    <AvatarFallback
-                      className="rounded-lg text-sm font-semibold text-white"
-                      style={{ backgroundColor: getMemberColor(member) }}
-                    >
-                      {initials(member.name)}
-                    </AvatarFallback>
+                    {member.imageUrl ? (
+                      <img src={member.imageUrl} alt={member.name} className="object-cover rounded-lg" />
+                    ) : (
+                      <AvatarFallback
+                        className="rounded-lg text-sm font-semibold text-white"
+                        style={{ backgroundColor: getMemberColor(member) }}
+                      >
+                        {initials(member.name)}
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <h2 className="truncate font-heading text-lg font-semibold tracking-tight">
