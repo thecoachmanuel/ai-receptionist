@@ -152,7 +152,7 @@ export function SettingsScreen() {
                   <Globe2 className="size-3.5" /> Public slug
                 </span>
                 <span className="font-mono text-[10px] font-medium">
-                  /p/{publicSite?.site?.siteSlug ?? "—"}
+                  /{publicSite?.site?.siteSlug ?? "—"}
                 </span>
               </div>
             </CardContent>

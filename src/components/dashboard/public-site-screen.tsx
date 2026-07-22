@@ -147,7 +147,7 @@ function SitePreview({
         <span className="size-2 rounded-full bg-amber-400" />
         <span className="size-2 rounded-full bg-emerald-400" />
         <div className="mx-auto rounded-md bg-white/80 px-8 py-1 font-mono text-[8px] text-muted-foreground">
-          /p/{siteSlug}
+          /{siteSlug}
         </div>
         <span className="font-mono text-[7px] tracking-[0.12em] text-muted-foreground uppercase">
           {config.template}
@@ -532,7 +532,7 @@ function SiteEditor({
               <Label htmlFor="siteSlug">Public URL</Label>
               <div className="flex items-center rounded-lg border border-input bg-background focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
                 <span className="pl-2.5 font-mono text-[11px] text-muted-foreground">
-                  /p/
+                  /
                 </span>
                 <Input
                   id="siteSlug"
