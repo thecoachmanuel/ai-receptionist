@@ -94,6 +94,74 @@ function CurrencySettingsCard({ organization }: { organization: any }) {
   );
 }
 
+function TimezoneSettingsCard({ organization }: { organization: any }) {
+  const updateCurrent = useMutation(dashboardApi.organizations.updateCurrent);
+  const [timezone, setTimezone] = useState(organization?.timezone || "UTC");
+  const [saving, setSaving] = useState(false);
+
+  const timezones = [
+    { value: "UTC", label: "UTC (Universal)" },
+    { value: "Africa/Lagos", label: "Africa/Lagos (WAT)" },
+    { value: "America/New_York", label: "America/New_York (EST)" },
+    { value: "America/Los_Angeles", label: "America/Los_Angeles (PST)" },
+    { value: "Europe/London", label: "Europe/London (GMT)" },
+    { value: "Europe/Paris", label: "Europe/Paris (CET)" },
+    { value: "Asia/Dubai", label: "Asia/Dubai (GST)" },
+    { value: "Asia/Tokyo", label: "Asia/Tokyo (JST)" },
+    { value: "Australia/Sydney", label: "Australia/Sydney (AEST)" },
+  ];
+
+  async function handleTimezoneChange(newTimezone: string) {
+    setTimezone(newTimezone);
+    setSaving(true);
+    try {
+      await updateCurrent({ timezone: newTimezone });
+      toast.success(`Business timezone updated to ${newTimezone}`);
+      window.location.reload();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not update timezone");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card className="h-fit bg-white">
+      <CardHeader className="border-b border-black/8 pb-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Clock3 className="size-4 text-primary" />
+            <CardTitle className="font-heading text-xl tracking-tight">
+              Timezone
+            </CardTitle>
+          </div>
+          {saving && <LoaderCircle className="size-4 animate-spin text-primary" />}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4 pt-4">
+        <p className="text-xs leading-5 text-muted-foreground">
+          Set the operational timezone for this workspace. This affects bookings, availability schedules, and public site displays.
+        </p>
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-foreground">Active Timezone</label>
+          <Select value={timezone} onValueChange={handleTimezoneChange} disabled={saving}>
+            <SelectTrigger className="w-full bg-muted/20 font-medium text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {timezones.map((tz) => (
+                <SelectItem key={tz.value} value={tz.value}>
+                  {tz.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function SettingsScreen() {
   const { user } = useAuth();
   const { organization } = useWorkspace();
@@ -159,6 +227,7 @@ export function SettingsScreen() {
           </Card>
 
           {organization && <CurrencySettingsCard organization={organization} />}
+          {organization && <TimezoneSettingsCard organization={organization} />}
         </div>
 
         {organization ? (

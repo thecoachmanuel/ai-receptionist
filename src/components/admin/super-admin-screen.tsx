@@ -477,9 +477,7 @@ export function SuperAdminScreen() {
       <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-border/60 bg-white shadow-sm">
         {/* Logo */}
         <div className="flex h-16 shrink-0 items-center border-b border-border/40 px-5">
-          <Link href="/" className="hover:opacity-80 transition-opacity">
-            <Brand className="w-28" />
-          </Link>
+          <Brand href="/app" className="hover:opacity-80 transition-opacity" />
         </div>
 
         {/* Label */}
