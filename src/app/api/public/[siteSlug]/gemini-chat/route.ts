@@ -13,6 +13,12 @@ const USER_FRIENDLY_REPLIES: Record<string, string> = {
   default: "I'm sorry, I couldn't process that just now. Please try again in a few seconds.",
 };
 
+// Global memory cache to prevent concurrent requests from piling on the same key
+let memoryRotationIndex = -1;
+// Track keys that hit 429 to back off for 30 seconds
+const rateLimitedKeys = new Map<string, number>();
+const RATE_LIMIT_COOLDOWN_MS = 30000;
+
 /** Detect if the Gemini error is a rate/quota error */
 function isQuotaError(status: number, message: string): boolean {
   if (status === 429) return true;
@@ -93,8 +99,8 @@ async function tryGeminiKey(
 
 /**
  * Call Gemini with full key rotation + model fallback.
- * - Tries every configured API key.
- * - On model-not-found, falls back to gemini-2.0-flash then gemini-1.5-flash.
+ * - Tries every configured API key, respecting in-memory cooldowns.
+ * - On model-not-found, falls back to stable models.
  * - Never leaks internal API errors to the caller; returns a friendly string on total failure.
  */
 async function callGeminiWithRotation(
@@ -104,25 +110,33 @@ async function callGeminiWithRotation(
   contents: unknown[],
   systemInstruction: string,
 ): Promise<{ reply: string; usedKeyIndex: number; usedModel: string; fallback: boolean }> {
-  const fallbackModels = ["gemini-2.0-flash", "gemini-1.5-flash"];
-  const modelsToTry = model === "gemini-2.0-flash"
-    ? ["gemini-2.0-flash", "gemini-1.5-flash"]
-    : model === "gemini-1.5-flash"
-    ? ["gemini-1.5-flash"]
-    : [model, ...fallbackModels.filter((m) => m !== model)];
+  const fallbackModels = ["gemini-2.0-flash", "gemini-2.0-flash-lite-preview-02-05", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
+  const modelsToTry = [model, ...fallbackModels.filter((m) => m !== model)];
 
   const keyCount = allKeys.length;
   let lastError: (Error & { status?: number }) | null = null;
+  const now = Date.now();
 
   // Iterate through all keys starting from the rotation index
   for (let attempt = 0; attempt < keyCount; attempt++) {
     const keyIndex = (startIndex + attempt) % keyCount;
     const apiKey = allKeys[keyIndex];
 
+    // Skip keys that are in cooldown, unless it's our last resort
+    if (attempt < keyCount - 1 && rateLimitedKeys.has(apiKey)) {
+      if (now - rateLimitedKeys.get(apiKey)! < RATE_LIMIT_COOLDOWN_MS) {
+        continue;
+      } else {
+        rateLimitedKeys.delete(apiKey);
+      }
+    }
+
     for (let mi = 0; mi < modelsToTry.length; mi++) {
       const currentModel = modelsToTry[mi];
       try {
         const reply = await tryGeminiKey(apiKey, currentModel, contents, systemInstruction);
+        // On success, clear any cooldown for this key just in case
+        rateLimitedKeys.delete(apiKey);
         return { reply, usedKeyIndex: keyIndex, usedModel: currentModel, fallback: mi > 0 };
       } catch (err: unknown) {
         lastError = err as Error & { status?: number };
@@ -135,8 +149,9 @@ async function callGeminiWithRotation(
         }
 
         if (isQuotaError(status, message)) {
-          // This key is rate-limited — try the next key (break inner model loop)
-          break;
+          // This key is rate-limited — add to cooldown and try next key
+          rateLimitedKeys.set(apiKey, Date.now());
+          break; // break inner model loop
         }
 
         // Any other error (auth, bad request) — don't retry this key, move on
@@ -179,7 +194,7 @@ export async function POST(
     }
 
     const allKeys = settings.geminiApiKeys;
-    const model = settings.geminiModel || "gemini-2.5-flash";
+    const model = settings.geminiModel || "gemini-2.5-flash-lite";
 
     if (!allKeys.length) {
       // Graceful: no keys configured at all
@@ -191,8 +206,12 @@ export async function POST(
       });
     }
 
-    // Determine which key to start from (round-robin)
-    const startIndex = (settings.geminiCurrentIndex || 0) % allKeys.length;
+    // Initialize or advance the synchronous memory index
+    if (memoryRotationIndex === -1) {
+      memoryRotationIndex = settings.geminiCurrentIndex || 0;
+    }
+    const startIndex = memoryRotationIndex % allKeys.length;
+    memoryRotationIndex = (memoryRotationIndex + 1) % allKeys.length;
 
     const dynamicVars = createAgentDynamicVariables({
       siteSlug: published.site.siteSlug,
@@ -260,15 +279,14 @@ RULES:
       systemInstruction,
     );
 
-    // Advance rotation index for next request (fire-and-forget, don't block response)
-    const nextIndex = (usedKeyIndex + 1) % allKeys.length;
+    // Sync the successful memory index state to DB in background
     getDb()
       .then((db) =>
         db
           .collection("platformSettings")
           .updateOne(
             { key: "elevenlabs" },
-            { $set: { geminiCurrentIndex: nextIndex } },
+            { $set: { geminiCurrentIndex: memoryRotationIndex } },
             { upsert: true },
           ),
       )
@@ -279,7 +297,7 @@ RULES:
     // Final safety net — never show raw errors to the public
     console.error("Gemini chat route unhandled error", { siteSlug, error });
     return NextResponse.json(
-      { success: true, provider: "gemini", model: "gemini-2.5-flash", reply: USER_FRIENDLY_REPLIES.default },
+      { success: true, provider: "gemini", model: "gemini-2.5-flash-lite", reply: USER_FRIENDLY_REPLIES.default },
     );
   }
 }

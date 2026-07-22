@@ -155,7 +155,7 @@ export async function getElevenLabsSettings(): Promise<ElevenLabsSettings> {
   const envAgent = process.env.ELEVENLABS_DEFAULT_AGENT_ID?.trim() || "";
   const envGeminiKey =
     process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim() || "";
-  const envGeminiModel = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
+  const envGeminiModel = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash-lite";
 
   // Migrate old string geminiApiKey to array if needed
   const rawGeminiKeys: string[] = Array.isArray(doc?.geminiApiKeys)
@@ -205,7 +205,7 @@ export async function updateElevenLabsSettings(data: {
     $set.geminiApiKeys = Array.from(new Set(data.geminiApiKeys.map((k) => k.trim()).filter(Boolean)));
   }
   if (data.geminiModel !== undefined) {
-    $set.geminiModel = data.geminiModel.trim() || "gemini-2.5-flash";
+    $set.geminiModel = data.geminiModel.trim() || "gemini-2.5-flash-lite";
   }
   if (data.apiKeys !== undefined) {
     $set.apiKeys = Array.from(new Set(data.apiKeys.map((k) => k.trim()).filter(Boolean)));
@@ -252,7 +252,7 @@ export async function getRotatedElevenLabsKey(): Promise<{ apiKey: string; agent
  */
 export async function getRotatedGeminiKey(): Promise<{ apiKey: string; model: string }> {
   const settings = await getElevenLabsSettings();
-  const model = settings.geminiModel || process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
+  const model = settings.geminiModel || process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash-lite";
 
   if (!settings.geminiApiKeys.length) {
     throw new Error("No Gemini API key is configured.");

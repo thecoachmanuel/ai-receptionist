@@ -288,7 +288,7 @@ export function SuperAdminScreen() {
 
   // AI engine state
   const [activeProvider, setActiveProvider] = useState<"elevenlabs" | "gemini">("elevenlabs");
-  const [geminiModel, setGeminiModel] = useState("gemini-2.5-flash");
+  const [geminiModel, setGeminiModel] = useState("gemini-2.5-flash-lite");
   const [geminiApiKeys, setGeminiApiKeys] = useState<string[]>([]);
   const [apiKeys, setApiKeys] = useState<string[]>([]);
   const [defaultAgentId, setDefaultAgentId] = useState("");
@@ -334,7 +334,7 @@ export function SuperAdminScreen() {
             data.elevenlabs.geminiApiKeys ||
               (data.elevenlabs.geminiApiKey ? [data.elevenlabs.geminiApiKey] : []),
           );
-          setGeminiModel(data.elevenlabs.geminiModel || "gemini-2.5-flash");
+          setGeminiModel(data.elevenlabs.geminiModel || "gemini-2.5-flash-lite");
           setApiKeys(data.elevenlabs.apiKeys || []);
           setDefaultAgentId(data.elevenlabs.defaultAgentId || "");
         }
@@ -936,13 +936,13 @@ export function SuperAdminScreen() {
                           <Label htmlFor="gemini-model" className="text-xs font-semibold">Active Model</Label>
                           <Input
                             id="gemini-model"
-                            placeholder="e.g. gemini-2.5-flash"
+                            placeholder="e.g. gemini-2.5-flash-lite or gemini-2.0-flash"
                             value={geminiModel}
                             onChange={(e) => setGeminiModel(e.target.value)}
                             className="max-w-sm font-mono text-xs"
                           />
                           <p className="text-[11px] text-muted-foreground">
-                            Supports: gemini-2.5-flash · gemini-2.0-flash · gemini-1.5-flash
+                            Supports: gemini-2.5-flash-lite · gemini-2.0-flash · gemini-1.5-flash
                           </p>
                         </div>
                         <div className="space-y-1.5">
