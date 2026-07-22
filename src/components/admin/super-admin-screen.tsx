@@ -543,7 +543,7 @@ export function SuperAdminScreen() {
         </header>
 
         <main className="flex-1 px-8 py-8">
-          <div className="mx-auto max-w-5xl space-y-7">
+          <div className="max-w-5xl space-y-7">
 
             {/* ───── OVERVIEW ───── */}
             {activeTab === "overview" && (
