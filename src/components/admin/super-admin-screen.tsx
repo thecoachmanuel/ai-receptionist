@@ -293,6 +293,7 @@ export function SuperAdminScreen() {
   const [apiKeys, setApiKeys] = useState<string[]>([]);
   const [defaultAgentId, setDefaultAgentId] = useState("");
   const [showAgentId, setShowAgentId] = useState(false);
+  const [geminiVoiceGender, setGeminiVoiceGender] = useState<"female" | "male">("female");
   const [savingElevenLabs, setSavingElevenLabs] = useState(false);
 
   // Platform contact state
@@ -337,6 +338,7 @@ export function SuperAdminScreen() {
           setGeminiModel(data.elevenlabs.geminiModel || "gemini-2.5-flash-lite");
           setApiKeys(data.elevenlabs.apiKeys || []);
           setDefaultAgentId(data.elevenlabs.defaultAgentId || "");
+          setGeminiVoiceGender(data.elevenlabs.geminiVoiceGender || "female");
         }
         setPricesLoaded(true);
       })
@@ -398,6 +400,7 @@ export function SuperAdminScreen() {
           activeProvider,
           geminiApiKeys,
           geminiModel: geminiModel.trim(),
+          geminiVoiceGender,
           elevenLabsApiKeys: apiKeys,
           elevenLabsDefaultAgentId: defaultAgentId.trim(),
         }),
@@ -944,6 +947,34 @@ export function SuperAdminScreen() {
                           <p className="text-[11px] text-muted-foreground">
                             Supports: gemini-2.5-flash-lite · gemini-2.0-flash · gemini-1.5-flash
                           </p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold flex items-center gap-1.5">
+                            AI Voice Gender
+                          </Label>
+                          <p className="text-[11px] text-muted-foreground">
+                            Sets the preferred voice gender for Gemini text-to-speech across all client pages.
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={geminiVoiceGender === "female" ? "default" : "outline"}
+                              onClick={() => setGeminiVoiceGender("female")}
+                              className="gap-1.5"
+                            >
+                              ♀ Female
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={geminiVoiceGender === "male" ? "default" : "outline"}
+                              onClick={() => setGeminiVoiceGender("male")}
+                              className="gap-1.5"
+                            >
+                              ♂ Male
+                            </Button>
+                          </div>
                         </div>
                         <div className="space-y-1.5">
                           <Label className="text-xs font-semibold flex items-center gap-1.5">

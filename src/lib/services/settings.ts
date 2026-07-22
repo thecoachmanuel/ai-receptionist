@@ -23,6 +23,7 @@ export type ElevenLabsSettings = {
   geminiApiKeys: string[];
   geminiModel: string;
   geminiCurrentIndex: number;
+  geminiVoiceGender: "female" | "male";
   apiKeys: string[];
   currentIndex: number;
   defaultAgentId: string;
@@ -178,6 +179,7 @@ export async function getElevenLabsSettings(): Promise<ElevenLabsSettings> {
     geminiApiKeys: validGeminiKeys.length ? validGeminiKeys : defaultGeminiKeys,
     geminiModel: doc?.geminiModel || envGeminiModel,
     geminiCurrentIndex: doc?.geminiCurrentIndex || 0,
+    geminiVoiceGender: doc?.geminiVoiceGender || "female",
     apiKeys: validKeys.length ? validKeys : defaultKeys,
     currentIndex: doc?.currentIndex || 0,
     defaultAgentId: doc?.defaultAgentId || envAgent,
@@ -192,6 +194,7 @@ export async function updateElevenLabsSettings(data: {
   activeProvider?: AIProvider;
   geminiApiKeys?: string[];
   geminiModel?: string;
+  geminiVoiceGender?: "female" | "male";
   apiKeys?: string[];
   defaultAgentId?: string;
 }): Promise<void> {
@@ -206,6 +209,9 @@ export async function updateElevenLabsSettings(data: {
   }
   if (data.geminiModel !== undefined) {
     $set.geminiModel = data.geminiModel.trim() || "gemini-2.5-flash-lite";
+  }
+  if (data.geminiVoiceGender !== undefined) {
+    $set.geminiVoiceGender = data.geminiVoiceGender;
   }
   if (data.apiKeys !== undefined) {
     $set.apiKeys = Array.from(new Set(data.apiKeys.map((k) => k.trim()).filter(Boolean)));

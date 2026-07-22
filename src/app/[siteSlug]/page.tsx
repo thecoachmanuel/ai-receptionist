@@ -6,6 +6,7 @@ import { PublicSite } from "@/components/public-site/public-site";
 import { PublicSiteUnavailable } from "@/components/public-site/public-site-states";
 import { organizationHasFeature } from "@/lib/billing";
 import * as publicSiteService from "@/lib/services/publicSite";
+import { getElevenLabsSettings } from "@/lib/services/settings";
 
 const RESERVED_SLUGS = new Set([
   "admin",
@@ -84,9 +85,10 @@ export default async function PublicSitePage({
     notFound();
   }
 
-  const [publishedSite, agentSessionConfig] = await Promise.all([
+  const [publishedSite, agentSessionConfig, elevenLabsSettings] = await Promise.all([
     getPublishedSite(siteSlug),
     getAgentSessionConfig(siteSlug),
+    getElevenLabsSettings(),
   ]);
 
   if (!publishedSite) {
@@ -103,6 +105,7 @@ export default async function PublicSitePage({
       publishedSite={publishedSite as any}
       textAgentEnabled={agentFeatures.text}
       voiceAgentEnabled={agentFeatures.voice}
+      voiceGender={elevenLabsSettings.geminiVoiceGender}
     />
   );
 }

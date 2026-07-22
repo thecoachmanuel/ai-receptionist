@@ -206,11 +206,13 @@ export function PublicSite({
   publishedSite,
   textAgentEnabled,
   voiceAgentEnabled,
+  voiceGender = "female",
 }: {
   siteSlug: string;
   publishedSite: PublishedSite;
   textAgentEnabled: boolean;
   voiceAgentEnabled: boolean;
+  voiceGender?: "female" | "male";
 }) {
   const { organization, site, offerings, teamMembers, knowledgeItems } =
     publishedSite;
@@ -643,6 +645,7 @@ export function PublicSite({
                 teamMembers={teamMembers}
                 timezone={organization.timezone}
                 locale={organization.locale}
+                voiceGender={voiceGender}
               />
             ) : (
               <div

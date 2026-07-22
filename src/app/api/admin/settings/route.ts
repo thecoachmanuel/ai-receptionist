@@ -55,6 +55,7 @@ export async function PATCH(request: NextRequest) {
       activeProvider,
       geminiApiKeys,
       geminiModel,
+      geminiVoiceGender,
       elevenLabsApiKeys,
       elevenLabsDefaultAgentId,
       contactPhone,
@@ -106,6 +107,7 @@ export async function PATCH(request: NextRequest) {
       activeProvider !== undefined ||
       geminiApiKeys !== undefined ||
       geminiModel !== undefined ||
+      geminiVoiceGender !== undefined ||
       elevenLabsApiKeys !== undefined ||
       elevenLabsDefaultAgentId !== undefined
     ) {
@@ -113,6 +115,7 @@ export async function PATCH(request: NextRequest) {
         activeProvider,
         geminiApiKeys,
         geminiModel,
+        geminiVoiceGender,
         apiKeys: elevenLabsApiKeys,
         defaultAgentId: elevenLabsDefaultAgentId,
       });

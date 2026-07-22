@@ -71,6 +71,7 @@ type AgentLauncherProps = {
   teamMembers: PublicTeamMember[];
   timezone: string;
   locale: string;
+  voiceGender?: "female" | "male";
 };
 
 function activityTitle(kind: AgentToolActivity["kind"]) {
@@ -163,6 +164,7 @@ function AgentLauncherInner({
   teamMembers,
   timezone,
   locale,
+  voiceGender,
   timeline,
   toolActivity,
   clearTimeline,
@@ -180,6 +182,7 @@ function AgentLauncherInner({
   teamMembers: PublicTeamMember[];
   timezone: string;
   locale: string;
+  voiceGender: "female" | "male";
   timeline: ChatTimelineItem[];
   toolActivity: AgentToolActivity | null;
   clearTimeline: () => void;
@@ -229,13 +232,40 @@ function AgentLauncherInner({
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      const voices = window.speechSynthesis.getVoices();
-      const preferred = voices.find(
-        (v) => v.lang.startsWith("en") && (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Online")),
-      );
-      if (preferred) utterance.voice = preferred;
-      window.speechSynthesis.speak(utterance);
+      utterance.pitch = voiceGender === "male" ? 0.8 : 1.1;
+
+      const trySetVoice = () => {
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices.length) return; // not loaded yet
+
+        const enVoices = voices.filter((v) => v.lang.startsWith("en"));
+
+        // Gender keywords for matching
+        const femaleKeywords = ["female", "woman", "zira", "samantha", "victoria", "karen", "moira", "fiona", "google uk english female", "google us english"];
+        const maleKeywords = ["male", "man", "david", "mark", "daniel", "alex", "fred", "google uk english male"];
+        const keywords = voiceGender === "male" ? maleKeywords : femaleKeywords;
+
+        // Try gender-matched online/natural voice first
+        let chosen = enVoices.find((v) =>
+          keywords.some((kw) => v.name.toLowerCase().includes(kw)) &&
+          (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Online"))
+        );
+        // Fallback: any gender-matched voice
+        if (!chosen) chosen = enVoices.find((v) => keywords.some((kw) => v.name.toLowerCase().includes(kw)));
+        // Last resort: any english voice
+        if (!chosen) chosen = enVoices[0];
+
+        if (chosen) utterance.voice = chosen;
+        window.speechSynthesis.speak(utterance);
+      };
+
+      // Voices may not be loaded immediately — retry once after they load
+      if (window.speechSynthesis.getVoices().length > 0) {
+        trySetVoice();
+      } else {
+        window.speechSynthesis.addEventListener("voiceschanged", trySetVoice, { once: true });
+        window.speechSynthesis.speak(utterance); // speak anyway so it doesn't feel stuck
+      }
     }
   }
 
@@ -710,6 +740,7 @@ export function AgentLauncher(props: AgentLauncherProps) {
         teamMembers={props.teamMembers}
         timezone={props.timezone}
         locale={props.locale}
+        voiceGender={props.voiceGender ?? "female"}
         timeline={timeline}
         toolActivity={toolActivity}
         clearTimeline={() => {
