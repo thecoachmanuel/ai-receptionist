@@ -9,6 +9,7 @@ import {
 } from "@elevenlabs/react";
 import {
   AudioLines,
+  Bot,
   CheckCircle2,
   CircleAlert,
   LoaderCircle,
@@ -16,16 +17,17 @@ import {
   Mic,
   Send,
   ShieldCheck,
-  Bot,
+  Sparkles,
   Square,
   Wrench,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   AgentClientToolRegistrar,
   createAgentClientTools,
-  type AgentToolEvent,
   type AgentToolActivity,
+  type AgentToolEvent,
   type AgentToolName,
 } from "@/components/public-site/agent-tools";
 import type {
@@ -40,6 +42,8 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 type SessionResponse = {
+  provider?: "elevenlabs" | "gemini";
+  model?: string;
   signedUrl?: string;
   conversationToken?: string;
   dynamicVariables?: Record<string, string>;
@@ -164,6 +168,7 @@ function AgentLauncherInner({
   toolActivity,
   clearTimeline,
   addUserMessage,
+  addAgentMessage,
   onActivity,
   onToolEvent,
 }: {
@@ -180,6 +185,7 @@ function AgentLauncherInner({
   toolActivity: AgentToolActivity | null;
   clearTimeline: () => void;
   addUserMessage: (text: string) => void;
+  addAgentMessage: (text: string) => void;
   onActivity: (activity: AgentToolActivity) => void;
   onToolEvent: (event: AgentToolEvent) => void;
 }) {
@@ -187,14 +193,20 @@ function AgentLauncherInner({
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [sessionKind, setSessionKind] = useState<"text" | "voice" | null>(null);
+  const [activeProvider, setActiveProvider] = useState<"elevenlabs" | "gemini">("elevenlabs");
+  const [geminiLoading, setGeminiLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+
   const transcriptRef = useRef<HTMLDivElement>(null);
   const followLatestRef = useRef(true);
+  const recognitionRef = useRef<any>(null);
+
   const { startSession, endSession, sendUserMessage } = useConversationControls();
   const { status, message: statusMessage } = useConversationStatus();
   const { mode } = useConversationMode();
 
-  const isConnected = status === "connected";
-  const isConnecting = status === "connecting" || isRequestingSession;
+  const isConnected = activeProvider === "gemini" ? sessionKind !== null : status === "connected";
+  const isConnecting = (status === "connecting" || isRequestingSession || geminiLoading);
 
   useEffect(() => {
     const transcript = transcriptRef.current;
@@ -213,6 +225,48 @@ function AgentLauncherInner({
       48;
   }
 
+  function speakText(text: string) {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(
+        (v) => v.lang.startsWith("en") && (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Online")),
+      );
+      if (preferred) utterance.voice = preferred;
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  function startVoiceRecognition() {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        toast.error("Browser speech recognition is not supported in this browser. Please type your message.");
+        return;
+      }
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = locale || "en-US";
+
+      recognition.onstart = () => setIsListening(true);
+      recognition.onend = () => setIsListening(false);
+      recognition.onerror = () => setIsListening(false);
+      recognition.onresult = (event: any) => {
+        const transcriptText = event.results[0]?.[0]?.transcript;
+        if (transcriptText) {
+          handleSendGemini(transcriptText);
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    }
+  }
+
   const clientTools = createAgentClientTools({
     siteSlug,
     businessName,
@@ -223,6 +277,40 @@ function AgentLauncherInner({
     onActivity,
     onToolEvent,
   });
+
+  async function handleSendGemini(textToSend: string) {
+    if (!textToSend.trim() || geminiLoading) return;
+    const userMessageText = textToSend.trim();
+    addUserMessage(userMessageText);
+    setMessage("");
+    setGeminiLoading(true);
+
+    try {
+      const history = timeline
+        .filter((item): item is ChatMessage => item.kind === "message")
+        .map((m) => ({ role: m.role, content: m.text }));
+
+      const response = await fetch(`/api/public/${encodeURIComponent(siteSlug)}/gemini-chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: userMessageText, history }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.reply) {
+        throw new Error(data.error || "Gemini receptionist error.");
+      }
+
+      addAgentMessage(data.reply);
+      if (sessionKind === "voice") {
+        speakText(data.reply);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to connect to Gemini receptionist.");
+    } finally {
+      setGeminiLoading(false);
+    }
+  }
 
   async function start(kind: "text" | "voice") {
     setSessionError(null);
@@ -253,6 +341,19 @@ function AgentLauncherInner({
       }
 
       const session = payload as SessionResponse;
+
+      if (session.provider === "gemini") {
+        setActiveProvider("gemini");
+        const greeting = welcomeMessage || `Hello! I'm the front-desk AI receptionist for ${businessName}. How can I help you today?`;
+        addAgentMessage(greeting);
+        if (kind === "voice") {
+          speakText(greeting);
+        }
+        return;
+      }
+
+      // ElevenLabs provider
+      setActiveProvider("elevenlabs");
       const sharedOptions = {
         clientTools,
         dynamicVariables: {
@@ -283,21 +384,25 @@ function AgentLauncherInner({
         throw new Error("The AI concierge session could not be started.");
       }
     } catch (error) {
-      const message =
+      const msg =
         error instanceof Error
           ? error.message
           : "The AI concierge is unavailable right now.";
       setSessionError(
-        kind === "voice" && /microphone|permission|audio/i.test(message)
+        kind === "voice" && /microphone|permission|audio/i.test(msg)
           ? "Microphone access was blocked. Allow access in your browser or start a text chat instead."
-          : message,
+          : msg,
       );
+      setSessionKind(null);
     } finally {
       setIsRequestingSession(false);
     }
   }
 
   async function stop() {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
     if (timeline.length > 0) {
       const messages = timeline
         .filter((item): item is ChatMessage => item.kind === "message")
@@ -316,187 +421,147 @@ function AgentLauncherInner({
         }).catch(() => null);
       }
     }
-    await endSession();
-    setMessage("");
+    if (activeProvider === "elevenlabs") {
+      await endSession();
+    }
     setSessionKind(null);
+    setMessage("");
   }
 
-  function submitMessage(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const text = message.trim();
-    if (!text || !isConnected) return;
-    followLatestRef.current = true;
-    addUserMessage(text);
-    sendUserMessage(text);
-    setMessage("");
+  function handleSend(event?: React.FormEvent) {
+    event?.preventDefault();
+    if (!message.trim()) return;
+    if (activeProvider === "gemini") {
+      void handleSendGemini(message);
+    } else {
+      addUserMessage(message);
+      void sendUserMessage(message);
+      setMessage("");
+    }
   }
 
   return (
-    <Card
-      id="assistant"
-      className="h-full min-h-[30rem] scroll-mt-24 gap-0 overflow-hidden border-foreground/10 bg-card/95 py-0 shadow-[0_35px_100px_-45px_color-mix(in_srgb,var(--foreground)_45%,transparent)] backdrop-blur-xl sm:min-h-[36rem]"
-    >
-      <CardHeader className="relative border-b bg-primary p-5 text-primary-foreground sm:p-6">
-        <div className="absolute inset-0 opacity-15 [background-image:radial-gradient(circle_at_16%_0%,white_0,transparent_38%)]" />
-        <div className="relative flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="grid size-11 shrink-0 place-items-center rounded-full bg-primary-foreground/15 ring-1 ring-primary-foreground/20">
-              {isConnected && mode === "speaking" ? (
-                <AudioLines className="size-5 animate-pulse" aria-hidden="true" />
-              ) : (
-                <Bot className="size-5" aria-hidden="true" />
+    <Card className="border-border/80 shadow-md">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "grid size-8 place-items-center rounded-lg bg-primary/10 text-primary",
+                isConnected && "bg-emerald-500/10 text-emerald-600",
               )}
-            </div>
+            >
+              {activeProvider === "gemini" ? <Sparkles className="size-4" /> : <Bot className="size-4" />}
+            </span>
             <div>
-              <p className="text-[0.65rem] font-semibold tracking-[0.16em] text-primary-foreground/60 uppercase">
-                Available now
-              </p>
-              <CardTitle className="mt-1 text-lg text-primary-foreground">
-                {businessName} AI concierge
+              <CardTitle className="text-base font-semibold">
+                {businessName} Receptionist
               </CardTitle>
-              <p className="mt-1 text-xs leading-5 text-primary-foreground/70">
-                {textEnabled && voiceEnabled
-                  ? "Message or speak naturally—your choice."
-                  : textEnabled
-                    ? "Send a message and get help right away."
-                    : "Speak naturally using your browser microphone."}
+              <p className="text-[11px] text-muted-foreground">
+                {isConnected
+                  ? activeProvider === "gemini"
+                    ? "Online · Gemini AI Engine"
+                    : `Online · ${sessionKind === "voice" ? "Live Voice" : "Text Chat"}`
+                  : "AI Front Desk Concierge"}
               </p>
             </div>
           </div>
-          {isConnected ? (
-            <Badge className="border-primary-foreground/15 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/10">
-              {sessionKind === "voice" ? "Voice live" : "Chat live"}
-            </Badge>
-          ) : null}
+          <Badge
+            variant="outline"
+            className={cn(
+              "font-mono text-[10px]",
+              isConnected
+                ? "border-emerald-500/30 text-emerald-600 bg-emerald-50"
+                : "text-muted-foreground",
+            )}
+          >
+            {isConnected ? "Active" : "Ready"}
+          </Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-4 p-5 sm:p-6">
-        {timeline.length > 0 ? (
+      <CardContent className="space-y-4">
+        {sessionError ? (
+          <Alert variant="destructive">
+            <CircleAlert className="size-4" />
+            <AlertTitle className="text-xs font-semibold">Connection Error</AlertTitle>
+            <AlertDescription className="text-xs">{sessionError}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        {toolActivity ? (
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-800">
+            <div className="flex items-center gap-2 font-semibold">
+              <CheckCircle2 className="size-4 text-emerald-600" />
+              {activityTitle(toolActivity.kind)}
+            </div>
+            <p className="mt-1 text-xs">{toolActivity.message}</p>
+          </div>
+        ) : null}
+
+        {/* Chat Transcript Area */}
+        {isConnected || timeline.length > 0 ? (
           <div
             ref={transcriptRef}
             onScroll={handleTranscriptScroll}
-            className="h-[min(22rem,45svh)] min-h-44 shrink-0 space-y-3 overflow-y-auto overscroll-contain rounded-xl bg-muted/45 p-3 [scrollbar-gutter:stable]"
-            role="log"
-            aria-live="polite"
-            aria-relevant="additions text"
-            aria-label="Conversation transcript"
-            tabIndex={0}
+            className="flex max-h-72 min-h-48 flex-col gap-3 overflow-y-auto rounded-xl border bg-muted/20 p-3 text-xs"
           >
-            {timeline.map((item) =>
-              item.kind === "tool" ? (
-                <ToolCallItem key={item.id} item={item} />
-              ) : (
-                <div
-                  key={item.id}
-                  className={cn(
-                    "w-fit max-w-[88%] rounded-xl px-3 py-2 text-sm leading-5",
-                    item.role === "user"
-                      ? "ms-auto bg-primary text-primary-foreground"
-                      : "bg-card text-card-foreground shadow-sm ring-1 ring-foreground/8",
-                  )}
-                >
-                  {item.text}
-                </div>
-              ),
+            {timeline.length === 0 ? (
+              <p className="m-auto text-center text-xs text-muted-foreground italic">
+                {welcomeMessage}
+              </p>
+            ) : (
+              timeline.map((item) =>
+                item.kind === "tool" ? (
+                  <ToolCallItem key={item.id} item={item} />
+                ) : (
+                  <div
+                    key={item.id}
+                    className={cn(
+                      "max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed",
+                      item.role === "user"
+                        ? "ml-auto bg-primary text-primary-foreground"
+                        : "mr-auto bg-card border text-foreground shadow-sm",
+                    )}
+                  >
+                    <p className="font-semibold text-[10px] opacity-70 mb-0.5">
+                      {item.role === "user" ? "You" : businessName + " AI"}
+                    </p>
+                    {item.text}
+                  </div>
+                ),
+              )
             )}
           </div>
-        ) : (
-          <div className="flex h-[min(22rem,45svh)] min-h-44 shrink-0 flex-col justify-between rounded-xl bg-muted/60 p-5">
-            <MessageCircle className="size-5 text-primary" aria-hidden="true" />
-            <p className="mt-6 font-heading text-xl leading-7 tracking-tight">
-              {welcomeMessage ||
-                `Hi! How can I help you with ${businessName} today?`}
-            </p>
-            <p className="mt-3 text-xs leading-5 text-muted-foreground">
-              Ask about services, availability, policies, or help choosing the
-              right next step.
-            </p>
-          </div>
-        )}
-
-        {toolActivity ? (
-          <Alert className="border-primary/20 bg-primary/[0.055]">
-            <CheckCircle2 className="text-primary" />
-            <AlertTitle>{activityTitle(toolActivity.kind)}</AlertTitle>
-            <AlertDescription>
-              {toolActivity.offeringName} with {toolActivity.teamMemberName} ·{" "}
-              {toolActivity.localTime}
-              <span className="mt-1 block font-mono text-[0.7rem] font-semibold tracking-wide text-foreground">
-                {toolActivity.confirmationCode}
-              </span>
-            </AlertDescription>
-          </Alert>
         ) : null}
 
-        <div className="flex items-center justify-between gap-3">
-          <div
-            className="flex items-center gap-2 text-xs text-muted-foreground"
-            aria-live="polite"
-          >
-            <span
-              className={cn(
-                "size-2 rounded-full bg-muted-foreground/40",
-                isConnected && "bg-emerald-500",
-                isConnecting && "animate-pulse bg-amber-500",
-                status === "error" && "bg-destructive",
-              )}
-            />
-            {isConnected
-              ? sessionKind === "text"
-                ? "Secure chat connected"
-                : mode === "speaking"
-                  ? "AI concierge is speaking"
-                  : "Listening"
-              : isConnecting
-                ? "Connecting securely…"
-                : textEnabled && voiceEnabled
-                  ? "Choose text or browser audio"
-                  : textEnabled
-                    ? "Start a secure text chat"
-                    : "Start a secure browser audio chat"}
-          </div>
-          <span className="inline-flex items-center gap-1 text-[0.65rem] text-muted-foreground">
-            <ShieldCheck className="size-3.5" /> Private session
-          </span>
-        </div>
-
-        {sessionError || statusMessage ? (
-          <Alert variant="destructive">
-            <MessageCircle />
-            <AlertDescription>{sessionError || statusMessage}</AlertDescription>
-          </Alert>
-        ) : null}
-
+        {/* Action Controls */}
         {isConnected ? (
-          <form onSubmit={submitMessage} className="flex gap-2">
+          <form onSubmit={handleSend} className="flex gap-2">
             <Input
               value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              placeholder={
-                sessionKind === "voice"
-                  ? "You can also type here…"
-                  : "Type your message…"
-              }
-              aria-label="Message the AI concierge"
-              className="h-11"
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder={sessionKind === "voice" ? "Type or speak to the AI..." : "Ask questions or request booking..."}
+              className="text-xs flex-1"
+              disabled={geminiLoading}
             />
-            <Button
-              type="submit"
-              size="icon-lg"
-              disabled={!message.trim()}
-              aria-label="Send message"
-            >
-              <Send />
+            {activeProvider === "gemini" && sessionKind === "voice" && (
+              <Button
+                type="button"
+                variant={isListening ? "destructive" : "outline"}
+                size="icon"
+                onClick={startVoiceRecognition}
+                title="Speak to AI"
+              >
+                <Mic className={cn("size-4", isListening && "animate-pulse")} />
+              </Button>
+            )}
+            <Button type="submit" size="sm" disabled={!message.trim() || geminiLoading}>
+              {geminiLoading ? <LoaderCircle className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
             </Button>
           </form>
         ) : (
-          <div
-            className={cn(
-              "grid gap-2",
-              textEnabled && voiceEnabled && "sm:grid-cols-2",
-            )}
-          >
+          <div className="grid gap-2 sm:grid-cols-2">
             {textEnabled ? (
               <Button
                 type="button"
@@ -538,10 +603,9 @@ function AgentLauncherInner({
             type="button"
             variant="outline"
             onClick={() => void stop()}
-            className="h-11 w-full"
+            className="h-9 w-full text-xs text-destructive hover:bg-destructive/10"
           >
-            <Square data-icon="inline-start" />
-            End conversation
+            <Square className="size-3.5 mr-1.5" /> End conversation
           </Button>
         ) : (
           <p className="text-center text-[0.68rem] leading-4 text-muted-foreground">
@@ -644,6 +708,17 @@ export function AgentLauncher(props: AgentLauncherProps) {
               kind: "message",
               id: `user-local-${Date.now()}-${Math.random()}`,
               role: "user",
+              text,
+            },
+          ])
+        }
+        addAgentMessage={(text) =>
+          setTimeline((current) => [
+            ...current,
+            {
+              kind: "message",
+              id: `agent-local-${Date.now()}-${Math.random()}`,
+              role: "agent",
               text,
             },
           ])

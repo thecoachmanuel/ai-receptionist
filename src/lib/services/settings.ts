@@ -14,7 +14,12 @@ export type PlatformSettings = {
   updatedAt: number;
 };
 
+export type AIProvider = "elevenlabs" | "gemini";
+
 export type ElevenLabsSettings = {
+  activeProvider: AIProvider;
+  geminiApiKey: string;
+  geminiModel: string;
   apiKeys: string[];
   currentIndex: number;
   defaultAgentId: string;
@@ -119,17 +124,22 @@ export async function updatePlatformContact(phone?: string, email?: string): Pro
 }
 
 /**
- * Fetches the Super Admin ElevenLabs settings (API keys & agent ID).
+ * Fetches the Super Admin AI Provider settings (ElevenLabs & Gemini).
  */
 export async function getElevenLabsSettings(): Promise<ElevenLabsSettings> {
   const db = await getDb();
   const doc = await db.collection("platformSettings").findOne({ key: "elevenlabs" });
   const envKey = process.env.ELEVENLABS_API_KEY?.trim();
   const envAgent = process.env.ELEVENLABS_DEFAULT_AGENT_ID?.trim() || "";
+  const envGeminiKey = process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim() || "";
+  const envGeminiModel = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
   const defaultKeys = envKey ? [envKey] : [];
 
   if (!doc) {
     return {
+      activeProvider: (process.env.DEFAULT_AI_PROVIDER as AIProvider) || "elevenlabs",
+      geminiApiKey: envGeminiKey,
+      geminiModel: envGeminiModel,
       apiKeys: defaultKeys,
       currentIndex: 0,
       defaultAgentId: envAgent,
@@ -141,6 +151,9 @@ export async function getElevenLabsSettings(): Promise<ElevenLabsSettings> {
   const validKeys = Array.from(new Set([...rawKeys, ...defaultKeys])).filter(Boolean);
 
   return {
+    activeProvider: (doc.activeProvider as AIProvider) || "elevenlabs",
+    geminiApiKey: doc.geminiApiKey || envGeminiKey,
+    geminiModel: doc.geminiModel || envGeminiModel,
     apiKeys: validKeys.length ? validKeys : defaultKeys,
     currentIndex: doc.currentIndex || 0,
     defaultAgentId: doc.defaultAgentId || envAgent,
@@ -149,15 +162,27 @@ export async function getElevenLabsSettings(): Promise<ElevenLabsSettings> {
 }
 
 /**
- * Updates Super Admin ElevenLabs API Keys and default Agent ID.
+ * Updates Super Admin AI provider settings (ElevenLabs / Gemini).
  */
 export async function updateElevenLabsSettings(data: {
+  activeProvider?: AIProvider;
+  geminiApiKey?: string;
+  geminiModel?: string;
   apiKeys?: string[];
   defaultAgentId?: string;
 }): Promise<void> {
   const db = await getDb();
   const $set: Record<string, any> = { updatedAt: Date.now() };
 
+  if (data.activeProvider !== undefined) {
+    $set.activeProvider = data.activeProvider;
+  }
+  if (data.geminiApiKey !== undefined) {
+    $set.geminiApiKey = data.geminiApiKey.trim();
+  }
+  if (data.geminiModel !== undefined) {
+    $set.geminiModel = data.geminiModel.trim() || "gemini-2.5-flash";
+  }
   if (data.apiKeys !== undefined) {
     $set.apiKeys = Array.from(new Set(data.apiKeys.map((k) => k.trim()).filter(Boolean)));
   }
@@ -195,4 +220,19 @@ export async function getRotatedElevenLabsKey(): Promise<{ apiKey: string; agent
     .catch(() => null);
 
   return { apiKey, agentId };
+}
+
+/**
+ * Returns configured Gemini credentials (API key and model).
+ */
+export async function getGeminiCredentials(): Promise<{ apiKey: string; model: string }> {
+  const settings = await getElevenLabsSettings();
+  const apiKey = settings.geminiApiKey || process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim() || "";
+  const model = settings.geminiModel || process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
+
+  if (!apiKey) {
+    throw new Error("Gemini API key is not configured.");
+  }
+
+  return { apiKey, model };
 }

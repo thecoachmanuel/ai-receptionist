@@ -98,7 +98,10 @@ export function SuperAdminScreen() {
   const [savingPrices, setSavingPrices] = useState(false);
   const priceFormRef = useRef<HTMLFormElement>(null);
 
-  // ElevenLabs multi-key auto-rotation state
+  // AI Provider & Credentials state (ElevenLabs vs Gemini 2.5 Flash)
+  const [activeProvider, setActiveProvider] = useState<"elevenlabs" | "gemini">("elevenlabs");
+  const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [geminiModel, setGeminiModel] = useState("gemini-2.5-flash");
   const [apiKeys, setApiKeys] = useState<string[]>([]);
   const [newKeyInput, setNewKeyInput] = useState("");
   const [defaultAgentId, setDefaultAgentId] = useState("");
@@ -124,6 +127,9 @@ export function SuperAdminScreen() {
           setContactEmail(data.settings.contactEmail || "oneboardng@gmail.com");
         }
         if (data.elevenlabs) {
+          setActiveProvider(data.elevenlabs.activeProvider || "elevenlabs");
+          setGeminiApiKey(data.elevenlabs.geminiApiKey || "");
+          setGeminiModel(data.elevenlabs.geminiModel || "gemini-2.5-flash");
           setApiKeys(data.elevenlabs.apiKeys || []);
           setDefaultAgentId(data.elevenlabs.defaultAgentId || "");
         }
@@ -214,26 +220,194 @@ export function SuperAdminScreen() {
     toast.success("API key removed from rotation list.");
   };
 
-  const handleSaveElevenLabs = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavingElevenLabs(true);
-    try {
-      const res = await fetch("/api/admin/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          elevenLabsApiKeys: apiKeys,
-          elevenLabsDefaultAgentId: defaultAgentId.trim(),
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to save ElevenLabs settings.");
-      toast.success("ElevenLabs API keys and auto-rotation settings updated successfully!");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save ElevenLabs settings.");
-    } finally {
-      setSavingElevenLabs(false);
-    }
-  };
+      {/* AI Provider & Voice Engine Settings (ElevenLabs & Gemini 2.5 Flash) */}
+      <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Bot className="size-4 text-purple-600" />
+              AI Voice & Chat Engine Provider
+            </CardTitle>
+            <Badge variant="outline" className="border-purple-500/30 text-purple-600 font-mono text-[10px]">
+              {activeProvider === "gemini" ? `Active: Gemini (${geminiModel})` : `Active: ElevenLabs (${apiKeys.length} Keys)`}
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Switch between ElevenLabs and Google Gemini for natural humanlike TTS/STT receptionist interactions. Super Admin can manage Gemini API key, model selection, and ElevenLabs multi-key auto-rotation.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <form onSubmit={handleSaveElevenLabs} className="space-y-5">
+            {/* Active Provider Selector */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Select Active AI Provider</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveProvider("elevenlabs")}
+                  className={cn(
+                    "flex flex-col items-start p-3 rounded-lg border text-left transition-all",
+                    activeProvider === "elevenlabs"
+                      ? "border-purple-600 bg-purple-50/50 dark:bg-purple-950/20 ring-1 ring-purple-600"
+                      : "border-border hover:bg-muted/50",
+                  )}
+                >
+                  <span className="text-xs font-semibold flex items-center gap-1.5">
+                    <Bot className="size-3.5 text-purple-600" /> ElevenLabs Conversational AI
+                  </span>
+                  <span className="text-[10px] text-muted-foreground mt-1">
+                    Uses ElevenLabs voice agents with multi-key auto-rotation.
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveProvider("gemini")}
+                  className={cn(
+                    "flex flex-col items-start p-3 rounded-lg border text-left transition-all",
+                    activeProvider === "gemini"
+                      ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/20 ring-1 ring-blue-600"
+                      : "border-border hover:bg-muted/50",
+                  )}
+                >
+                  <span className="text-xs font-semibold flex items-center gap-1.5 text-blue-700">
+                    <Sparkles className="size-3.5 text-blue-600" /> Google Gemini 2.5 Flash (Free / Low Cost)
+                  </span>
+                  <span className="text-[10px] text-muted-foreground mt-1">
+                    Uses Gemini API for fast, natural human receptionist chat & voice speech.
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Gemini Configuration Section */}
+            {activeProvider === "gemini" && (
+              <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 space-y-4">
+                <div className="flex items-center gap-2 text-xs font-semibold text-blue-800">
+                  <Sparkles className="size-4 text-blue-600" />
+                  Gemini API Configuration
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="gemini-api-key" className="text-xs font-semibold">
+                    Gemini API Key
+                  </Label>
+                  <Input
+                    id="gemini-api-key"
+                    type="password"
+                    placeholder="AIzaSy..."
+                    value={geminiApiKey}
+                    onChange={(e) => setGeminiApiKey(e.target.value)}
+                    className="font-mono text-xs bg-white"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Google AI Studio API key used for receptionist responses.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="gemini-model" className="text-xs font-semibold">
+                    Gemini Model Name
+                  </Label>
+                  <Input
+                    id="gemini-model"
+                    placeholder="gemini-2.5-flash"
+                    value={geminiModel}
+                    onChange={(e) => setGeminiModel(e.target.value)}
+                    className="font-mono text-xs bg-white"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Defaults to <code className="font-semibold">gemini-2.5-flash</code> (also supports <code className="font-semibold">gemini-2.0-flash</code>, <code className="font-semibold">gemini-1.5-flash</code>).
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ElevenLabs Configuration Section */}
+            {activeProvider === "elevenlabs" && (
+              <div className="space-y-4 border-t pt-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="elevenlabs-agent-id" className="text-xs font-semibold">
+                    Default ElevenLabs Agent ID
+                  </Label>
+                  <Input
+                    id="elevenlabs-agent-id"
+                    placeholder="e.g. agent_abc123xyz..."
+                    value={defaultAgentId}
+                    onChange={(e) => setDefaultAgentId(e.target.value)}
+                    className="font-mono text-xs"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Agent ID used for voice receptionist sessions.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Active ElevenLabs API Keys List</Label>
+                  {apiKeys.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic">
+                      No API keys added yet. Add one below or rely on ELEVENLABS_API_KEY environment variable.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {apiKeys.map((key, idx) => (
+                        <div
+                          key={key + idx}
+                          className="flex items-center justify-between rounded-lg border bg-card p-2.5 text-xs font-mono"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Badge variant="secondary" className="text-[10px] font-sans">
+                              Key #{idx + 1}
+                            </Badge>
+                            <span>
+                              {key.slice(0, 8)}••••••••••••••••{key.slice(-6)}
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveApiKey(key)}
+                            className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Paste new ElevenLabs API Key (e.g. sk_...)"
+                    value={newKeyInput}
+                    onChange={(e) => setNewKeyInput(e.target.value)}
+                    className="font-mono text-xs flex-1"
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={handleAddApiKey} className="gap-1.5 shrink-0">
+                    <Plus className="size-3.5" /> Add Key
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-[11px] text-muted-foreground">
+                {activeProvider === "gemini"
+                  ? `Active Engine: Gemini ${geminiModel} for natural receptionist speech.`
+                  : apiKeys.length > 1
+                  ? "Requests will rotate round-robin across all keys automatically."
+                  : "Add 2+ keys to enable multi-key auto-rotation."}
+              </p>
+              <Button type="submit" size="sm" disabled={savingElevenLabs} className="gap-2 bg-purple-600 text-white hover:bg-purple-700">
+                <Save className="size-3.5" />
+                {savingElevenLabs ? "Saving AI Settings..." : "Save AI Settings"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
   const fetchOrganizations = async () => {
     setLoading(true);

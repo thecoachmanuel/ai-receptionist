@@ -6,7 +6,11 @@ import { createAgentDynamicVariables } from "@/lib/agent-context";
 import { organizationHasFeature } from "@/lib/billing";
 import * as agentsService from "@/lib/services/agents";
 import * as publicSiteService from "@/lib/services/publicSite";
-import { getRotatedElevenLabsKey } from "@/lib/services/settings";
+import {
+  getElevenLabsSettings,
+  getGeminiCredentials,
+  getRotatedElevenLabsKey,
+} from "@/lib/services/settings";
 
 export const runtime = "nodejs";
 
@@ -34,20 +38,10 @@ export async function POST(
     );
   }
 
-  let apiKey = "";
-  let agentId = "";
   try {
-    const credentials = await getRotatedElevenLabsKey();
-    apiKey = credentials.apiKey;
-    agentId = credentials.agentId;
-  } catch (e) {
-    return NextResponse.json(
-      { error: "The concierge is not configured." },
-      { status: 503 },
-    );
-  }
+    const aiSettings = await getElevenLabsSettings();
+    const activeProvider = aiSettings.activeProvider || "elevenlabs";
 
-  try {
     const sessionConfig = await agentsService.requestPublicSession(
       siteSlug,
       clientKey(request),
@@ -86,33 +80,48 @@ export async function POST(
       );
     }
 
-    const elevenlabs = new ElevenLabsClient({ apiKey });
+    const dynamicVariables = createAgentDynamicVariables({
+      siteSlug: published.site.siteSlug,
+      businessName:
+        (published.site as any).config?.businessName ||
+        (published.site as any).businessName ||
+        published.organization.name,
+      description:
+        (published.site as any).config?.about ||
+        (published.site as any).about ||
+        "",
+      timezone: published.organization.timezone,
+      locale: published.organization.locale,
+      currency: published.organization.currency,
+      terminology: published.organization.terminology,
+      offerings: published.offerings,
+      teamMembers: published.teamMembers,
+      knowledgeItems: published.knowledgeItems,
+    });
+
+    if (activeProvider === "gemini") {
+      const { model } = await getGeminiCredentials();
+      return NextResponse.json({
+        provider: "gemini",
+        model,
+        siteSlug: published.site.siteSlug,
+        dynamicVariables,
+      });
+    }
+
+    // Default to ElevenLabs
+    const credentials = await getRotatedElevenLabsKey();
+    const elevenlabs = new ElevenLabsClient({ apiKey: credentials.apiKey });
     const { signedUrl } =
       await elevenlabs.conversationalAi.conversations.getSignedUrl({
-        agentId,
+        agentId: credentials.agentId,
       });
 
     return NextResponse.json(
       {
+        provider: "elevenlabs",
         signedUrl,
-        dynamicVariables: createAgentDynamicVariables({
-          siteSlug: published.site.siteSlug,
-          businessName:
-            (published.site as any).config?.businessName ||
-            (published.site as any).businessName ||
-            published.organization.name,
-          description:
-            (published.site as any).config?.about ||
-            (published.site as any).about ||
-            "",
-          timezone: published.organization.timezone,
-          locale: published.organization.locale,
-          currency: published.organization.currency,
-          terminology: published.organization.terminology,
-          offerings: published.offerings,
-          teamMembers: published.teamMembers,
-          knowledgeItems: published.knowledgeItems,
-        }),
+        dynamicVariables,
       },
       {
         headers: {
@@ -123,7 +132,7 @@ export async function POST(
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     const rateLimited = message.includes("Too many concierge sessions");
-    console.error("Unable to create ElevenLabs public session", {
+    console.error("Unable to create public concierge session", {
       siteSlug,
       error,
     });
