@@ -495,7 +495,7 @@ function AgentLauncherInner({
               <CheckCircle2 className="size-4 text-emerald-600" />
               {activityTitle(toolActivity.kind)}
             </div>
-            <p className="mt-1 text-xs">{toolActivity.message}</p>
+            <p className="mt-1 text-xs">{toolActivity.status}</p>
           </div>
         ) : null}
 
