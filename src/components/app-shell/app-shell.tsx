@@ -22,6 +22,7 @@ import {
   UsersRound,
 } from "lucide-react";
 
+import { BrandIcon } from "@/components/brand";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -221,9 +222,7 @@ function ShellChrome({
             href={`/app/${orgSlug}`}
             className="group flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground shadow-[0_2px_0_rgba(0,0,0,0.16)] transition-transform group-hover:-rotate-2">
-              <Sparkles className="size-4" aria-hidden="true" />
-            </span>
+            <BrandIcon />
             <span>
               <span className="block font-heading text-[17px] leading-none font-semibold tracking-[-0.02em]">
                 Oneboard
