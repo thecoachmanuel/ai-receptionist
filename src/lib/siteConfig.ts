@@ -1,7 +1,7 @@
 import type { SiteConfig } from "@/lib/db/types";
 import { boundedInteger, optionalTrimmed, requiredTrimmed } from "./validation";
 
-function safeOptionalUrl(value: string | undefined, label: string): string | undefined {
+function safeOptionalUrl(value: unknown, label: string): string | undefined {
   const url = optionalTrimmed(value, label, 2_000);
   if (!url) return undefined;
   try {
@@ -13,7 +13,7 @@ function safeOptionalUrl(value: string | undefined, label: string): string | und
   return url;
 }
 
-function safeColor(value: string, label: string): string {
+function safeColor(value: unknown, label: string): string {
   const color = requiredTrimmed(value, label, 30);
   if (!/^#[0-9a-f]{6}$/i.test(color)) {
     throw new Error(`${label} must be a six-digit hex color.`);
@@ -22,8 +22,13 @@ function safeColor(value: string, label: string): string {
 }
 
 export function sanitizeSiteConfig(config: SiteConfig): SiteConfig {
-  if (config.socialLinks.length > 12) throw new Error("At most 12 social links are allowed.");
-  if (config.sections.length > 12) throw new Error("At most 12 page sections are allowed.");
+  if (!config) throw new Error("Site configuration is required.");
+  const socialLinks = Array.isArray(config.socialLinks) ? config.socialLinks : [];
+  const sections = Array.isArray(config.sections) ? config.sections : [];
+
+  if (socialLinks.length > 12) throw new Error("At most 12 social links are allowed.");
+  if (sections.length > 12) throw new Error("At most 12 page sections are allowed.");
+
   return {
     businessName: requiredTrimmed(config.businessName, "businessName", 120),
     headline: requiredTrimmed(config.headline, "headline", 180),
@@ -32,53 +37,53 @@ export function sanitizeSiteConfig(config: SiteConfig): SiteConfig {
     announcement: optionalTrimmed(config.announcement, "announcement", 240),
     logoUrl: safeOptionalUrl(config.logoUrl, "logoUrl"),
     heroImageUrl: safeOptionalUrl(config.heroImageUrl, "heroImageUrl"),
-    template: config.template,
+    template: config.template || "modern",
     theme: {
-      accentColor: safeColor(config.theme.accentColor, "theme.accentColor"),
-      backgroundColor: safeColor(config.theme.backgroundColor, "theme.backgroundColor"),
-      foregroundColor: safeColor(config.theme.foregroundColor, "theme.foregroundColor"),
-      mutedColor: safeColor(config.theme.mutedColor, "theme.mutedColor"),
-      radius: config.theme.radius,
-      font: config.theme.font,
+      accentColor: safeColor(config.theme?.accentColor, "theme.accentColor"),
+      backgroundColor: safeColor(config.theme?.backgroundColor, "theme.backgroundColor"),
+      foregroundColor: safeColor(config.theme?.foregroundColor, "theme.foregroundColor"),
+      mutedColor: safeColor(config.theme?.mutedColor, "theme.mutedColor"),
+      radius: config.theme?.radius ?? 8,
+      font: config.theme?.font ?? "inter",
     },
     contact: {
-      email: optionalTrimmed(config.contact.email, "contact.email", 320),
-      phone: optionalTrimmed(config.contact.phone, "contact.phone", 40),
-      address: optionalTrimmed(config.contact.address, "contact.address", 500),
-      mapUrl: safeOptionalUrl(config.contact.mapUrl, "contact.mapUrl"),
+      email: optionalTrimmed(config.contact?.email, "contact.email", 320),
+      phone: optionalTrimmed(config.contact?.phone, "contact.phone", 40),
+      address: optionalTrimmed(config.contact?.address, "contact.address", 500),
+      mapUrl: safeOptionalUrl(config.contact?.mapUrl, "contact.mapUrl"),
     },
-    socialLinks: config.socialLinks.map((link, index) => ({
-      label: requiredTrimmed(link.label, `socialLinks[${index}].label`, 40),
-      url: safeOptionalUrl(link.url, `socialLinks[${index}].url`)!,
+    socialLinks: socialLinks.map((link, index) => ({
+      label: requiredTrimmed(link?.label, `socialLinks[${index}].label`, 40),
+      url: safeOptionalUrl(link?.url, `socialLinks[${index}].url`) || "",
     })),
-    sections: [...new Set(config.sections)],
+    sections: [...new Set(sections)],
     booking: {
-      enabled: config.booking.enabled,
+      enabled: config.booking?.enabled ?? true,
       slotIntervalMinutes: boundedInteger(
-        config.booking.slotIntervalMinutes,
+        config.booking?.slotIntervalMinutes ?? 30,
         "booking.slotIntervalMinutes",
         5,
         240,
       ),
       minimumNoticeMinutes: boundedInteger(
-        config.booking.minimumNoticeMinutes,
+        config.booking?.minimumNoticeMinutes ?? 60,
         "booking.minimumNoticeMinutes",
         0,
         43_200,
       ),
       maximumAdvanceDays: boundedInteger(
-        config.booking.maximumAdvanceDays,
+        config.booking?.maximumAdvanceDays ?? 60,
         "booking.maximumAdvanceDays",
         1,
         730,
       ),
     },
     agent: {
-      showWebChat: config.agent.showWebChat,
-      showVoiceChat: config.agent.showVoiceChat,
-      showElevenLabsWidget: config.agent.showElevenLabsWidget,
+      showWebChat: config.agent?.showWebChat ?? true,
+      showVoiceChat: config.agent?.showVoiceChat ?? true,
+      showElevenLabsWidget: config.agent?.showElevenLabsWidget ?? false,
       welcomeMessage: requiredTrimmed(
-        config.agent.welcomeMessage,
+        config.agent?.welcomeMessage,
         "agent.welcomeMessage",
         500,
       ),

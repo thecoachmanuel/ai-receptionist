@@ -1,4 +1,11 @@
-export function requiredTrimmed(value: string, label: string, max = 200): string {
+export function requiredTrimmed(
+  value: unknown,
+  label: string,
+  max = 200,
+): string {
+  if (value === null || value === undefined || typeof value !== "string") {
+    throw new Error(`${label} is required.`);
+  }
   const result = value.trim();
   if (!result) throw new Error(`${label} is required.`);
   if (result.length > max) throw new Error(`${label} must be ${max} characters or fewer.`);
@@ -6,11 +13,12 @@ export function requiredTrimmed(value: string, label: string, max = 200): string
 }
 
 export function optionalTrimmed(
-  value: string | undefined,
+  value: unknown,
   label: string,
   max = 500,
 ): string | undefined {
-  if (value === undefined) return undefined;
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "string") return undefined;
   const result = value.trim();
   if (!result) return undefined;
   if (result.length > max) throw new Error(`${label} must be ${max} characters or fewer.`);
