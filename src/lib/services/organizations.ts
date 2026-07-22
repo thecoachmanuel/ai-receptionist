@@ -5,7 +5,7 @@ import { DEFAULT_TERMINOLOGY, defaultSiteConfig, slugify } from "@/lib/defaults"
 import { assertIanaTimezone } from "@/lib/time";
 import { optionalTrimmed, requiredTrimmed } from "@/lib/validation";
 
-export async function viewOrganization(org: DbOrganization, role?: string) {
+export async function viewOrganization(org: DbOrganization, role: string = "admin") {
   return {
     _id: org._id?.toString() || org.clerkOrgId,
     clerkOrgId: org.clerkOrgId,
@@ -17,7 +17,7 @@ export async function viewOrganization(org: DbOrganization, role?: string) {
     terminology: org.terminology,
     plan: org.plan || "free_org",
     planStatus: org.planStatus || "active",
-    role,
+    role: role || "admin",
     createdAt: org.createdAt,
     updatedAt: org.updatedAt,
   };

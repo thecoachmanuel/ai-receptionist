@@ -84,9 +84,9 @@ export async function POST(
 
     switch (endpoint) {
       case "organizations/current": {
-        return NextResponse.json(
-          await organizationsService.getOrganizationByIdOrSlug(orgId),
-        );
+        const org = await organizationsService.getOrganizationByIdOrSlug(orgId);
+        if (!org) return NextResponse.json(null);
+        return NextResponse.json(await organizationsService.viewOrganization(org, session.role || "admin"));
       }
       case "organizations/listUserOrganizations": {
         const orgs = await organizationsService.listUserOrganizations(session.user.id);

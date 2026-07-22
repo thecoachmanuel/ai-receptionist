@@ -207,8 +207,7 @@ export function WorkspaceLanguageEditor({
     ...organization.terminology,
   }));
   const [saving, setSaving] = useState(false);
-  const canEdit =
-    organization.role === "admin" || organization.role === "owner";
+  const canEdit = !organization.role || organization.role !== "viewer";
   const normalizedDraft = useMemo(
     () => normalizedTerminology(draft),
     [draft],
@@ -258,6 +257,7 @@ export function WorkspaceLanguageEditor({
         setBaseline({ ...updated.terminology });
       }
       toast.success("Workspace language updated");
+      window.location.reload();
     } catch (error) {
       toast.error(
         error instanceof Error
