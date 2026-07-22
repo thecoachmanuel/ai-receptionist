@@ -400,9 +400,17 @@ function AgentLauncherInner({
   }
 
   async function stop() {
+    // Stop any in-flight TTS/STT
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch { /* ignore */ }
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+
+    // Log the transcript before clearing it
     if (timeline.length > 0) {
       const messages = timeline
         .filter((item): item is ChatMessage => item.kind === "message")
@@ -421,11 +429,19 @@ function AgentLauncherInner({
         }).catch(() => null);
       }
     }
+
+    // Tear down the ElevenLabs WebSocket session if active
     if (activeProvider === "elevenlabs") {
       await endSession();
     }
+
+    // Reset all session state so the client sees a clean slate
     setSessionKind(null);
     setMessage("");
+    setGeminiLoading(false);
+    clearTimeline();         // ← clears chat history + toolActivity
+    setSessionError(null);  // ← dismiss any previous error banners
+    followLatestRef.current = true;
   }
 
   function handleSend(event?: React.FormEvent) {
