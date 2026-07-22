@@ -476,8 +476,6 @@ export function SuperAdminScreen() {
   const totalConversations = organizations.reduce((s, o) => s + o.stats.conversationsCount, 0);
   const totalOfferings = organizations.reduce((s, o) => s + o.stats.offeringsCount, 0);
 
-  const totalOfferings = organizations.reduce((s, o) => s + o.stats.offeringsCount, 0);
-
   const SidebarNav = () => (
     <>
       {/* Logo */}
