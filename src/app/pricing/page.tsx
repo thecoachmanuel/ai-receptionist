@@ -14,14 +14,17 @@ export default async function PricingPage() {
   ]);
   const userId = session?.user.id;
 
+  const corePrice = settings.planPrices.core;
   const engagePrice = settings.planPrices.engage;
   const voicePrice = settings.planPrices.voice;
   const rate = settings.usdToNgnRate;
+  const isNgn = settings.baseCurrency === "NGN";
+  const sym = isNgn ? "₦" : "$";
 
   const publicPlans = [
     {
       name: "Core",
-      price: "$0",
+      price: `${sym}${corePrice}`,
       ngnNote: null,
       description: "Bookings, operations, and a custom public page.",
       features: [
@@ -32,16 +35,16 @@ export default async function PricingPage() {
     },
     {
       name: "Engage",
-      price: `$${engagePrice}`,
-      ngnNote: `≈ ₦${(engagePrice * rate).toLocaleString()} NGN`,
+      price: `${sym}${engagePrice}`,
+      ngnNote: !isNgn ? `≈ ₦${(engagePrice * rate).toLocaleString()} NGN` : null,
       description: "Add an ElevenLabs agent to every client page.",
       features: ["Everything in Core", "Web text agent", "Conversation history"],
       featured: true,
     },
     {
       name: "Voice",
-      price: `$${voicePrice}`,
-      ngnNote: `≈ ₦${(voicePrice * rate).toLocaleString()} NGN`,
+      price: `${sym}${voicePrice}`,
+      ngnNote: !isNgn ? `≈ ₦${(voicePrice * rate).toLocaleString()} NGN` : null,
       description:
         "Let clients speak with your agent directly in the browser.",
       features: [
@@ -127,8 +130,8 @@ export default async function PricingPage() {
         </div>
         <p className="mt-5 text-center text-xs text-muted-foreground">
           Create your organization first, then manage its plan securely inside
-          your workspace billing page. Payments are processed via Paystack in NGN
-          at $1 = ₦{rate.toLocaleString()} NGN.
+          your workspace billing page. Payments are processed via Paystack in NGN.
+          {!isNgn && ` Conversion at $1 = ₦${rate.toLocaleString()} NGN.`}
         </p>
       </section>
     </main>

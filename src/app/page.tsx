@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { UserButton } from "@/components/auth/user-button";
 import { getSession } from "@/lib/auth/session";
+import { getPlatformSettings } from "@/lib/services/settings";
 import { Brand } from "@/components/brand";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,27 +44,7 @@ const moments = [
   },
 ];
 
-const plans = [
-  {
-    name: "Core",
-    price: "$0",
-    copy: "The operational home for a new organization.",
-    features: ["Bookings and availability", "Offerings and team", "Custom public page"],
-  },
-  {
-    name: "Engage",
-    price: "$49",
-    copy: "Give every visitor an AI concierge on the web.",
-    features: ["Everything in Core", "ElevenLabs web agent", "Conversation history"],
-    featured: true,
-  },
-  {
-    name: "Voice",
-    price: "$149",
-    copy: "Let clients speak with your AI front desk from any browser.",
-    features: ["Everything in Engage", "Live browser audio", "Advanced analytics"],
-  },
-];
+// Moved dynamic plans creation into Home component
 
 function MarketingNav({ signedIn }: { signedIn: boolean }) {
   return (
@@ -113,8 +94,31 @@ function MarketingNav({ signedIn }: { signedIn: boolean }) {
 }
 
 export default async function Home() {
-  const session = await getSession();
+  const [session, settings] = await Promise.all([getSession(), getPlatformSettings()]);
   const userId = session?.user.id;
+
+  const symbol = settings.baseCurrency === "NGN" ? "₦" : "$";
+  const plans = [
+    {
+      name: "Core",
+      price: `${symbol}${settings.planPrices.core}`,
+      copy: "The operational home for a new organization.",
+      features: ["Bookings and availability", "Offerings and team", "Custom public page"],
+    },
+    {
+      name: "Engage",
+      price: `${symbol}${settings.planPrices.engage}`,
+      copy: "Give every visitor an AI concierge on the web.",
+      features: ["Everything in Core", "ElevenLabs web agent", "Conversation history"],
+      featured: true,
+    },
+    {
+      name: "Voice",
+      price: `${symbol}${settings.planPrices.voice}`,
+      copy: "Let clients speak with your AI front desk from any browser.",
+      features: ["Everything in Engage", "Live browser audio", "Advanced analytics"],
+    },
+  ];
 
   return (
     <main className="overflow-hidden bg-background">

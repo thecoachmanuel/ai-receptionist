@@ -7,6 +7,7 @@ export type PlanPrices = {
 };
 
 export type PlatformSettings = {
+  baseCurrency: "USD" | "NGN";
   planPrices: PlanPrices;
   usdToNgnRate: number;
   contactPhone: string;
@@ -29,6 +30,7 @@ export type ElevenLabsSettings = {
 };
 
 const DEFAULTS: PlatformSettings = {
+  baseCurrency: "USD",
   planPrices: { core: 0, engage: 49, voice: 149 },
   usdToNgnRate: 1500,
   contactPhone: "+2348168882014",
@@ -55,6 +57,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
   }
 
   return {
+    baseCurrency: doc.baseCurrency ?? DEFAULTS.baseCurrency,
     planPrices: {
       core: doc.planPrices?.core ?? DEFAULTS.planPrices.core,
       engage: doc.planPrices?.engage ?? DEFAULTS.planPrices.engage,
@@ -102,6 +105,18 @@ export async function updateExchangeRate(rate: number): Promise<void> {
   await db.collection("platformSettings").updateOne(
     { key: "platform" },
     { $set: { usdToNgnRate: Math.round(rate), updatedAt: Date.now() } },
+    { upsert: true },
+  );
+}
+
+/**
+ * Updates the platform base currency convention.
+ */
+export async function updateBaseCurrency(currency: "USD" | "NGN"): Promise<void> {
+  const db = await getDb();
+  await db.collection("platformSettings").updateOne(
+    { key: "platform" },
+    { $set: { baseCurrency: currency, updatedAt: Date.now() } },
     { upsert: true },
   );
 }

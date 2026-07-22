@@ -281,6 +281,7 @@ export function SuperAdminScreen() {
 
   // Pricing state
   const [prices, setPrices] = useState<PlatformPrices>({ core: 0, engage: 49, voice: 149, usdToNgnRate: 1500 });
+  const [baseCurrency, setBaseCurrency] = useState<"USD" | "NGN">("USD");
   const [pricesLoaded, setPricesLoaded] = useState(false);
   const [savingPrices, setSavingPrices] = useState(false);
   const priceFormRef = useRef<HTMLFormElement>(null);
@@ -322,6 +323,7 @@ export function SuperAdminScreen() {
             voice: data.settings.planPrices?.voice ?? 149,
             usdToNgnRate: data.settings.usdToNgnRate ?? 1500,
           });
+          setBaseCurrency(data.settings.baseCurrency || "USD");
           setContactPhone(data.settings.contactPhone || "+2348168882014");
           setContactEmail(data.settings.contactEmail || "oneboardng@gmail.com");
           setClientPageUrl(data.settings.clientPageUrl || "");
@@ -375,7 +377,7 @@ export function SuperAdminScreen() {
       await fetch("/api/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usdToNgnRate: prices.usdToNgnRate }),
+        body: JSON.stringify({ usdToNgnRate: prices.usdToNgnRate, baseCurrency }),
       });
       toast.success("Pricing configuration saved.");
     } catch (err) {
@@ -790,7 +792,7 @@ export function SuperAdminScreen() {
                             {label} Tier
                           </Label>
                           <div className="mt-2 flex items-center gap-1">
-                            <span className="text-lg font-bold text-muted-foreground">$</span>
+                            <span className="text-lg font-bold text-muted-foreground">{baseCurrency === "NGN" ? "₦" : "$"}</span>
                             <Input
                               id={`price-${key}`}
                               type="number"
@@ -805,6 +807,27 @@ export function SuperAdminScreen() {
                           <p className="mt-1 text-[11px] text-muted-foreground">{sub}</p>
                         </div>
                       ))}
+                    </div>
+
+                    {/* Base Currency */}
+                    <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+                      <Label htmlFor="base-currency" className="text-xs font-bold text-primary">
+                        Platform Pricing Currency
+                      </Label>
+                      <div className="mt-2">
+                        <Select value={baseCurrency} onValueChange={(val: any) => setBaseCurrency(val)}>
+                          <SelectTrigger id="base-currency" className="w-36 text-sm bg-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="USD">USD ($)</SelectItem>
+                            <SelectItem value="NGN">NGN (₦)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <p className="mt-1.5 text-[11px] text-muted-foreground">
+                        The primary currency convention used across the platform and marketing pages.
+                      </p>
                     </div>
 
                     {/* Exchange rate */}

@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import {
   getElevenLabsSettings,
   getPlatformSettings,
+  updateBaseCurrency,
   updateElevenLabsSettings,
   updateExchangeRate,
   updatePlanPrice,
@@ -59,7 +60,15 @@ export async function PATCH(request: NextRequest) {
       contactPhone,
       contactEmail,
       clientPageUrl,
+      baseCurrency,
     } = body;
+
+    if (baseCurrency !== undefined) {
+      if (baseCurrency !== "USD" && baseCurrency !== "NGN") {
+        return NextResponse.json({ error: "baseCurrency must be USD or NGN." }, { status: 400 });
+      }
+      await updateBaseCurrency(baseCurrency);
+    }
 
     if (usdToNgnRate !== undefined) {
       const rate = Number(usdToNgnRate);
