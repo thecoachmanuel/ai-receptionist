@@ -151,7 +151,7 @@ export default async function Home() {
             <div className="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t pt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
               <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> Start free</span>
               <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> No card required</span>
-              <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> Built on Clerk + ElevenLabs</span>
+              <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> Built on ElevenLabs</span>
             </div>
           </div>
 
