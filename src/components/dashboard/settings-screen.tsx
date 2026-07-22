@@ -94,6 +94,65 @@ function CurrencySettingsCard({ organization }: { organization: any }) {
   );
 }
 
+function NameSettingsCard({ organization }: { organization: any }) {
+  const updateCurrent = useMutation(dashboardApi.organizations.updateCurrent);
+  const [name, setName] = useState(organization?.name || "");
+  const [saving, setSaving] = useState(false);
+
+  async function handleNameChange(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    
+    setSaving(true);
+    try {
+      await updateCurrent({ name: name.trim() });
+      toast.success("Workspace name updated successfully");
+      window.location.reload();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not update name");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card className="h-fit bg-white">
+      <CardHeader className="border-b border-black/8 pb-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Building2 className="size-4 text-primary" />
+            <CardTitle className="font-heading text-xl tracking-tight">
+              Organization profile
+            </CardTitle>
+          </div>
+          {saving && <LoaderCircle className="size-4 animate-spin text-primary" />}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-4">
+        <form onSubmit={handleNameChange} className="space-y-4">
+          <p className="text-xs leading-5 text-muted-foreground">
+            The name of your workspace as it appears to team members and in your admin dashboard.
+          </p>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-foreground">Workspace Name</label>
+            <div className="flex gap-2">
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={saving}
+                className="text-xs h-9 bg-muted/20"
+              />
+              <Button type="submit" size="sm" disabled={saving || name.trim() === organization?.name}>
+                Save
+              </Button>
+            </div>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
 function TimezoneSettingsCard({ organization }: { organization: any }) {
   const updateCurrent = useMutation(dashboardApi.organizations.updateCurrent);
   const [timezone, setTimezone] = useState(organization?.timezone || "UTC");
@@ -181,40 +240,7 @@ export function SettingsScreen() {
       <section className="grid gap-6 xl:grid-cols-[minmax(18rem,0.65fr)_minmax(0,1.35fr)]">
         <div className="space-y-6">
           <Card className="h-fit bg-white">
-            <CardHeader className="border-b border-black/8 pb-4">
-              <div className="flex items-center gap-2">
-                <Building2 className="size-4 text-primary" />
-                <CardTitle className="font-heading text-xl tracking-tight">
-                  Organization profile
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-start justify-between gap-4">
-                <span className="text-xs text-muted-foreground">Name</span>
-                <span className="text-right text-xs font-medium">
-                  {organization?.name ?? "—"}
-                </span>
-              </div>
-              <Separator />
-              <div className="flex items-start justify-between gap-4">
-                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Clock3 className="size-3.5" /> Timezone
-                </span>
-                <span className="max-w-44 text-right font-mono text-[10px] font-medium">
-                  {organization?.timezone ?? "Not configured"}
-                </span>
-              </div>
-              <Separator />
-              <div className="flex items-start justify-between gap-4">
-                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Languages className="size-3.5" /> Locale & Currency
-                </span>
-                <span className="font-mono text-[10px] font-medium">
-                  {organization?.locale ?? "—"} · {organization?.currency ?? "—"}
-                </span>
-              </div>
-              <Separator />
+            <CardContent className="space-y-3 pt-4">
               <div className="flex items-start justify-between gap-4">
                 <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Globe2 className="size-3.5" /> Public slug
@@ -226,6 +252,7 @@ export function SettingsScreen() {
             </CardContent>
           </Card>
 
+          {organization && <NameSettingsCard organization={organization} />}
           {organization && <CurrencySettingsCard organization={organization} />}
           {organization && <TimezoneSettingsCard organization={organization} />}
         </div>
