@@ -1,12 +1,11 @@
 import { createHash } from "node:crypto";
-import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { NextRequest, NextResponse } from "next/server";
 
 import { createAgentDynamicVariables } from "@/lib/agent-context";
 import { organizationHasFeature } from "@/lib/billing";
 import * as agentsService from "@/lib/services/agents";
 import * as publicSiteService from "@/lib/services/publicSite";
-import { getRotatedElevenLabsKey } from "@/lib/services/settings";
+import { getWorkingElevenLabsSignedUrl } from "@/lib/services/settings";
 
 export const runtime = "nodejs";
 
@@ -31,19 +30,6 @@ export async function POST(
     return NextResponse.json(
       { error: "Choose text chat, browser audio, or the ElevenLabs widget." },
       { status: 400 },
-    );
-  }
-
-  let apiKey = "";
-  let agentId = "";
-  try {
-    const credentials = await getRotatedElevenLabsKey();
-    apiKey = credentials.apiKey;
-    agentId = credentials.agentId;
-  } catch (e) {
-    return NextResponse.json(
-      { error: "The concierge is not configured." },
-      { status: 503 },
     );
   }
 
@@ -86,11 +72,7 @@ export async function POST(
       );
     }
 
-    const elevenlabs = new ElevenLabsClient({ apiKey });
-    const { signedUrl } =
-      await elevenlabs.conversationalAi.conversations.getSignedUrl({
-        agentId,
-      });
+    const { signedUrl } = await getWorkingElevenLabsSignedUrl();
 
     return NextResponse.json(
       {

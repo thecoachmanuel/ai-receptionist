@@ -1,4 +1,3 @@
-import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { organizationHasFeature } from "@/lib/billing";
@@ -9,7 +8,7 @@ import * as publicSiteService from "@/lib/services/publicSite";
 import * as catalogService from "@/lib/services/catalog";
 import * as knowledgeService from "@/lib/services/knowledge";
 import * as teamService from "@/lib/services/team";
-import { getRotatedElevenLabsKey } from "@/lib/services/settings";
+import { getWorkingElevenLabsSignedUrl } from "@/lib/services/settings";
 
 export const runtime = "nodejs";
 
@@ -40,19 +39,6 @@ export async function POST() {
     );
   }
 
-  let apiKey = "";
-  let agentId = "";
-  try {
-    const credentials = await getRotatedElevenLabsKey();
-    apiKey = credentials.apiKey;
-    agentId = credentials.agentId;
-  } catch (e) {
-    return NextResponse.json(
-      { error: "The agent test is not configured." },
-      { status: 503 },
-    );
-  }
-
   try {
     const [organization, agent, site, offerings, knowledgeItems, teamMembers] =
       await Promise.all([
@@ -71,11 +57,7 @@ export async function POST() {
       );
     }
 
-    const elevenlabs = new ElevenLabsClient({ apiKey });
-    const { signedUrl } =
-      await elevenlabs.conversationalAi.conversations.getSignedUrl({
-        agentId,
-      });
+    const { signedUrl } = await getWorkingElevenLabsSignedUrl();
 
     return NextResponse.json(
       {
@@ -98,7 +80,7 @@ export async function POST() {
   } catch (error) {
     console.error("Unable to start authenticated ElevenLabs agent test", error);
     return NextResponse.json(
-      { error: "The agent test is unavailable right now." },
+      { error: error instanceof Error ? error.message : "The agent test is unavailable right now." },
       { status: 500 },
     );
   }

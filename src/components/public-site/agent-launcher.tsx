@@ -232,6 +232,17 @@ function AgentLauncherInner({
     clearTimeline();
 
     try {
+      if (kind === "voice") {
+        try {
+          if (typeof window !== "undefined" && navigator.mediaDevices?.getUserMedia) {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach((track) => track.stop());
+          }
+        } catch (micErr) {
+          throw new Error("Microphone permission was denied. Please allow microphone access in your browser to speak with the AI.");
+        }
+      }
+
       const response = await fetch(
         `/api/public/${encodeURIComponent(siteSlug)}/agent-session`,
         {
@@ -574,6 +585,9 @@ export function AgentLauncher(props: AgentLauncherProps) {
 
   return (
     <ConversationProvider
+      onError={(error) => {
+        console.error("ElevenLabs Conversation Provider error:", error);
+      }}
       onMessage={({ message, role, event_id }) => {
         const text = message.trim();
         if (!text) return;

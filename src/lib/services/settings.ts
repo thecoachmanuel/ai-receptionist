@@ -1,3 +1,4 @@
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { getDb } from "@/lib/db/mongodb";
 
 export type PlanPrices = {
@@ -173,26 +174,47 @@ export async function updateElevenLabsSettings(data: {
 }
 
 /**
- * Returns an active ElevenLabs API key using auto-rotation.
- * Rotates round-robin across configured keys to prevent credit exhaustion.
+ * Generates a signed session URL with automatic failover across all configured ElevenLabs API keys.
+ * If one key fails (e.g. quota exhausted or invalid), it automatically tries the next key in rotation.
  */
-export async function getRotatedElevenLabsKey(): Promise<{ apiKey: string; agentId: string }> {
+export async function getWorkingElevenLabsSignedUrl(): Promise<{ signedUrl: string; apiKey: string; agentId: string }> {
   const settings = await getElevenLabsSettings();
   if (!settings.apiKeys.length) {
-    throw new Error("No ElevenLabs API key is configured.");
+    throw new Error("No ElevenLabs API key configured. Please set an API key in Super Admin settings.");
   }
 
-  const index = settings.currentIndex % settings.apiKeys.length;
-  const apiKey = settings.apiKeys[index];
   const agentId = settings.defaultAgentId || process.env.ELEVENLABS_DEFAULT_AGENT_ID?.trim() || "";
+  if (!agentId) {
+    throw new Error("No ElevenLabs Agent ID configured. Please set an Agent ID in Super Admin settings.");
+  }
 
-  // Advance rotation index atomically
-  const nextIndex = (index + 1) % settings.apiKeys.length;
-  const db = await getDb();
-  await db
-    .collection("platformSettings")
-    .updateOne({ key: "elevenlabs" }, { $set: { currentIndex: nextIndex } }, { upsert: true })
-    .catch(() => null);
+  let lastError: Error | null = null;
+  const totalKeys = settings.apiKeys.length;
+  const startIndex = settings.currentIndex % totalKeys;
 
-  return { apiKey, agentId };
+  // Try every configured API key starting from current rotation index
+  for (let attempt = 0; attempt < totalKeys; attempt++) {
+    const keyIndex = (startIndex + attempt) % totalKeys;
+    const apiKey = settings.apiKeys[keyIndex];
+
+    try {
+      const elevenlabs = new ElevenLabsClient({ apiKey });
+      const { signedUrl } = await elevenlabs.conversationalAi.conversations.getSignedUrl({ agentId });
+
+      // Save next index for round-robin rotation
+      const nextIndex = (keyIndex + 1) % totalKeys;
+      const db = await getDb();
+      await db
+        .collection("platformSettings")
+        .updateOne({ key: "elevenlabs" }, { $set: { currentIndex: nextIndex } }, { upsert: true })
+        .catch(() => null);
+
+      return { signedUrl, apiKey, agentId };
+    } catch (err) {
+      console.warn(`ElevenLabs API key #${keyIndex + 1} failed, attempting next key in rotation...`, err);
+      lastError = err instanceof Error ? err : new Error("Failed to get ElevenLabs signed URL");
+    }
+  }
+
+  throw lastError || new Error("All configured ElevenLabs API keys failed or exhausted free credits.");
 }
