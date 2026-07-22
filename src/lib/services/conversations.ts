@@ -25,6 +25,8 @@ export async function listRecentConversations(orgId: string, limit = 20) {
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
   }));
+}
+
 export async function logConversation(
   orgId: string,
   data: {
