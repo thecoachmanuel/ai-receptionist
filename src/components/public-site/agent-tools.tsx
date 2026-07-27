@@ -81,6 +81,7 @@ function normalizedName(value: string) {
   return value
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b(dr|doc|doctor|mr|mrs|ms)\b/gi, "")
     .replace(/[^a-z\d]+/gi, " ")
     .trim()
     .toLowerCase();
@@ -91,6 +92,9 @@ function resolveByName<T extends { name: string }>(
   rawName: unknown,
   label: string,
 ) {
+  if (!items || items.length === 0) {
+    throw new Error(`No ${label.replaceAll("_", " ")}s registered.`);
+  }
   if (!rawName || (typeof rawName === "string" && !rawName.trim())) {
     if (items.length === 1) return items[0];
     const choices = items.map((item: any) => item.name).join(", ");
@@ -98,23 +102,40 @@ function resolveByName<T extends { name: string }>(
   }
   const name = typeof rawName === "string" ? rawName.trim() : String(rawName).trim();
   const normalized = normalizedName(name);
+
+  // 1. Exact match
   const exact = items.find((item: any) => normalizedName(item.name) === normalized);
   if (exact) return exact;
 
+  // 2. Substring / inclusion match
   const partial = items.filter((item: any) => {
     const candidate = normalizedName(item.name);
     return candidate.includes(normalized) || normalized.includes(candidate);
   });
   if (partial.length === 1) return partial[0];
 
+  // 3. Phonetic / word token overlap match for spoken mispronunciations
+  const inputWords = normalized.split(/\s+/).filter(Boolean);
+  const scored = items.map((item: any) => {
+    const candWords = normalizedName(item.name).split(/\s+/).filter(Boolean);
+    let overlap = 0;
+    for (const w of inputWords) {
+      if (candWords.some((cw) => cw.includes(w) || w.includes(cw))) {
+        overlap++;
+      }
+    }
+    return { item, overlap };
+  }).filter((s) => s.overlap > 0);
+
+  scored.sort((a, b) => b.overlap - a.overlap);
+  if (scored.length > 0) {
+    return scored[0].item;
+  }
+
+  if (items.length === 1) return items[0];
+
   const choices = items.map((item: any) => item.name).join(", ");
-  throw new Error(
-    partial.length > 1
-      ? `${label} is ambiguous. Ask the customer to choose from: ${partial
-          .map((item: any) => item.name)
-          .join(", ")}.`
-      : `${label} was not found. Available choices: ${choices || "none"}.`,
-  );
+  throw new Error(`${label} was not found. Available choices: ${choices || "none"}.`);
 }
 
 function formatLocalTime(timestamp: number, locale: string, timezone: string) {
@@ -543,6 +564,9 @@ export function createAgentClientTools({
           date: availability.date,
           available_time_count: groupedSlots.length,
           available_slot_count: availability.slots.length,
+          response_instruction: groupedSlots.length === 0
+            ? "No available slots were found for this date. State this politely to the customer out loud and ask if they would like to check another date."
+            : `Found ${groupedSlots.length} available time slots. Speak up to 4 convenient times out loud naturally, and ask the customer which time works best for them or if they need a different time.`,
           selection_instruction:
             "Choose one team member at one time and copy that exact slot_id into the booking or reschedule tool.",
           times: publishedTimes,
