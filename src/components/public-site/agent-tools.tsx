@@ -610,6 +610,7 @@ export function createAgentClientTools({
             ...(email ? { email } : {}),
           },
           ...(notes ? { notes } : {}),
+          source: "ai_agent",
           idempotencyKey: stableIdempotencyKey(
             JSON.stringify({
               siteSlug,
@@ -627,6 +628,7 @@ export function createAgentClientTools({
         onActivity?.(
           activityFromBooking("booked", booking, locale, timezone),
         );
+        const localFormattedTime = formatLocalTime(booking.startAt, locale, timezone);
         return JSON.stringify({
           success: true,
           action: booking.replayed ? "booking_replayed" : "booking_created",
@@ -634,8 +636,10 @@ export function createAgentClientTools({
           confirmation_code: booking.confirmationCode,
           offering_name: booking.offering.name,
           team_member_name: booking.teamMember.name,
+          customer_name: customerName,
           start_time_iso: booking.startTimeISO,
-          local_time: formatLocalTime(booking.startAt, locale, timezone),
+          local_time: localFormattedTime,
+          response_instruction: `The appointment has been successfully booked! Speak out loud to the customer now: confirm that their appointment for ${booking.offering.name} with ${booking.teamMember.name} on ${localFormattedTime} is confirmed. Clearly state their confirmation code is ${booking.confirmationCode}. Ask if they need help with anything else.`,
         });
       } catch (error) {
         return toolError(error);
@@ -691,6 +695,7 @@ export function createAgentClientTools({
         onActivity?.(
           activityFromBooking("rescheduled", booking, locale, timezone),
         );
+        const localTimeFormatted = formatLocalTime(booking.startAt, locale, timezone);
         return JSON.stringify({
           success: true,
           action: "booking_rescheduled",
@@ -699,7 +704,8 @@ export function createAgentClientTools({
           offering_name: booking.offering.name,
           team_member_name: booking.teamMember.name,
           start_time_iso: booking.startTimeISO,
-          local_time: formatLocalTime(booking.startAt, locale, timezone),
+          local_time: localTimeFormatted,
+          response_instruction: `The appointment has been successfully rescheduled! Speak out loud to the customer now: confirm that their appointment for ${booking.offering.name} is now rescheduled to ${localTimeFormatted} with ${booking.teamMember.name}. Confirmation code remains ${booking.confirmationCode}.`,
         });
       } catch (error) {
         return toolError(error);
@@ -721,6 +727,7 @@ export function createAgentClientTools({
         onActivity?.(
           activityFromBooking("canceled", booking, locale, timezone),
         );
+        const canceledTimeFormatted = formatLocalTime(booking.startAt, locale, timezone);
         return JSON.stringify({
           success: true,
           action: "booking_canceled",
@@ -729,7 +736,8 @@ export function createAgentClientTools({
           offering_name: booking.offering.name,
           team_member_name: booking.teamMember.name,
           start_time_iso: booking.startTimeISO,
-          local_time: formatLocalTime(booking.startAt, locale, timezone),
+          local_time: canceledTimeFormatted,
+          response_instruction: `The appointment (Code: ${booking.confirmationCode}) has been successfully canceled! State this clearly out loud to the customer and ask if they would like to book a different time.`,
         });
       } catch (error) {
         return toolError(error);
