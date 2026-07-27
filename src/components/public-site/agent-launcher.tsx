@@ -574,6 +574,7 @@ function AgentLauncherInner({
           firstMessageMode: "assistant-speaks-first",
           firstMessage: greeting,
           variableValues: session.dynamicVariables,
+          systemPrompt: session.dynamicVariables?.booking_instruction,
         });
         return;
       }

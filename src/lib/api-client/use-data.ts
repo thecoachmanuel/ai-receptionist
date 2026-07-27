@@ -12,7 +12,11 @@ export async function callApi(endpoint: string, args: Record<string, unknown> = 
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.error || `API error ${res.status}`);
   }
-  return res.json();
+  const data = await res.json();
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("app:data-updated"));
+  }
+  return data;
 }
 
 export function useQuery<T>(endpoint: string, args: Record<string, unknown> | "skip" = {}) {
