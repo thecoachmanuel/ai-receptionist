@@ -76,6 +76,7 @@ type AgentLauncherProps = {
   timezone: string;
   locale: string;
   voiceGender?: "female" | "male";
+  onActivity?: (activity: AgentToolActivity) => void;
 };
 
 function activityTitle(kind: AgentToolActivity["kind"]) {
@@ -925,7 +926,10 @@ export function AgentLauncher(props: AgentLauncherProps) {
         teamMembers={props.teamMembers}
         timezone={props.timezone}
         locale={props.locale}
-        onActivity={setToolActivity}
+        onActivity={(activity) => {
+          setToolActivity(activity);
+          props.onActivity?.(activity);
+        }}
         onToolEvent={handleToolEvent}
       />
       <AgentLauncherInner

@@ -1,4 +1,7 @@
+"use client";
+
 import type { CSSProperties, ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -214,6 +217,7 @@ export function PublicSite({
   voiceAgentEnabled: boolean;
   voiceGender?: "female" | "male";
 }) {
+  const router = useRouter();
   const { organization, site, offerings, teamMembers, knowledgeItems } =
     publishedSite;
   const { config } = site;
@@ -645,6 +649,11 @@ export function PublicSite({
                 timezone={organization.timezone}
                 locale={organization.locale}
                 voiceGender={voiceGender}
+                onActivity={(activity) => {
+                  if (activity.kind === "booked" || activity.kind === "rescheduled" || activity.kind === "canceled") {
+                    try { router.refresh(); } catch { /* ignore */ }
+                  }
+                }}
               />
             ) : (
               <div
