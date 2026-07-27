@@ -1,0 +1,157 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth/session";
+import {
+  getElevenLabsSettings,
+  getPlatformSettings,
+  updateBaseCurrency,
+  updateElevenLabsSettings,
+  updateExchangeRate,
+  updatePlanPrice,
+  updatePlatformContact,
+  updateWaitlistStatus,
+} from "@/lib/services/settings";
+
+export const runtime = "nodejs";
+
+export async function GET() {
+  try {
+    const session = await getSession();
+    if (
+      !session ||
+      (session.role !== "admin" && !session.permissions.includes("admin:all"))
+    ) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
+    }
+
+    const [settings, elevenlabs] = await Promise.all([
+      getPlatformSettings(),
+      getElevenLabsSettings(),
+    ]);
+
+    return NextResponse.json({ settings, elevenlabs });
+  } catch (error) {
+    console.error("Admin GET settings error", error);
+    return NextResponse.json(
+      { error: "Failed to load platform settings." },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getSession();
+    if (
+      !session ||
+      (session.role !== "admin" && !session.permissions.includes("admin:all"))
+    ) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const {
+      plan,
+      usdPrice,
+      usdToNgnRate,
+      activeProvider,
+      geminiApiKeys,
+      geminiModel,
+      geminiVoiceGender,
+      elevenLabsApiKeys,
+      elevenLabsDefaultAgentId,
+      vapiPublicKey,
+      vapiPrivateKey,
+      vapiAssistantId,
+      contactPhone,
+      contactEmail,
+      clientPageUrl,
+      baseCurrency,
+      isWaitlistActive,
+    } = body;
+
+    if (baseCurrency !== undefined) {
+      if (baseCurrency !== "USD" && baseCurrency !== "NGN") {
+        return NextResponse.json({ error: "baseCurrency must be USD or NGN." }, { status: 400 });
+      }
+      await updateBaseCurrency(baseCurrency);
+    }
+
+    if (usdToNgnRate !== undefined) {
+      const rate = Number(usdToNgnRate);
+      if (!Number.isFinite(rate) || rate <= 0) {
+        return NextResponse.json(
+          { error: "Exchange rate must be a positive number." },
+          { status: 400 },
+        );
+      }
+      await updateExchangeRate(rate);
+    }
+
+    if (plan !== undefined) {
+      if (plan !== "core" && plan !== "engage" && plan !== "voice") {
+        return NextResponse.json(
+          { error: "Plan must be 'core', 'engage', or 'voice'." },
+          { status: 400 },
+        );
+      }
+      const price = Number(usdPrice);
+      if (!Number.isFinite(price) || price < 0) {
+        return NextResponse.json(
+          { error: "Price must be a non-negative number." },
+          { status: 400 },
+        );
+      }
+      await updatePlanPrice(plan, price);
+    }
+
+    if (contactPhone !== undefined || contactEmail !== undefined || clientPageUrl !== undefined) {
+      await updatePlatformContact(contactPhone, contactEmail, clientPageUrl);
+    }
+
+    if (isWaitlistActive !== undefined) {
+      await updateWaitlistStatus(Boolean(isWaitlistActive));
+    }
+
+    if (
+      activeProvider !== undefined ||
+      geminiApiKeys !== undefined ||
+      geminiModel !== undefined ||
+      geminiVoiceGender !== undefined ||
+      elevenLabsApiKeys !== undefined ||
+      elevenLabsDefaultAgentId !== undefined ||
+      vapiPublicKey !== undefined ||
+      vapiPrivateKey !== undefined ||
+      vapiAssistantId !== undefined
+    ) {
+      await updateElevenLabsSettings({
+        activeProvider,
+        geminiApiKeys,
+        geminiModel,
+        geminiVoiceGender,
+        apiKeys: elevenLabsApiKeys,
+        defaultAgentId: elevenLabsDefaultAgentId,
+        vapiPublicKey,
+        vapiPrivateKey,
+        vapiAssistantId,
+      });
+    }
+
+    const [settings, elevenlabs] = await Promise.all([
+      getPlatformSettings(),
+      getElevenLabsSettings(),
+    ]);
+
+    return NextResponse.json({ success: true, settings, elevenlabs });
+  } catch (error) {
+    console.error("Admin PATCH settings error", error);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to update platform settings.",
+      },
+      { status: 500 },
+    );
+  }
+}
