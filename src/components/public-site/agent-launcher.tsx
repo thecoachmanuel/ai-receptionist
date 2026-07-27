@@ -511,7 +511,8 @@ function AgentLauncherInner({
             }
           } else if (msg.type === "tool-calls") {
             const results = [];
-            for (const toolCall of msg.toolCallList || []) {
+            const toolCallList = msg.toolCallList || msg.toolCalls || msg.tool_calls || msg.toolWithToolCallList || [];
+            for (const toolCall of toolCallList) {
               try {
                 if (toolCall.type === "function") {
                   const { name, arguments: argsString } = toolCall.function;
@@ -519,28 +520,36 @@ function AgentLauncherInner({
                   
                   if (name in clientTools) {
                     const result = await (clientTools as any)[name](args);
+                    const resultStr = typeof result === "string" ? result : JSON.stringify(result);
                     results.push({
                       toolCallId: toolCall.id,
                       id: toolCall.id,
                       tool_call_id: toolCall.id,
-                      result: typeof result === "string" ? result : JSON.stringify(result),
+                      result: resultStr,
+                      content: resultStr,
                     });
                   } else {
+                    const errStr = JSON.stringify({ error: "Tool not found" });
                     results.push({
                       toolCallId: toolCall.id,
                       id: toolCall.id,
                       tool_call_id: toolCall.id,
                       error: "Tool not found",
+                      result: errStr,
+                      content: errStr,
                     });
                   }
                 }
               } catch (err) {
                 console.error("Vapi tool execution error:", err);
+                const errStr = JSON.stringify({ error: err instanceof Error ? err.message : "Failed to execute tool" });
                 results.push({
                   toolCallId: toolCall.id,
                   id: toolCall.id,
                   tool_call_id: toolCall.id,
-                  error: "Failed to execute tool",
+                  error: err instanceof Error ? err.message : "Failed to execute tool",
+                  result: errStr,
+                  content: errStr,
                 });
               }
             }

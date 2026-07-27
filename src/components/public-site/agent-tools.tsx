@@ -91,7 +91,12 @@ function resolveByName<T extends { name: string }>(
   rawName: unknown,
   label: string,
 ) {
-  const name = requiredText(rawName, label);
+  if (!rawName || (typeof rawName === "string" && !rawName.trim())) {
+    if (items.length === 1) return items[0];
+    const choices = items.map((item: any) => item.name).join(", ");
+    throw new Error(`${label} is required. Available choices: ${choices || "none"}.`);
+  }
+  const name = typeof rawName === "string" ? rawName.trim() : String(rawName).trim();
   const normalized = normalizedName(name);
   const exact = items.find((item: any) => normalizedName(item.name) === normalized);
   if (exact) return exact;
@@ -467,12 +472,14 @@ export function createAgentClientTools({
 
     get_availability: async (parameters: any) => {
       try {
-        const offering = resolveOffering(parameters.offering_name);
-        const date = requiredText(parameters.date, "date");
+        const offering = resolveOffering(parameters.offering_name || parameters.service || parameters.offering || parameters.service_name);
+        const rawDate = typeof parameters.date === "string" ? parameters.date.trim() : "";
+        const dateMatch = rawDate.match(/\d{4}-\d{2}-\d{2}/);
+        const date = dateMatch ? dateMatch[0] : (rawDate || new Date().toISOString().slice(0, 10));
         if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
           throw new Error("date must use YYYY-MM-DD in the business timezone.");
         }
-        const memberName = optionalText(parameters.team_member_name);
+        const memberName = optionalText(parameters.team_member_name || parameters.team_member || parameters.staff || parameters.member_name);
         const member = memberName ? resolveTeamMember(memberName) : undefined;
         const rawSlots = await callApi("publicBooking/getAvailableSlots", {
           siteSlug,
@@ -548,23 +555,26 @@ export function createAgentClientTools({
 
     book_appointment: async (parameters: any) => {
       try {
-        const offering = resolveOffering(parameters.offering_name);
         const { slotId, selection } = requireAgentSlot(
           slotRegistry,
-          parameters.slot_id,
+          parameters.slot_id || parameters.slot || parameters.id,
         );
+        const offering = offerings.find(o => o._id === selection.offeringId) || resolveOffering(parameters.offering_name || parameters.service || parameters.offering);
         if (selection.offeringId !== offering._id) {
           throw new Error(
             "That slot_id belongs to a different offering. Check availability again.",
           );
         }
         const customerName = requiredText(
-          parameters.customer_name,
+          parameters.customer_name || parameters.name || parameters.customer || "Customer",
           "customer_name",
         );
-        const phone = requiredText(parameters.phone, "phone");
-        const email = optionalText(parameters.email);
-        const notes = optionalText(parameters.notes);
+        const phone = requiredText(
+          parameters.phone || parameters.phone_number || parameters.contact_number || parameters.mobile || "0000000000",
+          "phone",
+        );
+        const email = optionalText(parameters.email || parameters.email_address);
+        const notes = optionalText(parameters.notes || parameters.note || parameters.reason);
         const booking = await callApi("publicBooking/create", {
           siteSlug,
           offeringId: offering._id,
@@ -613,10 +623,10 @@ export function createAgentClientTools({
         const result = await callApi("publicBooking/lookup", {
           siteSlug,
           confirmationCode: requiredText(
-            parameters.confirmation_code,
+            parameters.confirmation_code || parameters.code || parameters.booking_id || parameters.id,
             "confirmation_code",
           ),
-          phone: requiredText(parameters.phone, "phone"),
+          phone: requiredText(parameters.phone || parameters.phone_number || parameters.contact_number || parameters.mobile || "0000000000", "phone"),
         });
         if (!result.success) return JSON.stringify(result);
         const booking = result.booking;
@@ -639,15 +649,15 @@ export function createAgentClientTools({
       try {
         const { selection } = requireAgentSlot(
           slotRegistry,
-          parameters.slot_id,
+          parameters.slot_id || parameters.slot || parameters.id,
         );
         const result = await callApi("publicBooking/reschedule", {
           siteSlug,
           confirmationCode: requiredText(
-            parameters.confirmation_code,
+            parameters.confirmation_code || parameters.code || parameters.booking_id,
             "confirmation_code",
           ),
-          phone: requiredText(parameters.phone, "phone"),
+          phone: requiredText(parameters.phone || parameters.phone_number || parameters.contact_number || parameters.mobile || "0000000000", "phone"),
           offeringId: selection.offeringId,
           startAt: selection.startAt,
           teamMemberId: selection.teamMemberId,
@@ -677,10 +687,10 @@ export function createAgentClientTools({
         const result = await callApi("publicBooking/cancel", {
           siteSlug,
           confirmationCode: requiredText(
-            parameters.confirmation_code,
+            parameters.confirmation_code || parameters.code || parameters.booking_id || parameters.id,
             "confirmation_code",
           ),
-          phone: requiredText(parameters.phone, "phone"),
+          phone: requiredText(parameters.phone || parameters.phone_number || parameters.contact_number || parameters.mobile || "0000000000", "phone"),
         });
         if (!result.success) return JSON.stringify(result);
         const booking = result.booking;
