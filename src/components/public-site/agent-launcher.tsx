@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ConversationProvider,
   useConversationControls,
@@ -157,6 +157,28 @@ function ToolCallItem({ item }: { item: ChatToolCall }) {
       </div>
     </div>
   );
+}
+
+function formatError(err: unknown): string {
+  if (!err) return "The AI assistant is unavailable right now.";
+  if (typeof err === "string") return err;
+  if (err instanceof Error) return err.message || "The AI assistant is unavailable right now.";
+  if (typeof err === "object") {
+    const obj = err as Record<string, any>;
+    if (typeof obj.message === "string" && obj.message) return obj.message;
+    if (typeof obj.error === "string" && obj.error) return obj.error;
+    if (obj.error && typeof obj.error === "object") {
+      if (typeof obj.error.message === "string" && obj.error.message) return obj.error.message;
+      if (typeof obj.error.error === "string" && obj.error.error) return obj.error.error;
+    }
+    try {
+      const str = JSON.stringify(err);
+      if (str && str !== "{}" && str !== "null") return str;
+    } catch {
+      // ignore
+    }
+  }
+  return "Voice connection issue. Please check microphone access or try again.";
 }
 
 function AgentLauncherInner({
@@ -495,15 +517,16 @@ function AgentLauncherInner({
           throw new Error("Vapi AI is configured for voice interaction only. Please click 'Speak with AI'.");
         }
 
-        const vapi = new Vapi(session.vapiPublicKey || "");
+        if (!session.vapiAssistantId || !session.vapiPublicKey) {
+          throw new Error("Vapi AI assistant ID or public key is not configured in admin settings.");
+        }
+
+        const vapi = new Vapi(session.vapiPublicKey);
         vapiRef.current = vapi;
         
         vapi.on("error", (e: any) => {
           console.error("Vapi event error:", e);
-          const errText = typeof e === "string"
-            ? e
-            : e?.message || e?.error?.message || e?.error || "Voice connection issue. Please allow microphone access or try again.";
-          setSessionError(errText);
+          setSessionError(formatError(e));
         });
 
         vapi.on("message", async (msg: any) => {
@@ -582,15 +605,7 @@ function AgentLauncherInner({
           firstMessageMode: "assistant-speaks-first",
           firstMessage: greeting,
           variableValues: session.dynamicVariables,
-          model: {
-            messages: [
-              {
-                role: "system",
-                content: session.dynamicVariables?.booking_instruction,
-              },
-            ],
-          },
-        } as any);
+        });
         return;
       }
 
@@ -627,10 +642,9 @@ function AgentLauncherInner({
       }
     } catch (error) {
       console.error("Agent session error:", error);
-      const rawMsg = error instanceof Error ? error.message : typeof error === "string" ? error : (error as any)?.message || (error as any)?.error || "";
-      const msg = rawMsg && rawMsg !== "undefined" ? rawMsg : "The AI assistant is unavailable right now.";
+      const msg = formatError(error);
       setSessionError(
-        kind === "voice" && /microphone|permission|audio/i.test(msg)
+        kind === "voice" && typeof msg === "string" && /microphone|permission|audio/i.test(msg)
           ? "Microphone access was blocked. Allow access in your browser and try again."
           : msg,
       );
@@ -760,7 +774,9 @@ function AgentLauncherInner({
           <Alert variant="destructive">
             <CircleAlert className="size-4" />
             <AlertTitle className="text-xs font-semibold">Connection Error</AlertTitle>
-            <AlertDescription className="text-xs">{sessionError}</AlertDescription>
+            <AlertDescription className="text-xs">
+              {typeof sessionError === "string" ? sessionError : formatError(sessionError)}
+            </AlertDescription>
           </Alert>
         ) : null}
 
@@ -877,6 +893,50 @@ function AgentLauncherInner({
   );
 }
 
+class AgentLauncherErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; errorMessage: string }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, errorMessage: "" };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, errorMessage: formatError(error) };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("AgentLauncher error boundary caught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Card className="border-border/80 shadow-md">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2 text-destructive">
+              <CircleAlert className="size-5" />
+              <CardTitle className="text-base font-semibold">Assistant Connection Issue</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3 text-xs text-muted-foreground">
+            <p>{this.state.errorMessage || "The AI assistant is temporarily unavailable. Please try reloading or use online booking."}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => this.setState({ hasError: false, errorMessage: "" })}
+            >
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export function AgentLauncher(props: AgentLauncherProps) {
   const [timeline, setTimeline] = useState<ChatTimelineItem[]>([]);
   const [toolActivity, setToolActivity] = useState<AgentToolActivity | null>(
@@ -896,8 +956,9 @@ export function AgentLauncher(props: AgentLauncherProps) {
   }, []);
 
   return (
-    <ConversationProvider
-      onMessage={({ message, role, event_id }) => {
+    <AgentLauncherErrorBoundary>
+      <ConversationProvider
+        onMessage={({ message, role, event_id }) => {
         const text = message.trim();
         if (!text) return;
         const id = `${role}-${event_id ?? `${Date.now()}-${Math.random()}`}`;
@@ -990,5 +1051,6 @@ export function AgentLauncher(props: AgentLauncherProps) {
         onToolEvent={handleToolEvent}
       />
     </ConversationProvider>
+    </AgentLauncherErrorBoundary>
   );
 }

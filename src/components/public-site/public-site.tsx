@@ -636,18 +636,20 @@ export function PublicSite({
             </div>
 
             {agentIsVisible ? (
-              <AgentLauncher
-                siteSlug={siteSlug}
-                businessName={config.businessName}
-                welcomeMessage={config.agent.welcomeMessage}
-                textEnabled={textAgentIsVisible}
-                voiceEnabled={voiceAgentIsVisible}
-                offerings={offerings}
-                teamMembers={teamMembers}
-                timezone={organization.timezone}
-                locale={organization.locale}
-                voiceGender={voiceGender}
-              />
+              <div id="assistant" className="scroll-mt-24">
+                <AgentLauncher
+                  siteSlug={siteSlug}
+                  businessName={config.businessName}
+                  welcomeMessage={config.agent.welcomeMessage}
+                  textEnabled={textAgentIsVisible}
+                  voiceEnabled={voiceAgentIsVisible}
+                  offerings={offerings}
+                  teamMembers={teamMembers}
+                  timezone={organization.timezone}
+                  locale={organization.locale}
+                  voiceGender={voiceGender}
+                />
+              </div>
             ) : (
               <div
                 className={cn(
