@@ -816,31 +816,15 @@ function AgentLauncherInner({
             </Button>
           </form>
         ) : (
-          <div className={cn("grid gap-2", activeProvider === "vapi" || !textEnabled ? "grid-cols-1" : "sm:grid-cols-2")}>
-            {textEnabled && activeProvider !== "vapi" ? (
-              <Button
-                type="button"
-                size="lg"
-                onClick={() => void start("text")}
-                disabled={isConnecting}
-                className="h-12"
-              >
-                {isConnecting && sessionKind === "text" ? (
-                  <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                ) : (
-                  <MessageCircle data-icon="inline-start" />
-                )}
-                Chat with AI
-              </Button>
-            ) : null}
+          <div className="flex flex-col gap-2">
             {voiceEnabled ? (
               <Button
                 type="button"
-                variant={textEnabled && activeProvider !== "vapi" ? "outline" : "default"}
+                variant="default"
                 size="lg"
                 onClick={() => void start("voice")}
                 disabled={isConnecting}
-                className="h-12"
+                className="h-12 w-full"
               >
                 {isConnecting && sessionKind === "voice" ? (
                   <LoaderCircle className="animate-spin" data-icon="inline-start" />
