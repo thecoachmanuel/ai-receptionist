@@ -101,13 +101,10 @@ export async function POST(
 
     if (activeProvider === "vapi") {
       if (mode === "text") {
-        return NextResponse.json({
-          provider: "vapi",
-          vapiPublicKey: aiSettings.vapiPublicKey,
-          vapiAssistantId: aiSettings.vapiAssistantId,
-          sessionId: null,
-          dynamicVariables,
-        });
+        return NextResponse.json(
+          { error: "Vapi AI is configured for voice interaction only. Please use Speak with AI." },
+          { status: 400 },
+        );
       }
       return NextResponse.json({
         provider: "vapi",

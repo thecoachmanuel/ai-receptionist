@@ -491,10 +491,7 @@ function AgentLauncherInner({
         setActiveProvider("vapi");
         
         if (kind === "text") {
-          vapiSessionIdRef.current = session.sessionId || null;
-          const greeting = welcomeMessage || `Hello! I'm the front-desk AI receptionist for ${businessName}. How can I help you today?`;
-          addAgentMessage(greeting);
-          return;
+          throw new Error("Vapi AI is configured for voice interaction only. Please click 'Speak with AI'.");
         }
 
         const vapi = new Vapi(session.vapiPublicKey || "");
@@ -819,8 +816,8 @@ function AgentLauncherInner({
             </Button>
           </form>
         ) : (
-          <div className="grid gap-2 sm:grid-cols-2">
-            {textEnabled ? (
+          <div className={cn("grid gap-2", activeProvider === "vapi" || !textEnabled ? "grid-cols-1" : "sm:grid-cols-2")}>
+            {textEnabled && activeProvider !== "vapi" ? (
               <Button
                 type="button"
                 size="lg"
@@ -839,7 +836,7 @@ function AgentLauncherInner({
             {voiceEnabled ? (
               <Button
                 type="button"
-                variant={textEnabled ? "outline" : "default"}
+                variant={textEnabled && activeProvider !== "vapi" ? "outline" : "default"}
                 size="lg"
                 onClick={() => void start("voice")}
                 disabled={isConnecting}
