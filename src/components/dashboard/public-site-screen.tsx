@@ -414,7 +414,7 @@ function SitePreview({
                 <Bot className="size-3.5" />
               </span>
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold">AI concierge</p>
+                <p className="text-[10px] font-semibold">AI assistant</p>
                 <p className="mt-0.5 line-clamp-2 text-[8px] leading-3 text-white/50">
                   {config.agent.welcomeMessage}
                 </p>

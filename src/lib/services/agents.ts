@@ -66,7 +66,7 @@ export async function requestPublicSession(
   });
 
   if (rateLimit && rateLimit.count >= 10) {
-    throw new Error("Too many concierge sessions. Please wait a moment and try again.");
+    throw new Error("Too many assistant sessions. Please wait a moment and try again.");
   }
 
   if (rateLimit) {

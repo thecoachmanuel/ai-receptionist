@@ -172,7 +172,7 @@ async function main() {
   console.log("🚀 Creating Vapi AI Assistant...");
 
   const payload = {
-    name: "Switchboard Concierge (Vapi)",
+    name: "Switchboard Assistant (Vapi)",
     firstMessageMode: "assistant-speaks-first",
     firstMessage: "Hello! Welcome to our workspace. How can I help you today?",
     voice: {

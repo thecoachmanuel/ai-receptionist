@@ -419,7 +419,7 @@ export function PublicSite({
                 Let&apos;s find the right next step
               </h2>
               <p className="mt-5 max-w-lg text-sm leading-6 text-background/65">
-                Book online, ask the concierge, or reach out directly. {config.businessName} will be happy to help.
+                Book online, ask the assistant, or reach out directly. {config.businessName} will be happy to help.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 {bookingIsVisible ? (
@@ -562,7 +562,7 @@ export function PublicSite({
             {sectionSet.has("about") ? <a href="#about" className="text-muted-foreground transition hover:text-foreground">About</a> : null}
             {sectionSet.has("faq") && knowledgeItems.length ? <a href="#faq" className="text-muted-foreground transition hover:text-foreground">FAQ</a> : null}
             {sectionSet.has("contact") ? <a href="#contact" className="text-muted-foreground transition hover:text-foreground">Contact</a> : null}
-            {agentIsVisible ? <a href="#assistant" className="text-muted-foreground transition hover:text-foreground">AI concierge</a> : null}
+            {agentIsVisible ? <a href="#assistant" className="text-muted-foreground transition hover:text-foreground">AI assistant</a> : null}
           </nav>
 
           {bookingIsVisible ? (

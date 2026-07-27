@@ -165,12 +165,12 @@ export default async function ContactPage() {
                 </div>
                 <div>
                   <CardTitle className="text-base font-semibold">Operating Hours</CardTitle>
-                  <CardDescription className="text-xs">Always-on AI concierge platform</CardDescription>
+                  <CardDescription className="text-xs">Always-on AI assistant platform</CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="pt-2 text-xs text-muted-foreground leading-relaxed">
                 <p>
-                  <strong className="text-foreground font-medium">AI Concierge & Booking Engine:</strong> 24/7/365 active
+                  <strong className="text-foreground font-medium">AI Assistant & Booking Engine:</strong> 24/7/365 active
                 </p>
                 <p className="mt-1">
                   <strong className="text-foreground font-medium">Human Operations Desk:</strong> Monday – Saturday, 8:00 AM – 8:00 PM WAT

@@ -34,14 +34,14 @@ async function main() {
 
   try {
     const agent = await client.conversationalAi.agents.create({
-      name: "Switchboard Concierge",
+      name: "Switchboard Assistant",
       conversationConfig: {
         agent: {
           firstMessage: "Hello! Welcome to our workspace. How can I help you today?",
           language: "en",
           prompt: {
             prompt: `# Personality
-You are a warm, professional, and articulate AI receptionist and front desk concierge.
+You are a warm, professional, and articulate AI receptionist and front desk assistant.
 
 # Tone
 - Friendly, concise, helpful, and attentive.

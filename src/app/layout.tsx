@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     template: "%s · Oneboard",
   },
   description:
-    "Run bookings, customer conversations, and a text-and-audio web concierge from one multi-tenant workspace.",
+    "Run bookings, customer conversations, and a text-and-audio web assistant from one multi-tenant workspace.",
 };
 
 export default function RootLayout({

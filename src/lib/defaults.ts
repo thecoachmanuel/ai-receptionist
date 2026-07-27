@@ -41,7 +41,7 @@ export function defaultSiteConfig(businessName: string): SiteConfig {
       showWebChat: false,
       showVoiceChat: false,
       showElevenLabsWidget: false,
-      welcomeMessage: `Hi, I'm the ${businessName} concierge. How can I help?`,
+      welcomeMessage: `Hi, I'm the ${businessName} assistant. How can I help?`,
     },
   };
 }

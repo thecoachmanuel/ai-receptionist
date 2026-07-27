@@ -471,7 +471,7 @@ function AgentLauncherInner({
         throw new Error(
           "error" in payload && payload.error
             ? payload.error
-            : "The AI concierge is unavailable right now.",
+            : "The AI assistant is unavailable right now.",
         );
       }
 
@@ -606,13 +606,13 @@ function AgentLauncherInner({
           textOnly: kind === "text",
         });
       } else {
-        throw new Error("The AI concierge session could not be started.");
+        throw new Error("The AI assistant session could not be started.");
       }
     } catch (error) {
       const msg =
         error instanceof Error
           ? error.message
-          : "The AI concierge is unavailable right now.";
+          : "The AI assistant is unavailable right now.";
       setSessionError(
         kind === "voice" && /microphone|permission|audio/i.test(msg)
           ? "Microphone access was blocked. Allow access in your browser or start a text chat instead."
@@ -653,7 +653,7 @@ function AgentLauncherInner({
           body: JSON.stringify({
             siteSlug,
             transcript: messages,
-            summary: `Public AI concierge chat session (${timeline.filter((i) => i.kind === "message").length} messages)`,
+            summary: `Public AI assistant chat session (${timeline.filter((i) => i.kind === "message").length} messages)`,
           }),
         }).catch(() => null);
       }
@@ -721,7 +721,7 @@ function AgentLauncherInner({
                     : activeProvider === "vapi"
                     ? "Online · Live Voice (Vapi)"
                     : `Online · ${sessionKind === "voice" ? "Live Voice" : "Text Chat"}`
-                  : "AI Front Desk Concierge"}
+                  : "AI Front Desk Assistant"}
               </p>
             </div>
           </div>
@@ -852,7 +852,7 @@ function AgentLauncherInner({
           </Button>
         ) : (
           <p className="text-center text-[0.68rem] leading-4 text-muted-foreground">
-            For booking or follow-up requests, the concierge will ask for a
+            For booking or follow-up requests, the assistant will ask for a
             contact number before continuing.
           </p>
         )}

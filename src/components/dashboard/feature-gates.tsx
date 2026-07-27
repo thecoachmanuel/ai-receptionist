@@ -23,14 +23,14 @@ const featureCopy = {
   web_agent: {
     title: "AI text chat",
     description:
-      "Let visitors message your ElevenLabs concierge from the public page.",
+      "Let visitors message your ElevenLabs assistant from the public page.",
     icon: Bot,
     capability: "Secure live text chat",
   },
   browser_voice: {
     title: "Browser audio",
     description:
-      "Let visitors speak naturally to the same concierge using their microphone.",
+      "Let visitors speak naturally to the same assistant using their microphone.",
     icon: AudioLines,
     capability: "Live microphone conversations",
   },

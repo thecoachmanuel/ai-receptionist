@@ -238,7 +238,7 @@ export function ElevenLabsEmbed({
       text-input="true"
       avatar-orb-color-1={primaryColor}
       avatar-orb-color-2={secondaryColor}
-      aria-label={`${businessName} AI concierge`}
+      aria-label={`${businessName} AI assistant`}
       style={{ zIndex: 50 }}
     />
   );

@@ -54,7 +54,7 @@ export async function logConversation(
     transcript: data.transcript,
     summary: data.summary,
     durationSeconds: data.durationSeconds || 0,
-    outcome: data.outcome || "AI Concierge Interaction",
+    outcome: data.outcome || "AI Assistant Interaction",
     startedAt: now,
     endedAt: now,
     createdAt: now,
@@ -83,6 +83,6 @@ export async function logPublicConversationBySlug(
     ...data,
     channel: "web",
     status: "completed",
-    outcome: "Public Site AI Concierge Session",
+    outcome: "Public Site AI Assistant Session",
   });
 }

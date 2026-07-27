@@ -870,7 +870,7 @@ export function SuperAdminScreen() {
                       {(
                         [
                           { key: "core", label: "Core", sub: "Self-serve. No AI agents.", colour: "slate" },
-                          { key: "engage", label: "Engage", sub: "Text concierge unlocked.", colour: "emerald" },
+                          { key: "engage", label: "Engage", sub: "Text assistant unlocked.", colour: "emerald" },
                           { key: "voice", label: "Voice", sub: "Live voice receptionist.", colour: "purple" },
                         ] as const
                       ).map(({ key, label, sub, colour }) => (

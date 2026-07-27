@@ -50,7 +50,7 @@ export async function POST(
 
     if (!sessionConfig) {
       return NextResponse.json(
-        { error: "The concierge is not enabled for this page." },
+        { error: "The assistant is not enabled for this page." },
         { status: 404 },
       );
     }
@@ -146,16 +146,16 @@ export async function POST(
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    const rateLimited = message.includes("Too many concierge sessions");
-    console.error("Unable to create public concierge session", {
+    const rateLimited = message.includes("Too many assistant sessions") || message.includes("Too many concierge sessions");
+    console.error("Unable to create public assistant session", {
       siteSlug,
       error,
     });
     return NextResponse.json(
       {
         error: rateLimited
-          ? "Too many concierge sessions. Please wait a moment and try again."
-          : "The concierge is unavailable right now.",
+          ? "Too many assistant sessions. Please wait a moment and try again."
+          : "The assistant is unavailable right now.",
       },
       { status: rateLimited ? 429 : 500 },
     );

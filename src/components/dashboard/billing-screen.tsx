@@ -80,10 +80,10 @@ export function BillingScreen() {
       name: "Engage",
       price: loaded ? (isNgn ? `₦${engageNgn.toLocaleString()}` : `$${prices.engage}`) : null,
       subPrice: loaded && !isNgn ? `≈ ₦${engageNgn.toLocaleString()} NGN` : null,
-      description: "Add an ElevenLabs web concierge to every customer touchpoint.",
+      description: "Add an ElevenLabs web assistant to every customer touchpoint.",
       features: [
         "Everything in Core",
-        "AI text concierge (Web agent)",
+        "AI text assistant (Web agent)",
         isNgn
           ? `Paystack checkout in NGN`
           : `Paystack checkout in NGN ($1 = ₦${rate.toLocaleString()})`,
@@ -96,7 +96,7 @@ export function BillingScreen() {
       name: "Voice",
       price: loaded ? (isNgn ? `₦${voiceNgn.toLocaleString()}` : `$${prices.voice}`) : null,
       subPrice: loaded && !isNgn ? `≈ ₦${voiceNgn.toLocaleString()} NGN` : null,
-      description: "Add live browser audio to the web concierge and measure every outcome.",
+      description: "Add live browser audio to the web assistant and measure every outcome.",
       features: [
         "Everything in Engage",
         "Live browser audio (Microphone chat)",
