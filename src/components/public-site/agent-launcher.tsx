@@ -480,7 +480,7 @@ function AgentLauncherInner({
 
       if (session.provider === "gemini") {
         setActiveProvider("gemini");
-        const greeting = welcomeMessage || `Hello! I'm the front-desk AI receptionist for ${businessName}. How can I help you today?`;
+        const greeting = welcomeMessage || `Hello! I'm the front-desk AI assistant for ${businessName}. How can I help you today?`;
         addAgentMessage(greeting);
         if (kind === "voice") {
           speakText(greeting);
@@ -567,7 +567,7 @@ function AgentLauncherInner({
           stop();
         });
 
-        const greeting = welcomeMessage || `Hello! I'm the front-desk AI receptionist for ${businessName}. How can I help you today?`;
+        const greeting = welcomeMessage || `Hello! I'm the front-desk AI assistant for ${businessName}. How can I help you today?`;
         addAgentMessage(greeting);
 
         await vapi.start(session.vapiAssistantId || "", {
@@ -713,7 +713,7 @@ function AgentLauncherInner({
             </span>
             <div>
               <CardTitle className="text-base font-semibold">
-                {businessName} Receptionist
+                {businessName} Assistant
               </CardTitle>
               <p className="text-[11px] text-muted-foreground">
                 {isConnected
