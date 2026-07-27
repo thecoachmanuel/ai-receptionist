@@ -215,6 +215,7 @@ export function PublicSite({
   textAgentEnabled: boolean;
   voiceAgentEnabled: boolean;
   voiceGender?: "female" | "male";
+}) {
   const { organization, site, offerings, teamMembers, knowledgeItems } =
     publishedSite;
   const { config } = site;
