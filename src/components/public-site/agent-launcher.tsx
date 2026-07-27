@@ -498,6 +498,14 @@ function AgentLauncherInner({
         const vapi = new Vapi(session.vapiPublicKey || "");
         vapiRef.current = vapi;
         
+        vapi.on("error", (e: any) => {
+          console.error("Vapi event error:", e);
+          const errText = typeof e === "string"
+            ? e
+            : e?.message || e?.error?.message || e?.error || "Voice connection issue. Please allow microphone access or try again.";
+          setSessionError(errText);
+        });
+
         vapi.on("message", async (msg: any) => {
           if (msg.type === "transcript" && msg.transcriptType === "final") {
             const role = msg.role === "user" ? "user" : "agent";
@@ -618,13 +626,12 @@ function AgentLauncherInner({
         throw new Error("The AI assistant session could not be started.");
       }
     } catch (error) {
-      const msg =
-        error instanceof Error
-          ? error.message
-          : "The AI assistant is unavailable right now.";
+      console.error("Agent session error:", error);
+      const rawMsg = error instanceof Error ? error.message : typeof error === "string" ? error : (error as any)?.message || (error as any)?.error || "";
+      const msg = rawMsg && rawMsg !== "undefined" ? rawMsg : "The AI assistant is unavailable right now.";
       setSessionError(
         kind === "voice" && /microphone|permission|audio/i.test(msg)
-          ? "Microphone access was blocked. Allow access in your browser or start a text chat instead."
+          ? "Microphone access was blocked. Allow access in your browser and try again."
           : msg,
       );
       setSessionKind(null);
