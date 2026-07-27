@@ -595,7 +595,6 @@ export function PublicSite({
                   <Sparkles className="size-3" />
                   Now accepting {terminology.bookingPlural.toLowerCase()} online
                 </Badge>
-                <span className="text-xs text-muted-foreground">{organization.timezone.replaceAll("_", " ")}</span>
               </div>
               <h1 className={cn("mt-7 max-w-4xl font-heading text-5xl leading-[0.96] tracking-[-0.06em] text-balance sm:text-6xl lg:text-7xl", isCompact && "lg:text-6xl")}>
                 {config.headline}
