@@ -173,6 +173,7 @@ async function main() {
 
   const payload = {
     name: "Switchboard Concierge (Vapi)",
+    firstMessageMode: "assistant-speaks-first",
     firstMessage: "Hello! Welcome to our workspace. How can I help you today?",
     voice: {
       provider: "openai",
@@ -182,12 +183,13 @@ async function main() {
       provider: "deepgram",
       model: "nova-2",
       language: "en-US",
-      smartFormat: true
+      smartFormat: true,
+      endpointing: 250
     },
     model: {
       provider: "openai",
-      model: "gpt-4o",
-      temperature: 0.7,
+      model: "gpt-4o-mini",
+      temperature: 0.5,
       messages: [
         {
           role: "system",

@@ -566,10 +566,14 @@ function AgentLauncherInner({
           stop();
         });
 
-        await vapi.start(session.vapiAssistantId || "", { variableValues: session.dynamicVariables });
-        
         const greeting = welcomeMessage || `Hello! I'm the front-desk AI receptionist for ${businessName}. How can I help you today?`;
         addAgentMessage(greeting);
+
+        await vapi.start(session.vapiAssistantId || "", {
+          firstMessageMode: "assistant-speaks-first",
+          firstMessage: greeting,
+          variableValues: session.dynamicVariables,
+        });
         return;
       }
 
