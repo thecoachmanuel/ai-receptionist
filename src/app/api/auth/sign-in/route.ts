@@ -7,6 +7,11 @@ import { createOrganizationForUser } from "@/lib/services/organizations";
 
 export const runtime = "nodejs";
 
+function cleanEnv(val?: string): string {
+  if (!val) return "";
+  return val.replace(/^["']|["']$/g, "").trim();
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
@@ -15,21 +20,24 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const adminEmail = (process.env.ADMIN_EMAIL || "admin@admin.com").trim().toLowerCase();
-    const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+    const adminEmail = (cleanEnv(process.env.ADMIN_EMAIL) || "admin@admin.com").toLowerCase();
+    const adminPassword = cleanEnv(process.env.ADMIN_PASSWORD) || "admin123";
 
     const db = await getDb();
     let user = await db.collection<DbUser>("users").findOne({ email: normalizedEmail });
 
     // Handle Super Admin authentication using env ADMIN_EMAIL and ADMIN_PASSWORD
     if (normalizedEmail === adminEmail) {
-      if (password !== adminPassword) {
+      const isEnvPasswordValid = password === adminPassword;
+      const isDbPasswordValid = user ? await comparePassword(password, user.passwordHash) : false;
+
+      if (!isEnvPasswordValid && !isDbPasswordValid) {
         return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
       }
 
       if (!user) {
         // Automatically bootstrap super admin user and workspace if missing
-        const passwordHash = await hashPassword(adminPassword);
+        const passwordHash = await hashPassword(password);
         const now = Date.now();
         const insertUserResult = await db.collection<DbUser>("users").insertOne({
           email: adminEmail,
@@ -56,7 +64,7 @@ export async function POST(request: NextRequest) {
           createdAt: now,
           updatedAt: now,
         };
-      } else {
+      } else if (isEnvPasswordValid) {
         // Update stored passwordHash to stay in sync with env ADMIN_PASSWORD
         const passwordHash = await hashPassword(adminPassword);
         await db.collection<DbUser>("users").updateOne(
