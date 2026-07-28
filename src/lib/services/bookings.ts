@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/db/mongodb";
 import type { BookingStatus, DbAvailabilityRule, DbBooking, DbContact, DbOffering, DbOrganization, DbPublicSite, DbTeamMember } from "@/lib/db/types";
-import { dayOfWeek, localPartsAt } from "@/lib/time";
+import { dayOfWeek, localPartsAt, zonedDateTimeToUtc } from "@/lib/time";
 import { normalizedEmail, normalizedPhone, optionalTrimmed, requiredTrimmed } from "@/lib/validation";
 import { upsertContact } from "./contacts";
 
