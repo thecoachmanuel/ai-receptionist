@@ -554,6 +554,7 @@ function AgentLauncherInner({
                       toolCallId: toolCall.id,
                       id: toolCall.id,
                       tool_call_id: toolCall.id,
+                      name,
                       result: resultStr,
                       content: resultStr,
                     });
@@ -563,6 +564,7 @@ function AgentLauncherInner({
                       toolCallId: toolCall.id,
                       id: toolCall.id,
                       tool_call_id: toolCall.id,
+                      name,
                       error: "Tool not found",
                       result: errStr,
                       content: errStr,
@@ -576,6 +578,7 @@ function AgentLauncherInner({
                   toolCallId: toolCall.id,
                   id: toolCall.id,
                   tool_call_id: toolCall.id,
+                  name: toolCall.function?.name,
                   error: err instanceof Error ? err.message : "Failed to execute tool",
                   result: errStr,
                   content: errStr,
@@ -584,10 +587,25 @@ function AgentLauncherInner({
             }
             
             if (results.length > 0) {
-              vapi.send({
-                type: "tool-calls-result",
-                toolCallList: results,
-              } as any);
+              for (const res of results) {
+                vapi.send({
+                  type: "add-message",
+                  message: {
+                    role: "tool",
+                    tool_call_id: res.toolCallId,
+                    name: res.name,
+                    content: res.content,
+                  },
+                } as any);
+
+                vapi.send({
+                  type: "add-message",
+                  message: {
+                    role: "system",
+                    content: `[System Note: Tool "${res.name}" execution completed. Result:\n${res.content}\n\nINSTRUCTION: Immediately synthesize these findings into a clear, natural spoken response to the customer out loud without pausing or waiting for another user prompt.]`,
+                  },
+                } as any);
+              }
             }
           }
         });
