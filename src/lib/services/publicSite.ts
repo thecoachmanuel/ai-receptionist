@@ -105,7 +105,7 @@ export async function getPublishedBySlug(siteSlug: string) {
       clerkOrgId: organization.clerkOrgId,
       name: organization.name || "Business",
       slug: organization.slug || normalizedSlug,
-      timezone: organization.timezone || "UTC",
+      timezone: organization.timezone || "Africa/Lagos",
       currency: organization.currency || "USD",
       locale: organization.locale || "en-US",
       terminology: {

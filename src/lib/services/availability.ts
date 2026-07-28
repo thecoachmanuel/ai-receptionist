@@ -42,7 +42,7 @@ export async function replaceMemberRules(
   const db = await getDb();
   const orgFilter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
   const org = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
-  const timezone = org?.timezone || "UTC";
+  const timezone = org?.timezone || "Africa/Lagos";
 
   // Validate rule bounds
   for (const r of rulesInput) {

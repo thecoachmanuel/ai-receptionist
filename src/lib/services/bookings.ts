@@ -261,7 +261,7 @@ export async function getPublicAvailableSlots(
   if (!organization) throw new Error("Organization not found");
 
   const effectiveOrgId = organization._id!.toString();
-  const timezone = organization.timezone || "UTC";
+  const timezone = organization.timezone || "Africa/Lagos";
 
   const offeringFilter = ObjectId.isValid(offeringId)
     ? { _id: new ObjectId(offeringId), organizationId: effectiveOrgId, active: true }
