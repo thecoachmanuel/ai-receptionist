@@ -638,6 +638,9 @@ export function createAgentClientTools({
                 team_members: AgentSlotSelection[];
               }
             >(),
+          ).values(),
+        );
+
         const timePref = parseFlexibleTime(parameters.date, parameters.time || parameters.preferred_time || parameters.time_slot || parameters.requested_time);
         let exactMatchFound = false;
 
