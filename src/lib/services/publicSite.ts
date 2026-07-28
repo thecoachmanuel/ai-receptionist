@@ -29,7 +29,7 @@ export async function getPublishedBySlug(siteSlug: string) {
 
   if (!organization) return null;
 
-  const effectiveOrgId = organization._id!.toString();
+  const effectiveOrgId = organization._id ? organization._id.toString() : (organization.clerkOrgId || normalizedSlug);
 
   if (!site) {
     site = await db.collection<DbPublicSite>("publicSites").findOne({
@@ -96,7 +96,7 @@ export async function getPublishedBySlug(siteSlug: string) {
 
   return {
     site: {
-      _id: site._id!.toString(),
+      _id: site._id ? site._id.toString() : "",
       siteSlug: site.siteSlug,
       config: mergedConfig,
       publishedAt: site.publishedAt,
@@ -113,10 +113,10 @@ export async function getPublishedBySlug(siteSlug: string) {
         ...(organization.terminology || {}),
       },
     },
-    offerings: offerings
+    offerings: (offerings || [])
       .filter((o: any) => o.bookableOnline)
       .map((o: any) => ({
-        _id: o._id!.toString(),
+        _id: o._id ? o._id.toString() : "",
         name: o.name,
         slug: o.slug,
         description: o.description,
@@ -126,10 +126,10 @@ export async function getPublishedBySlug(siteSlug: string) {
         currency: o.currency,
         active: o.active,
       })),
-    teamMembers: teamMembers
+    teamMembers: (teamMembers || [])
       .filter((m: any) => m.acceptingBookings)
       .map((m: any) => ({
-        _id: m._id!.toString(),
+        _id: m._id ? m._id.toString() : "",
         name: m.name,
         title: m.title,
         bio: m.bio,
@@ -137,8 +137,8 @@ export async function getPublishedBySlug(siteSlug: string) {
         offeringIds: m.offeringIds || [],
         active: m.active,
       })),
-    knowledgeItems: knowledgeItems.map((k: any) => ({
-      _id: k._id!.toString(),
+    knowledgeItems: (knowledgeItems || []).map((k: any) => ({
+      _id: k._id ? k._id.toString() : "",
       title: k.title,
       content: k.content,
       category: k.category,
@@ -166,7 +166,7 @@ export async function getAgentSessionConfig(siteSlug: string) {
   const organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
   if (!organization) return null;
 
-  const effectiveOrgId = organization._id!.toString();
+  const effectiveOrgId = organization._id ? organization._id.toString() : (organization.clerkOrgId || slug);
   const integration = await db.collection<DbAgentIntegration>("agentIntegrations").findOne({
     organizationId: effectiveOrgId,
     provider: "elevenlabs",

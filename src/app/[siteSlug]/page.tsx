@@ -86,27 +86,32 @@ export default async function PublicSitePage({
     notFound();
   }
 
-  const [publishedSite, agentSessionConfig, elevenLabsSettings] = await Promise.all([
-    getPublishedSite(siteSlug),
-    getAgentSessionConfig(siteSlug),
-    getElevenLabsSettings(),
-  ]);
+  try {
+    const [publishedSite, agentSessionConfig, elevenLabsSettings] = await Promise.all([
+      getPublishedSite(siteSlug),
+      getAgentSessionConfig(siteSlug),
+      getElevenLabsSettings(),
+    ]);
 
-  if (!publishedSite) {
+    if (!publishedSite) {
+      return <PublicSiteUnavailable />;
+    }
+
+    const agentFeatures = agentSessionConfig
+      ? await getAgentFeatures(agentSessionConfig.clerkOrgId || agentSessionConfig.organizationId)
+      : { text: false, voice: false };
+
+    return (
+      <PublicSite
+        siteSlug={siteSlug}
+        publishedSite={publishedSite as any}
+        textAgentEnabled={agentFeatures.text}
+        voiceAgentEnabled={agentFeatures.voice}
+        voiceGender={elevenLabsSettings.geminiVoiceGender}
+      />
+    );
+  } catch (error) {
+    console.error(`Error loading public site for ${siteSlug}:`, error);
     return <PublicSiteUnavailable />;
   }
-
-  const agentFeatures = agentSessionConfig
-    ? await getAgentFeatures(agentSessionConfig.clerkOrgId || agentSessionConfig.organizationId)
-    : { text: false, voice: false };
-
-  return (
-    <PublicSite
-      siteSlug={siteSlug}
-      publishedSite={publishedSite as any}
-      textAgentEnabled={agentFeatures.text}
-      voiceAgentEnabled={agentFeatures.voice}
-      voiceGender={elevenLabsSettings.geminiVoiceGender}
-    />
-  );
 }
