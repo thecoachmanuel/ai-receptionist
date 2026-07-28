@@ -30,6 +30,7 @@ import {
   type AgentToolEvent,
   type AgentToolName,
 } from "@/components/public-site/agent-tools";
+import { VoiceOrbIndicator, type VoiceOrbState } from "@/components/public-site/voice-orb-indicator";
 import type {
   PublicOffering,
   PublicTeamMember,
@@ -225,6 +226,9 @@ function AgentLauncherInner({
   const [activeProvider, setActiveProvider] = useState<"elevenlabs" | "gemini" | "vapi">("elevenlabs");
   const [geminiLoading, setGeminiLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [vapiState, setVapiState] = useState<VoiceOrbState>("idle");
+  const [vapiVolume, setVapiVolume] = useState<number>(0);
+  const [geminiSpeaking, setGeminiSpeaking] = useState<boolean>(false);
 
   const transcriptRef = useRef<HTMLDivElement>(null);
   const followLatestRef = useRef(true);
@@ -262,6 +266,10 @@ function AgentLauncherInner({
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 1.0;
       utterance.pitch = voiceGender === "male" ? 0.8 : 1.1;
+
+      utterance.onstart = () => setGeminiSpeaking(true);
+      utterance.onend = () => setGeminiSpeaking(false);
+      utterance.onerror = () => setGeminiSpeaking(false);
 
       const trySetVoice = () => {
         const voices = window.speechSynthesis.getVoices();
@@ -537,6 +545,17 @@ function AgentLauncherInner({
         const vapi = new Vapi(session.vapiPublicKey);
         vapiRef.current = vapi;
         
+        vapi.on("speech-start", () => setVapiState("speaking"));
+        vapi.on("speech-end", () => setVapiState("idle"));
+        vapi.on("user-speech-start", () => setVapiState("listening"));
+        vapi.on("user-speech-end", () => setVapiState("idle"));
+        vapi.on("volume-level", (vol: number) => setVapiVolume(vol));
+        vapi.on("call-start", () => setVapiState("idle"));
+        vapi.on("call-end", () => {
+          setVapiState("idle");
+          setVapiVolume(0);
+        });
+
         vapi.on("error", (e: any) => {
           console.error("Vapi event error:", e);
           setSessionError(formatError(e));
@@ -729,6 +748,9 @@ function AgentLauncherInner({
     setSessionKind(null);
     setMessage("");
     setGeminiLoading(false);
+    setVapiState("idle");
+    setVapiVolume(0);
+    setGeminiSpeaking(false);
     vapiSessionIdRef.current = null;
     clearTimeline();         // ← clears chat history + toolActivity
     setSessionError(null);  // ← dismiss any previous error banners
@@ -756,6 +778,25 @@ function AgentLauncherInner({
       void sendUserMessage(message);
       setMessage("");
     }
+  }
+
+  let voiceOrbState: VoiceOrbState = "idle";
+  if (isConnecting && sessionKind === "voice") {
+    voiceOrbState = "connecting";
+  } else if (isConnected && sessionKind === "voice") {
+    if (activeProvider === "elevenlabs") {
+      if (mode === "speaking") voiceOrbState = "speaking";
+      else if (mode === "listening") voiceOrbState = "listening";
+      else voiceOrbState = "idle";
+    } else if (activeProvider === "vapi") {
+      voiceOrbState = vapiState;
+    } else if (activeProvider === "gemini") {
+      if (isListening) voiceOrbState = "listening";
+      else if (geminiSpeaking) voiceOrbState = "speaking";
+      else voiceOrbState = "idle";
+    }
+  } else {
+    voiceOrbState = "idle";
   }
 
   return (
@@ -859,7 +900,16 @@ function AgentLauncherInner({
 
         {/* Action Controls */}
         {isConnected ? (
-          <form onSubmit={handleSend} className="flex gap-2">
+          <>
+            {sessionKind === "voice" && (
+              <VoiceOrbIndicator
+                state={voiceOrbState}
+                businessName={businessName}
+                volume={vapiVolume}
+                className="mb-3"
+              />
+            )}
+            <form onSubmit={handleSend} className="flex gap-2">
             <Input
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -882,24 +932,33 @@ function AgentLauncherInner({
               {geminiLoading ? <LoaderCircle className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
             </Button>
           </form>
+          </>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {voiceEnabled ? (
-              <Button
-                type="button"
-                variant="default"
-                size="lg"
-                onClick={() => void start("voice")}
-                disabled={isConnecting}
-                className="h-12 w-full"
-              >
-                {isConnecting && sessionKind === "voice" ? (
-                  <LoaderCircle className="animate-spin" data-icon="inline-start" />
-                ) : (
-                  <Mic data-icon="inline-start" />
-                )}
-                Speak with AI
-              </Button>
+              <>
+                <VoiceOrbIndicator
+                  state={voiceOrbState}
+                  businessName={businessName}
+                  volume={vapiVolume}
+                  className="w-full"
+                />
+                <Button
+                  type="button"
+                  variant="default"
+                  size="lg"
+                  onClick={() => void start("voice")}
+                  disabled={isConnecting}
+                  className="h-12 w-full text-base font-medium shadow-lg transition-transform active:scale-[0.99]"
+                >
+                  {isConnecting && sessionKind === "voice" ? (
+                    <LoaderCircle className="animate-spin" data-icon="inline-start" />
+                  ) : (
+                    <Mic data-icon="inline-start" />
+                  )}
+                  Speak with AI
+                </Button>
+              </>
             ) : null}
           </div>
         )}
