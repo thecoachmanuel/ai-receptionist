@@ -242,11 +242,15 @@ export async function updateBookingStatus(
 }
 
 export async function getPublicAvailableSlots(
-  siteSlug: string,
-  offeringId: string,
-  dateStr: string,
-  teamMemberId?: string,
+  argsOrSiteSlug: string | { siteSlug: string; offeringId: string; dateStr: string; teamMemberId?: string },
+  offeringIdParam?: string,
+  dateStrParam?: string,
+  teamMemberIdParam?: string,
 ) {
+  const siteSlug = typeof argsOrSiteSlug === "object" ? argsOrSiteSlug.siteSlug : argsOrSiteSlug;
+  const offeringId = typeof argsOrSiteSlug === "object" ? argsOrSiteSlug.offeringId : offeringIdParam!;
+  const dateStr = typeof argsOrSiteSlug === "object" ? argsOrSiteSlug.dateStr : dateStrParam!;
+  const teamMemberId = typeof argsOrSiteSlug === "object" ? argsOrSiteSlug.teamMemberId : teamMemberIdParam;
   const db = await getDb();
   const site = await db.collection<DbPublicSite>("publicSites").findOne({ siteSlug });
   if (!site?.published || !site.publishedAt) throw new Error("Site not found");
@@ -257,13 +261,12 @@ export async function getPublicAvailableSlots(
   if (!organization) throw new Error("Organization not found");
 
   const effectiveOrgId = organization._id!.toString();
-  const timezone = organization.timezone;
+  const timezone = organization.timezone || "UTC";
 
-  const offering = await db.collection<DbOffering>("offerings").findOne({
-    _id: new ObjectId(offeringId),
-    organizationId: effectiveOrgId,
-    active: true,
-  });
+  const offeringFilter = ObjectId.isValid(offeringId)
+    ? { _id: new ObjectId(offeringId), organizationId: effectiveOrgId, active: true }
+    : { organizationId: effectiveOrgId, active: true };
+  const offering = await db.collection<DbOffering>("offerings").findOne(offeringFilter);
   if (!offering) throw new Error("Offering not found");
 
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -279,36 +282,77 @@ export async function getPublicAvailableSlots(
     rulesFilter.teamMemberId = teamMemberId;
   }
 
-  const rules = await db
+  let rules = await db
     .collection<DbAvailabilityRule>("availabilityRules")
     .find(rulesFilter)
     .toArray();
 
-  const slotIntervalMinutes = site.published.booking.slotIntervalMinutes || 30;
+  // If no explicit rules exist for this day/organization, fall back to default working hours (9 AM - 5 PM)
+  // for all active team members accepting bookings who support this offering
+  if (rules.length === 0) {
+    const staffFilter: Record<string, unknown> = {
+      organizationId: effectiveOrgId,
+      active: true,
+      acceptingBookings: true,
+    };
+    if (teamMemberId) {
+      if (ObjectId.isValid(teamMemberId)) {
+        staffFilter._id = { $in: [teamMemberId, new ObjectId(teamMemberId)] };
+      } else {
+        staffFilter._id = teamMemberId;
+      }
+    }
+    const availableStaff = await db.collection<DbTeamMember>("teamMembers").find(staffFilter).toArray();
+
+    const nowMs = Date.now();
+    rules = availableStaff
+      .filter((m: any) => !m.offeringIds?.length || m.offeringIds.includes(offering._id.toString()))
+      .map((m: any) => ({
+        _id: new ObjectId(),
+        organizationId: effectiveOrgId,
+        teamMemberId: m._id.toString(),
+        timezone,
+        dayOfWeek: dayIndex,
+        startMinute: 540, // 9:00 AM
+        endMinute: 1020,  // 5:00 PM
+        active: true,
+        createdAt: nowMs,
+        updatedAt: nowMs,
+      }));
+  }
+
+  const slotIntervalMinutes = site.published.booking?.slotIntervalMinutes || 30;
   const durationMs = offering.durationMinutes * 60_000;
   const slots: Array<{ startAt: number; endAt: number; teamMemberId: string; startTimeISO: string; endTimeISO: string; teamMemberName: string }> = [];
 
   const now = Date.now();
-  const minNoticeMs = (site.published.booking.minimumNoticeMinutes || 60) * 60_000;
+  const minNoticeMs = (site.published.booking?.minimumNoticeMinutes || 60) * 60_000;
 
   for (const rule of rules) {
-    const member = await db.collection<DbTeamMember>("teamMembers").findOne({
-      _id: new ObjectId(rule.teamMemberId),
-      organizationId: effectiveOrgId,
-      active: true,
-      acceptingBookings: true,
-    });
+    const memberFilter = ObjectId.isValid(rule.teamMemberId)
+      ? { _id: { $in: [rule.teamMemberId, new ObjectId(rule.teamMemberId)] }, organizationId: effectiveOrgId, active: true, acceptingBookings: true }
+      : { _id: rule.teamMemberId, organizationId: effectiveOrgId, active: true, acceptingBookings: true };
+
+    const member = await db.collection<DbTeamMember>("teamMembers").findOne(memberFilter as any);
     if (!member) continue;
+
+    // Check if staff member supports this offering
+    if (member.offeringIds && member.offeringIds.length > 0) {
+      const supportsOffering = member.offeringIds.some((id: string) => id === offering._id.toString());
+      if (!supportsOffering) continue;
+    }
 
     for (let min = rule.startMinute; min + offering.durationMinutes <= rule.endMinute; min += slotIntervalMinutes) {
       const hour = Math.floor(min / 60);
       const minute = min % 60;
-      const startAt = Date.UTC(year, month - 1, day, hour, minute);
+      
+      const wallClockUtc = zonedDateTimeToUtc({ year, month, day, hour, minute }, timezone);
+      const startAt = wallClockUtc ?? Date.UTC(year, month - 1, day, hour, minute);
 
       if (startAt < now + minNoticeMs) continue;
 
-      const reservedStartAt = startAt - offering.bufferBeforeMinutes * 60_000;
-      const reservedEndAt = startAt + durationMs + offering.bufferAfterMinutes * 60_000;
+      const reservedStartAt = startAt - (offering.bufferBeforeMinutes || 0) * 60_000;
+      const reservedEndAt = startAt + durationMs + (offering.bufferAfterMinutes || 0) * 60_000;
 
       const collision = await db.collection<DbBooking>("bookings").findOne({
         organizationId: effectiveOrgId,
