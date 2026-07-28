@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ConversationProvider,
   useConversationControls,
@@ -325,7 +325,8 @@ function AgentLauncherInner({
     }
   }
 
-  const clientTools = createAgentClientTools({
+  const [slotRegistry] = useState(() => new Map<string, any>());
+  const clientTools = useMemo(() => createAgentClientTools({
     siteSlug,
     businessName,
     offerings,
@@ -334,7 +335,8 @@ function AgentLauncherInner({
     locale,
     onActivity,
     onToolEvent,
-  });
+    slotRegistry,
+  }), [siteSlug, businessName, offerings, teamMembers, timezone, locale, onActivity, onToolEvent, slotRegistry]);
 
   async function handleSendGemini(textToSend: string, skipAddingUserMessage = false) {
     if (!textToSend.trim() || (geminiLoading && !skipAddingUserMessage)) return;

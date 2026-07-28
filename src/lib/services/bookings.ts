@@ -344,25 +344,38 @@ export async function createPublicBooking(args: {
   customer: { name: string; email?: string; phone?: string };
   notes?: string;
   idempotencyKey?: string;
+  source?: string;
 }) {
   const db = await getDb();
-  const site = await db.collection<DbPublicSite>("publicSites").findOne({ siteSlug: args.siteSlug });
+  const normalizedSlug = args.siteSlug?.trim().toLowerCase();
+  const site = await db.collection<DbPublicSite>("publicSites").findOne({ siteSlug: normalizedSlug });
   if (!site?.published) throw new Error("Site not found or not published.");
 
-  return createBooking(site.organizationId, {
+  const orgId = site.organizationId;
+  const orgFilter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
+  const organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
+  const effectiveOrgId = organization ? organization._id!.toString() : orgId;
+
+  return createBooking(effectiveOrgId, {
     ...args,
     publicSiteId: site._id!.toString(),
-    source: "public_site",
+    source: (args as any).source || "public_site",
   });
 }
 
 export async function lookupBooking(siteSlug: string, confirmationCode: string, phone: string) {
   const db = await getDb();
-  const site = await db.collection<DbPublicSite>("publicSites").findOne({ siteSlug });
+  const normalizedSlug = siteSlug?.trim().toLowerCase();
+  const site = await db.collection<DbPublicSite>("publicSites").findOne({ siteSlug: normalizedSlug });
   if (!site) return { success: false, message: "Site not found." };
 
+  const orgId = site.organizationId;
+  const orgFilter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
+  const organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
+  const effectiveOrgId = organization ? organization._id!.toString() : orgId;
+
   const booking = await db.collection<DbBooking>("bookings").findOne({
-    organizationId: site.organizationId,
+    organizationId: effectiveOrgId,
     confirmationCode: confirmationCode.trim().toUpperCase(),
     "customerSnapshot.phone": phone.trim(),
   });
@@ -398,11 +411,17 @@ export async function rescheduleBooking(
 
   const db = await getDb();
   const bookingId = lookup.booking.bookingId;
-  const site = await db.collection<DbPublicSite>("publicSites").findOne({ siteSlug });
+  const normalizedSlug = siteSlug?.trim().toLowerCase();
+  const site = await db.collection<DbPublicSite>("publicSites").findOne({ siteSlug: normalizedSlug });
+
+  const orgId = site!.organizationId;
+  const orgFilter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
+  const organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
+  const effectiveOrgId = organization ? organization._id!.toString() : orgId;
 
   const offering = await db.collection<DbOffering>("offerings").findOne({
     _id: new ObjectId(offeringId),
-    organizationId: site!.organizationId,
+    organizationId: effectiveOrgId,
   });
   if (!offering) return { success: false, message: "Offering not found." };
 

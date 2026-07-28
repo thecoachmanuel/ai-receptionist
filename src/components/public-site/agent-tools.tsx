@@ -590,11 +590,11 @@ export function createAgentClientTools({
           );
         }
         const customerName = requiredText(
-          parameters.customer_name || parameters.name || parameters.customer || "Customer",
+          parameters.customer_name || parameters.name || parameters.customer,
           "customer_name",
         );
         const phone = requiredText(
-          parameters.phone || parameters.phone_number || parameters.contact_number || parameters.mobile || "0000000000",
+          parameters.phone || parameters.phone_number || parameters.contact_number || parameters.mobile,
           "phone",
         );
         const email = optionalText(parameters.email || parameters.email_address);
@@ -654,7 +654,7 @@ export function createAgentClientTools({
             parameters.confirmation_code || parameters.code || parameters.booking_id || parameters.id,
             "confirmation_code",
           ),
-          phone: requiredText(parameters.phone || parameters.phone_number || parameters.contact_number || parameters.mobile || "0000000000", "phone"),
+          phone: requiredText(parameters.phone || parameters.phone_number || parameters.contact_number || parameters.mobile, "phone"),
         });
         if (!result.success) return JSON.stringify(result);
         const booking = result.booking;
@@ -685,7 +685,7 @@ export function createAgentClientTools({
             parameters.confirmation_code || parameters.code || parameters.booking_id,
             "confirmation_code",
           ),
-          phone: requiredText(parameters.phone || parameters.phone_number || parameters.contact_number || parameters.mobile || "0000000000", "phone"),
+          phone: requiredText(parameters.phone || parameters.phone_number || parameters.contact_number || parameters.mobile, "phone"),
           offeringId: selection.offeringId,
           startAt: selection.startAt,
           teamMemberId: selection.teamMemberId,
@@ -720,7 +720,7 @@ export function createAgentClientTools({
             parameters.confirmation_code || parameters.code || parameters.booking_id || parameters.id,
             "confirmation_code",
           ),
-          phone: requiredText(parameters.phone || parameters.phone_number || parameters.contact_number || parameters.mobile || "0000000000", "phone"),
+          phone: requiredText(parameters.phone || parameters.phone_number || parameters.contact_number || parameters.mobile, "phone"),
         });
         if (!result.success) return JSON.stringify(result);
         const booking = result.booking;
