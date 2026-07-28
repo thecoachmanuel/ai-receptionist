@@ -68,7 +68,12 @@ type ToolFactoryOptions = {
 
 function requiredText(value: unknown, label: string) {
   if (typeof value !== "string" || !value.trim()) {
-    throw new Error(`${label} is required.`);
+    const fieldMessages: Record<string, string> = {
+      customer_name: "customer_name is required. You must ask the customer for their full name before calling this tool. Ask: \"May I have your full name for the booking?\"",
+      phone: "phone is required. You must ask the customer for their phone number before calling this tool. Ask: \"What phone number can we reach you on?\"",
+      confirmation_code: "confirmation_code is required. Ask the customer for their booking confirmation code.",
+    };
+    throw new Error(fieldMessages[label] ?? `${label} is required. Please collect this information from the customer before proceeding.`);
   }
   return value.trim();
 }
