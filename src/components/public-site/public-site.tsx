@@ -91,42 +91,50 @@ function fontFamilies(font: PublishedSite["site"]["config"]["theme"]["font"]) {
 }
 
 function tenantStyle(
-  theme: PublishedSite["site"]["config"]["theme"],
+  theme?: PublishedSite["site"]["config"]["theme"],
 ): TenantStyle {
-  const fonts = fontFamilies(theme.font);
-  const primaryForeground = contrastColor(theme.accentColor);
+  const t = {
+    accentColor: theme?.accentColor || "#2446D8",
+    backgroundColor: theme?.backgroundColor || "#F5F1E8",
+    foregroundColor: theme?.foregroundColor || "#171717",
+    mutedColor: theme?.mutedColor || "#6B675F",
+    radius: theme?.radius || "soft",
+    font: theme?.font || "editorial",
+  };
+  const fonts = fontFamilies(t.font as any);
+  const primaryForeground = contrastColor(t.accentColor);
   const radius =
-    theme.radius === "sharp"
+    t.radius === "sharp"
       ? "0.3rem"
-      : theme.radius === "rounded"
+      : t.radius === "rounded"
         ? "1.15rem"
         : "0.7rem";
 
   return {
-    "--background": theme.backgroundColor,
-    "--foreground": theme.foregroundColor,
-    "--card": `color-mix(in srgb, ${theme.backgroundColor} 94%, ${theme.foregroundColor} 6%)`,
-    "--card-foreground": theme.foregroundColor,
-    "--popover": theme.backgroundColor,
-    "--popover-foreground": theme.foregroundColor,
-    "--primary": theme.accentColor,
+    "--background": t.backgroundColor,
+    "--foreground": t.foregroundColor,
+    "--card": `color-mix(in srgb, ${t.backgroundColor} 94%, ${t.foregroundColor} 6%)`,
+    "--card-foreground": t.foregroundColor,
+    "--popover": t.backgroundColor,
+    "--popover-foreground": t.foregroundColor,
+    "--primary": t.accentColor,
     "--primary-foreground": primaryForeground,
-    "--secondary": `color-mix(in srgb, ${theme.backgroundColor} 88%, ${theme.mutedColor} 12%)`,
-    "--secondary-foreground": theme.foregroundColor,
-    "--muted": `color-mix(in srgb, ${theme.backgroundColor} 84%, ${theme.mutedColor} 16%)`,
-    "--muted-foreground": theme.mutedColor,
-    "--accent": theme.accentColor,
+    "--secondary": `color-mix(in srgb, ${t.backgroundColor} 88%, ${t.mutedColor} 12%)`,
+    "--secondary-foreground": t.foregroundColor,
+    "--muted": `color-mix(in srgb, ${t.backgroundColor} 84%, ${t.mutedColor} 16%)`,
+    "--muted-foreground": t.mutedColor,
+    "--accent": t.accentColor,
     "--accent-foreground": primaryForeground,
-    "--border": `color-mix(in srgb, ${theme.foregroundColor} 14%, transparent)`,
-    "--input": `color-mix(in srgb, ${theme.foregroundColor} 18%, transparent)`,
-    "--ring": theme.accentColor,
+    "--border": `color-mix(in srgb, ${t.foregroundColor} 14%, transparent)`,
+    "--input": `color-mix(in srgb, ${t.foregroundColor} 18%, transparent)`,
+    "--ring": t.accentColor,
     "--radius": radius,
     "--font-sans": fonts.heading,
     "--font-heading": fonts.heading,
-    backgroundColor: theme.backgroundColor,
-    color: theme.foregroundColor,
+    backgroundColor: t.backgroundColor,
+    color: t.foregroundColor,
     colorScheme:
-      contrastColor(theme.backgroundColor) === "#ffffff" ? "dark" : "light",
+      contrastColor(t.backgroundColor) === "#ffffff" ? "dark" : "light",
     fontFamily: fonts.body,
   };
 }
@@ -225,15 +233,15 @@ export function PublicSite({
   const isCompact = config.template === "compact";
   const isGallery = config.template === "gallery";
   const bookingIsVisible =
-    config.booking.enabled && config.sections.includes("booking");
+    config.booking?.enabled && config.sections?.includes("booking");
   const textAgentIsVisible =
-    textAgentEnabled && config.agent.showWebChat;
+    textAgentEnabled && config.agent?.showWebChat;
   const voiceAgentIsVisible =
-    voiceAgentEnabled && config.agent.showVoiceChat;
+    voiceAgentEnabled && config.agent?.showVoiceChat;
   const elevenLabsWidgetIsVisible =
-    voiceAgentEnabled && config.agent.showElevenLabsWidget;
+    voiceAgentEnabled && config.agent?.showElevenLabsWidget;
   const agentIsVisible = textAgentIsVisible || voiceAgentIsVisible;
-  const sectionSet = new Set(config.sections);
+  const sectionSet = new Set(config.sections || []);
 
   const heroVisualStyle: CSSProperties = heroImageUrl
     ? {

@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/db/mongodb";
 import type { DbAgentIntegration, DbKnowledgeItem, DbOffering, DbOrganization, DbPublicSite, DbTeamMember, SiteConfig } from "@/lib/db/types";
-import { defaultSiteConfig, slugify } from "@/lib/defaults";
+import { DEFAULT_TERMINOLOGY, defaultSiteConfig, slugify } from "@/lib/defaults";
 import { sanitizeSiteConfig } from "@/lib/siteConfig";
 import { requiredTrimmed } from "@/lib/validation";
 
@@ -81,21 +81,37 @@ export async function getPublishedBySlug(siteSlug: string) {
       .toArray(),
   ]);
 
+  const defaults = defaultSiteConfig(organization.name);
+  const pub = site.published || defaults;
+  const mergedConfig = {
+    ...defaults,
+    ...pub,
+    theme: { ...defaults.theme, ...(pub.theme || {}) },
+    contact: { ...defaults.contact, ...(pub.contact || {}) },
+    booking: { ...defaults.booking, ...(pub.booking || {}) },
+    agent: { ...defaults.agent, ...(pub.agent || {}) },
+    sections: pub.sections || defaults.sections,
+    socialLinks: pub.socialLinks || defaults.socialLinks,
+  };
+
   return {
     site: {
       _id: site._id!.toString(),
       siteSlug: site.siteSlug,
-      config: site.published,
+      config: mergedConfig,
       publishedAt: site.publishedAt,
     },
     organization: {
       clerkOrgId: organization.clerkOrgId,
-      name: organization.name,
-      slug: organization.slug,
-      timezone: organization.timezone,
-      currency: organization.currency,
-      locale: organization.locale,
-      terminology: organization.terminology,
+      name: organization.name || "Business",
+      slug: organization.slug || normalizedSlug,
+      timezone: organization.timezone || "UTC",
+      currency: organization.currency || "USD",
+      locale: organization.locale || "en-US",
+      terminology: {
+        ...DEFAULT_TERMINOLOGY,
+        ...(organization.terminology || {}),
+      },
     },
     offerings: offerings
       .filter((o: any) => o.bookableOnline)
@@ -134,12 +150,13 @@ export async function getAgentSessionConfig(siteSlug: string) {
   const db = await getDb();
   const slug = siteSlug.trim().toLowerCase();
   const site = await db.collection<DbPublicSite>("publicSites").findOne({ siteSlug: slug });
+  const agent = site?.published?.agent;
   if (
     !site?.published ||
     !site.publishedAt ||
-    (!site.published.agent.showWebChat &&
-      !site.published.agent.showVoiceChat &&
-      !site.published.agent.showElevenLabsWidget)
+    (!agent?.showWebChat &&
+      !agent?.showVoiceChat &&
+      !agent?.showElevenLabsWidget)
   ) {
     return null;
   }

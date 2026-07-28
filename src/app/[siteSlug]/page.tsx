@@ -30,10 +30,11 @@ const getAgentSessionConfig = cache((siteSlug: string) =>
   publicSiteService.getAgentSessionConfig(siteSlug),
 );
 
-const getAgentFeatures = cache(async (clerkOrgId: string) => {
+const getAgentFeatures = cache(async (orgIdOrClerkId?: string) => {
+  if (!orgIdOrClerkId) return { text: false, voice: false };
   const [text, voice] = await Promise.all([
-    organizationHasFeature(clerkOrgId, "web_agent"),
-    organizationHasFeature(clerkOrgId, "browser_voice"),
+    organizationHasFeature(orgIdOrClerkId, "web_agent"),
+    organizationHasFeature(orgIdOrClerkId, "browser_voice"),
   ]);
 
   return { text, voice };
@@ -96,7 +97,7 @@ export default async function PublicSitePage({
   }
 
   const agentFeatures = agentSessionConfig
-    ? await getAgentFeatures(agentSessionConfig.clerkOrgId)
+    ? await getAgentFeatures(agentSessionConfig.clerkOrgId || agentSessionConfig.organizationId)
     : { text: false, voice: false };
 
   return (
