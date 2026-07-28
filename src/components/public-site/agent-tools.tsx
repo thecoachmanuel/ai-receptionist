@@ -207,6 +207,27 @@ function parseFlexibleDate(rawDate: unknown, timezone: string): string {
   return `${todayYear}-${String(todayMonth).padStart(2, "0")}-${String(todayDay).padStart(2, "0")}`;
 }
 
+function parseFlexibleTime(rawDate: unknown, rawTime: unknown): { hour: number; minute: number; label: string } | null {
+  const combined = `${typeof rawDate === "string" ? rawDate : ""} ${typeof rawTime === "string" ? rawTime : ""}`.toLowerCase();
+  const timeMatch = combined.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/);
+  if (!timeMatch) return null;
+
+  let hour = Number(timeMatch[1]);
+  const minute = timeMatch[2] ? Number(timeMatch[2]) : 0;
+  const ampm = timeMatch[3];
+
+  if (ampm === "pm" && hour < 12) hour += 12;
+  if (ampm === "am" && hour === 12) hour = 0;
+
+  if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+    const dispHour = hour % 12 || 12;
+    const dispAmPm = hour >= 12 ? "PM" : "AM";
+    const dispMin = minute === 0 ? "" : `:${String(minute).padStart(2, "0")}`;
+    return { hour, minute, label: `${dispHour}${dispMin} ${dispAmPm}` };
+  }
+  return null;
+}
+
 function formatLocalTime(timestamp: number, locale: string, timezone: string) {
   try {
     return new Intl.DateTimeFormat(locale, {
@@ -617,8 +638,34 @@ export function createAgentClientTools({
                 team_members: AgentSlotSelection[];
               }
             >(),
-          ).values(),
-        );
+        const timePref = parseFlexibleTime(parameters.date, parameters.time || parameters.preferred_time || parameters.time_slot || parameters.requested_time);
+        let exactMatchFound = false;
+
+        if (timePref) {
+          groupedSlots.sort((a: any, b: any) => {
+            const partsA = new Intl.DateTimeFormat("en-US", { timeZone: timezone, hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(new Date(a.start_time_iso));
+            const partsB = new Intl.DateTimeFormat("en-US", { timeZone: timezone, hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(new Date(b.start_time_iso));
+            const hA = Number(partsA.find((p) => p.type === "hour")?.value || 0);
+            const mA = Number(partsA.find((p) => p.type === "minute")?.value || 0);
+            const hB = Number(partsB.find((p) => p.type === "hour")?.value || 0);
+            const mB = Number(partsB.find((p) => p.type === "minute")?.value || 0);
+
+            const diffA = Math.abs((hA * 60 + mA) - (timePref.hour * 60 + timePref.minute));
+            const diffB = Math.abs((hB * 60 + mB) - (timePref.hour * 60 + timePref.minute));
+            return diffA - diffB;
+          });
+
+          const topSlot = groupedSlots[0] as any;
+          if (topSlot) {
+            const parts = new Intl.DateTimeFormat("en-US", { timeZone: timezone, hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(new Date(topSlot.start_time_iso));
+            const h = Number(parts.find((p) => p.type === "hour")?.value || 0);
+            const m = Number(parts.find((p) => p.type === "minute")?.value || 0);
+            if (h === timePref.hour && m === timePref.minute) {
+              exactMatchFound = true;
+            }
+          }
+        }
+
         const publishedTimes = groupedSlots.slice(0, 12).map((slot: any) => ({
           start_time_iso: slot.start_time_iso,
           end_time_iso: slot.end_time_iso,
@@ -631,16 +678,25 @@ export function createAgentClientTools({
             )?.title,
           })),
         }));
+
         return JSON.stringify({
           success: true,
           timezone: availability.timezone,
           offering: availability.offering,
           date: availability.date,
+          ...(timePref ? {
+            requested_time: timePref.label,
+            exact_time_available: exactMatchFound,
+          } : {}),
           available_time_count: groupedSlots.length,
           available_slot_count: availability.slots.length,
           response_instruction: groupedSlots.length === 0
             ? "No available slots were found for this date. State this politely to the customer out loud and ask if they would like to check another date."
-            : `Found ${groupedSlots.length} available time slots. Speak up to 4 convenient times out loud naturally, and ask the customer which time works best for them or if they need a different time.`,
+            : timePref && exactMatchFound
+              ? `The exact requested time (${timePref.label}) is AVAILABLE! Confirm this out loud to the customer, state the staff member, and ask if they would like to book it.`
+              : timePref
+                ? `The exact requested time (${timePref.label}) is not open, but closest available times are listed first (e.g. ${publishedTimes[0]?.local_time || "nearby times"}). Present these available times out loud.`
+                : `Found ${groupedSlots.length} available time slots. Speak up to 4 convenient times out loud naturally, and ask the customer which time works best for them or if they need a different time.`,
           selection_instruction:
             "Choose one team member at one time and copy that exact slot_id into the booking or reschedule tool.",
           times: publishedTimes,
