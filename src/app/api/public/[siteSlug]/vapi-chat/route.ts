@@ -18,9 +18,9 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { message, sessionId, dynamicVariables } = body;
+    const { message, sessionId, dynamicVariables, toolResults } = body;
 
-    if (!message) {
+    if (!message && !toolResults) {
       return NextResponse.json({ error: "Missing message" }, { status: 400 });
     }
 
@@ -36,14 +36,25 @@ export async function POST(
 
     const payload: any = {
       assistantId: aiSettings.vapiAssistantId,
-      input: message,
       assistantOverrides: {
         variableValues: dynamicVariables || {},
       },
     };
-    
+
     if (sessionId) {
       payload.previousChatId = sessionId;
+    }
+
+    // If this is a tool result submission, format it correctly for Vapi
+    if (toolResults && Array.isArray(toolResults) && toolResults.length > 0) {
+      // Vapi expects tool results as a messages array with tool role
+      payload.messages = toolResults.map((tr: any) => ({
+        role: "tool",
+        tool_call_id: tr.tool_call_id || tr.toolCallId,
+        content: typeof tr.content === "string" ? tr.content : JSON.stringify(tr.content),
+      }));
+    } else {
+      payload.input = typeof message === "string" ? message : JSON.stringify(message);
     }
 
     const vapiRes = await fetch("https://api.vapi.ai/chat", {

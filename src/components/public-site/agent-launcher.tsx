@@ -392,11 +392,19 @@ function AgentLauncherInner({
       const response = await fetch(`/api/public/${encodeURIComponent(siteSlug)}/vapi-chat`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ 
-          message: textToSend, 
-          sessionId: vapiSessionIdRef.current,
-          dynamicVariables: vapiDynamicVarsRef.current,
-        }),
+        body: JSON.stringify(
+          isToolCall
+            ? {
+                toolResults: textToSend,
+                sessionId: vapiSessionIdRef.current,
+                dynamicVariables: vapiDynamicVarsRef.current,
+              }
+            : {
+                message: textToSend,
+                sessionId: vapiSessionIdRef.current,
+                dynamicVariables: vapiDynamicVarsRef.current,
+              }
+        ),
       });
 
       const data = await response.json();
@@ -432,20 +440,23 @@ function AgentLauncherInner({
                   tool_call_id: toolCall.id,
                   toolCallId: toolCall.id,
                   name: toolCall.function?.name,
-                  content: JSON.stringify({ error: "Tool not found" }),
-                  result: JSON.stringify({ error: "Tool not found" }),
+                  content: JSON.stringify({ success: false, error: `Tool '${name}' is not available.` }),
+                  result: JSON.stringify({ success: false, error: `Tool '${name}' is not available.` }),
                 });
               }
             }
           } catch (err) {
+            // Return the ACTUAL error message back to Vapi so the AI understands
+            // what went wrong and can ask the customer for the missing information.
+            const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred.";
             console.error("Vapi text tool execution error:", err);
             results.push({
               role: "tool",
               tool_call_id: toolCall.id,
               toolCallId: toolCall.id,
               name: toolCall.function?.name,
-              content: JSON.stringify({ error: "Failed to execute tool" }),
-              result: JSON.stringify({ error: "Failed to execute tool" }),
+              content: JSON.stringify({ success: false, error: errorMessage }),
+              result: JSON.stringify({ success: false, error: errorMessage }),
             });
           }
         }
