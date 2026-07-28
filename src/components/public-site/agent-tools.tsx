@@ -92,6 +92,11 @@ function normalizedName(value: string) {
     .toLowerCase();
 }
 
+function isGenericTerm(term: string): boolean {
+  const norm = term.toLowerCase().trim();
+  return /^(any|anyone|either|all|no preference|staff|member|available|available staff|none|somebody|someone|service|booking|appointment|work|offering)$/i.test(norm);
+}
+
 function resolveByName<T extends { name: string }>(
   items: T[],
   rawName: unknown,
@@ -100,10 +105,10 @@ function resolveByName<T extends { name: string }>(
   if (!items || items.length === 0) {
     throw new Error(`No ${label.replaceAll("_", " ")}s registered.`);
   }
-  if (!rawName || (typeof rawName === "string" && !rawName.trim())) {
-    if (items.length === 1) return items[0];
-    const choices = items.map((item: any) => item.name).join(", ");
-    throw new Error(`${label} is required. Available choices: ${choices || "none"}.`);
+  if (items.length === 1) return items[0];
+
+  if (!rawName || (typeof rawName === "string" && !rawName.trim()) || (typeof rawName === "string" && isGenericTerm(rawName))) {
+    return items[0];
   }
   const name = typeof rawName === "string" ? rawName.trim() : String(rawName).trim();
   const normalized = normalizedName(name);
@@ -137,10 +142,69 @@ function resolveByName<T extends { name: string }>(
     return scored[0].item;
   }
 
-  if (items.length === 1) return items[0];
+  return items[0];
+}
 
-  const choices = items.map((item: any) => item.name).join(", ");
-  throw new Error(`${label} was not found. Available choices: ${choices || "none"}.`);
+function parseFlexibleDate(rawDate: unknown, timezone: string): string {
+  const text = typeof rawDate === "string" ? rawDate.trim().toLowerCase() : "";
+  const now = new Date();
+  
+  const todayParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone || "Africa/Lagos",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+
+  const getPart = (type: string) => todayParts.find((p) => p.type === type)?.value || "";
+  const todayYear = Number(getPart("year")) || now.getUTCFullYear();
+  const todayMonth = Number(getPart("month")) || (now.getUTCMonth() + 1);
+  const todayDay = Number(getPart("day")) || now.getUTCDate();
+
+  if (!text || text === "today" || text === "now" || text === "current") {
+    return `${todayYear}-${String(todayMonth).padStart(2, "0")}-${String(todayDay).padStart(2, "0")}`;
+  }
+
+  if (text === "tomorrow") {
+    const tm = new Date(Date.UTC(todayYear, todayMonth - 1, todayDay + 1));
+    return tm.toISOString().slice(0, 10);
+  }
+
+  const weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  const targetDayIndex = weekdays.findIndex((w) => text.includes(w));
+  if (targetDayIndex !== -1) {
+    const todayDate = new Date(Date.UTC(todayYear, todayMonth - 1, todayDay));
+    const currentDayIndex = todayDate.getUTCDay();
+    let daysAhead = targetDayIndex - currentDayIndex;
+    if (daysAhead <= 0) daysAhead += 7;
+    const targetDate = new Date(Date.UTC(todayYear, todayMonth - 1, todayDay + daysAhead));
+    return targetDate.toISOString().slice(0, 10);
+  }
+
+  const isoMatch = text.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoMatch) {
+    const y = isoMatch[1];
+    const m = String(Number(isoMatch[2])).padStart(2, "0");
+    const d = String(Number(isoMatch[3])).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  const slashMatch = text.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (slashMatch) {
+    const p1 = Number(slashMatch[1]);
+    const p2 = Number(slashMatch[2]);
+    const y = slashMatch[3];
+    const [d, m] = p1 > 12 ? [p1, p2] : [p2, p1];
+    return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+
+  const parsed = Date.parse(text);
+  if (!Number.isNaN(parsed)) {
+    const d = new Date(parsed);
+    return d.toISOString().slice(0, 10);
+  }
+
+  return `${todayYear}-${String(todayMonth).padStart(2, "0")}-${String(todayDay).padStart(2, "0")}`;
 }
 
 function formatLocalTime(timestamp: number, locale: string, timezone: string) {
@@ -498,15 +562,20 @@ export function createAgentClientTools({
 
     get_availability: async (parameters: any) => {
       try {
-        const offering = resolveOffering(parameters.offering_name || parameters.service || parameters.offering || parameters.service_name);
-        const rawDate = typeof parameters.date === "string" ? parameters.date.trim() : "";
-        const dateMatch = rawDate.match(/\d{4}-\d{2}-\d{2}/);
-        const date = dateMatch ? dateMatch[0] : (rawDate || new Date().toISOString().slice(0, 10));
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-          throw new Error("date must use YYYY-MM-DD in the business timezone.");
+        const rawOffering = parameters.offering_name || parameters.service || parameters.offering || parameters.service_name;
+        const offering = resolveOffering(rawOffering);
+        const date = parseFlexibleDate(parameters.date, timezone);
+        
+        const rawMemberName = optionalText(parameters.team_member_name || parameters.team_member || parameters.staff || parameters.member_name);
+        let member: any = undefined;
+        if (rawMemberName && !isGenericTerm(rawMemberName)) {
+          try {
+            member = resolveTeamMember(rawMemberName);
+          } catch {
+            member = undefined;
+          }
         }
-        const memberName = optionalText(parameters.team_member_name || parameters.team_member || parameters.staff || parameters.member_name);
-        const member = memberName ? resolveTeamMember(memberName) : undefined;
+
         const rawSlots = await callApi("publicBooking/getAvailableSlots", {
           siteSlug,
           offeringId: offering._id,
