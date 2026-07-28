@@ -682,26 +682,33 @@ export function createAgentClientTools({
           })),
         }));
 
+        const timeOptionsSummary = publishedTimes
+          .slice(0, 4)
+          .map((t: any) => `${t.local_time} (${t.team_members.map((m: any) => m.team_member_name).join(", ")})`)
+          .join("; ");
+
+        if (groupedSlots.length === 0) {
+          return JSON.stringify({
+            success: true,
+            status_summary: `NO_SLOTS: No available slots found for ${availability.offering} on ${availability.date}.`,
+            available_time_count: 0,
+            instruction_for_ai: "Tell the customer politely out loud that there are no available slots for that date, and ask if they would like to check another date.",
+            times: [],
+          });
+        }
+
         return JSON.stringify({
           success: true,
-          timezone: availability.timezone,
-          offering: availability.offering,
-          date: availability.date,
-          ...(timePref ? {
-            requested_time: timePref.label,
-            exact_time_available: exactMatchFound,
-          } : {}),
+          status_summary: `SUCCESS: Found ${groupedSlots.length} available time slots for ${availability.offering} on ${availability.date}.`,
+          CRITICAL_NOTE_FOR_AI: `There ARE ${groupedSlots.length} available slots! Do NOT say there are no slots. Present the available times listed below warmly to the customer out loud.`,
           available_time_count: groupedSlots.length,
-          available_slot_count: availability.slots.length,
-          response_instruction: groupedSlots.length === 0
-            ? "No available slots were found for this date. State this politely to the customer out loud and ask if they would like to check another date."
-            : timePref && exactMatchFound
-              ? `The exact requested time (${timePref.label}) is AVAILABLE! Confirm this out loud to the customer, state the staff member, and ask if they would like to book it.`
-              : timePref
-                ? `The exact requested time (${timePref.label}) is not open, but closest available times are listed first (e.g. ${publishedTimes[0]?.local_time || "nearby times"}). Present these available times out loud.`
-                : `Found ${groupedSlots.length} available time slots. Speak up to 4 convenient times out loud naturally, and ask the customer which time works best for them or if they need a different time.`,
-          selection_instruction:
-            "Choose one team member at one time and copy that exact slot_id into the booking or reschedule tool.",
+          available_times_summary: timeOptionsSummary,
+          instruction_for_ai: timePref && exactMatchFound
+            ? `The requested time (${timePref.label}) is AVAILABLE! Confirm ${timePref.label} out loud to the customer, state the staff member, and ask if they want to book it.`
+            : timePref
+              ? `The exact time ${timePref.label} is not open, but nearby available times are: ${timeOptionsSummary}. Offer these available times out loud to the customer.`
+              : `Announce these available times out loud: ${timeOptionsSummary}. Ask which time slot works best for the customer.`,
+          selection_instruction: "Choose one team member at one time and copy that exact slot_id into book_appointment.",
           times: publishedTimes,
           truncated: groupedSlots.length > 12,
         });
