@@ -74,19 +74,20 @@ const tools = [
     async: false,
     function: {
       name: "get_availability",
-      description: "Check available appointment slots for a specified offering and date (YYYY-MM-DD).",
+      description: "Check available appointment slots for a specified service, date, and optional time preference (e.g. '2pm', '3:30pm', 'today', 'tomorrow', 'next Monday').",
       parameters: {
         type: "object",
         properties: {
-          offering_name: { type: "string" },
-          date: { type: "string" },
-          team_member_name: { type: "string" },
+          offering_name: { type: "string", description: "Name of the service or offering to book." },
+          date: { type: "string", description: "Target date or relative date, e.g. 'today', 'tomorrow', 'next Monday', '2026-07-28', or 'today at 2pm'." },
+          time: { type: "string", description: "Optional requested time preference, e.g. '2pm', '3:30pm', '14:00'." },
+          team_member_name: { type: "string", description: "Optional staff member name. Leave blank or use 'any' if customer has no preference." }
         },
-        required: ["offering_name", "date"],
-      },
+        required: ["offering_name"]
+      }
     },
     messages: [
-      { type: "request-start", content: "Let me check the calendar for availability." }
+      { type: "request-start", content: "Let me check our calendar for availability." }
     ]
   },
   {
