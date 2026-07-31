@@ -656,7 +656,6 @@ export function PublicSite({
                   timezone={organization.timezone}
                   locale={organization.locale}
                   voiceGender={voiceGender}
-                  accentColor={config.theme.accentColor}
                 />
               </div>
             ) : (
