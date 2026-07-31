@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { AuthShell } from "@/components/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,10 +33,13 @@ export default function SignInPage() {
         throw new Error(data.error || "Sign in failed");
       }
 
+      toast.success("Signed in successfully");
       router.push("/app");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign in failed");
+      const msg = err instanceof Error ? err.message : "Sign in failed";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
