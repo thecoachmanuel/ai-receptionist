@@ -111,7 +111,7 @@ function WorkspaceNavigation({
 }) {
   const pathname = usePathname();
   const { role, permissions } = useAuth();
-  const isSiteAdmin = role === "admin" || permissions.includes("admin:all");
+  const isSiteAdmin = permissions.includes("admin:all");
 
   return (
     <>
