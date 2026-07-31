@@ -12,7 +12,7 @@ export default async function AdminPage() {
     redirect("/sign-in");
   }
 
-  if (session.role !== "admin" && !session.permissions.includes("admin:all")) {
+  if (!session.permissions.includes("admin:all")) {
     redirect("/app/access-required");
   }
 

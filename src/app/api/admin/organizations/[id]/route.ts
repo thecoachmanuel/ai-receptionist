@@ -13,7 +13,7 @@ export async function PATCH(
 ) {
   try {
     const session = await getSession();
-    if (!session || (session.role !== "admin" && !session.permissions.includes("admin:all"))) {
+    if (!session || !session.permissions.includes("admin:all")) {
       return NextResponse.json({ error: "Unauthorized site admin access." }, { status: 403 });
     }
 
@@ -39,7 +39,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getSession();
-    if (!session || (session.role !== "admin" && !session.permissions.includes("admin:all"))) {
+    if (!session || !session.permissions.includes("admin:all")) {
       return NextResponse.json({ error: "Unauthorized site admin access." }, { status: 403 });
     }
 
