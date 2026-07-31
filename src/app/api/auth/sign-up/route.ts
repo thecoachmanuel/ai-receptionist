@@ -18,17 +18,6 @@ export async function POST(request: NextRequest) {
     }
 
     const emailNorm = email.trim().toLowerCase();
-    
-    const rawAdminEmail = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-    const adminEmail = ((rawAdminEmail?.replace(/^["']+|["']+$/g, "").trim()) || "admin@admin.com").toLowerCase();
-    
-    if (emailNorm === adminEmail) {
-      return NextResponse.json(
-        { error: "This email is reserved for system administration. Please sign in instead." },
-        { status: 403 },
-      );
-    }
-
     const db = await getDb();
     const existing = await db.collection<DbUser>("users").findOne({ email: emailNorm });
     if (existing) {

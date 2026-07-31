@@ -68,25 +68,6 @@ export async function clearSession(): Promise<void> {
 
 export async function updateActiveOrganization(userId: string, orgId: string): Promise<void> {
   const db = await getDb();
-
-  const userObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
-  const user = await db.collection<DbUser>("users").findOne({ _id: userObjectId as ObjectId });
-  if (!user) throw new Error("User not found.");
-
-  const rawAdminEmail = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-  const adminEmail = (rawAdminEmail ? rawAdminEmail.replace(/^["']+|["']+$/g, "").trim() : "admin@admin.com").toLowerCase();
-  const isSiteAdmin = user.email.trim().toLowerCase() === adminEmail;
-
-  if (!isSiteAdmin) {
-    const orgMember = await db.collection<DbOrgMember>("orgMembers").findOne({
-      organizationId: orgId,
-      userId: user._id!.toString(),
-    });
-    if (!orgMember) {
-      throw new Error("Unauthorized to switch to this organization.");
-    }
-  }
-
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
@@ -97,6 +78,7 @@ export async function updateActiveOrganization(userId: string, orgId: string): P
     );
   }
 
+  const userObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
   await db.collection<DbUser>("users").updateOne(
     { _id: userObjectId as ObjectId },
     { $set: { activeOrgId: orgId } },
@@ -156,8 +138,7 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
       }
     }
 
-    const rawAdminEmail = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-    const adminEmail = (rawAdminEmail ? rawAdminEmail.replace(/^["']+|["']+$/g, "").trim() : "admin@admin.com").toLowerCase();
+    const adminEmail = (process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.replace(/^["']|["']$/g, "").trim() : "admin@admin.com").toLowerCase();
     const isSiteAdmin = user.email.trim().toLowerCase() === adminEmail;
 
     if (!organization && isSiteAdmin) {
@@ -171,10 +152,6 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
         organizationId: orgIdStr,
         userId: userIdStr,
       });
-
-      if (!isSiteAdmin && !orgMember) {
-        organization = null;
-      }
     }
 
     let role: "admin" | "operator" | "member" = orgMember?.role || "member";

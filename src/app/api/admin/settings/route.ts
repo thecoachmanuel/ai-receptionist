@@ -16,7 +16,10 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     const session = await getSession();
-    if (!session || !session.permissions.includes("admin:all")) {
+    if (
+      !session ||
+      (session.role !== "admin" && !session.permissions.includes("admin:all"))
+    ) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
     }
 
@@ -38,7 +41,10 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !session.permissions.includes("admin:all")) {
+    if (
+      !session ||
+      (session.role !== "admin" && !session.permissions.includes("admin:all"))
+    ) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
     }
 

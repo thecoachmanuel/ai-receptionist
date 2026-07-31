@@ -19,12 +19,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import dynamic from "next/dynamic";
+import { AgentLauncher } from "@/components/public-site/agent-launcher";
+import { BookingFlow } from "@/components/public-site/booking-flow";
+import { ElevenLabsEmbed } from "@/components/public-site/elevenlabs-embed";
 import type { PublishedSite, PublicOffering } from "@/components/public-site/types";
-
-const AgentLauncher = dynamic(() => import("@/components/public-site/agent-launcher").then(mod => mod.AgentLauncher), { ssr: false });
-const BookingFlow = dynamic(() => import("@/components/public-site/booking-flow").then(mod => mod.BookingFlow), { ssr: false });
-const ElevenLabsEmbed = dynamic(() => import("@/components/public-site/elevenlabs-embed").then(mod => mod.ElevenLabsEmbed), { ssr: false });
 
 type TenantStyle = CSSProperties &
   Record<
@@ -53,7 +51,6 @@ type TenantStyle = CSSProperties &
 
 function safeHttpUrl(value?: string) {
   if (!value) return undefined;
-  if (value.startsWith("/") || value.startsWith("data:")) return value;
   try {
     const url = new URL(value);
     return url.protocol === "https:" || url.protocol === "http:"
@@ -248,7 +245,7 @@ export function PublicSite({
 
   const heroVisualStyle: CSSProperties = heroImageUrl
     ? {
-        backgroundImage: `linear-gradient(180deg, transparent 48%, color-mix(in srgb, var(--foreground) 38%, transparent)), url("${heroImageUrl.replace(/"/g, '\\"')}")`,
+        backgroundImage: `linear-gradient(180deg, transparent 48%, color-mix(in srgb, var(--foreground) 38%, transparent)), url(${JSON.stringify(heroImageUrl)})`,
         backgroundPosition: "center",
         backgroundSize: "cover",
       }
@@ -688,11 +685,9 @@ export function PublicSite({
           </div>
         </section>
 
-        {(config.sections || []).map((section: string) => {
-          const renderSection = sections[section as keyof typeof sections];
-          if (typeof renderSection !== "function") return null;
-          return <div key={section}>{renderSection()}</div>;
-        })}
+        {config.sections.map((section: any) => (
+          <div key={section}>{sections[section]()}</div>
+        ))}
       </main>
 
       <footer className="border-t border-border px-5 py-10 sm:px-8 lg:px-12">

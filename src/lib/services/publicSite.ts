@@ -183,27 +183,11 @@ export async function getAgentSessionConfig(siteSlug: string) {
 
 export async function getCurrentDraft(orgId: string) {
   const db = await getDb();
+  const site = await db.collection<DbPublicSite>("publicSites").findOne({ organizationId: orgId });
   const orgFilter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
   const organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
-  if (!organization) throw new Error("Organization not found.");
 
-  let site = await db.collection<DbPublicSite>("publicSites").findOne({ organizationId: orgId });
-
-  if (!site) {
-    const defaultConfig = defaultSiteConfig(organization.name);
-    const now = Date.now();
-    const newSiteDoc: DbPublicSite = {
-      organizationId: orgId,
-      siteSlug: organization.slug || "site-" + Date.now().toString(36),
-      draft: defaultConfig,
-      published: defaultConfig,
-      publishedAt: now,
-      createdAt: now,
-      updatedAt: now,
-    };
-    const res = await db.collection<DbPublicSite>("publicSites").insertOne(newSiteDoc);
-    site = { ...newSiteDoc, _id: res.insertedId };
-  }
+  if (!site || !organization) throw new Error("Public site not initialized.");
 
   return {
     site: {

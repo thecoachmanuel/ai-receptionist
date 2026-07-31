@@ -1,4 +1,4 @@
-
+export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import {
@@ -14,9 +14,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import { UserButton } from "@/components/auth/user-button";
+import { getSession } from "@/lib/auth/session";
 import { getPlatformSettings } from "@/lib/services/settings";
 import { Brand } from "@/components/brand";
-import { SiteAuthNav } from "@/components/site-auth-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { WaitlistPage } from "./waitlist-page";
@@ -47,7 +47,7 @@ const moments = [
 
 // Moved dynamic plans creation into Home component
 
-function MarketingNav() {
+function MarketingNav({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-background/92 backdrop-blur-md">
       <div className="mx-auto flex h-17 max-w-[1400px] items-center px-5 sm:px-8 lg:px-12">
@@ -67,7 +67,27 @@ function MarketingNav() {
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          <SiteAuthNav />
+          {!signedIn ? (
+            <>
+            <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+              <Link href="/sign-in">Sign in</Link>
+            </Button>
+            <Button asChild size="sm" className="gap-1.5 shadow-none">
+              <Link href="/sign-up">
+                Start free <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
+            </>
+          ) : (
+            <>
+            <Button asChild size="sm" className="gap-1.5 shadow-none">
+              <Link href="/app">
+                Open workspace <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
+            <UserButton />
+            </>
+          )}
         </div>
       </div>
     </header>
@@ -75,7 +95,9 @@ function MarketingNav() {
 }
 
 export default async function Home() {
-  const settings = await getPlatformSettings();
+  const [session, settings] = await Promise.all([getSession(), getPlatformSettings()]);
+  const userId = session?.user.id;
+
   const symbol = settings.baseCurrency === "NGN" ? "₦" : "$";
   const plans = [
     {
@@ -105,7 +127,7 @@ export default async function Home() {
 
   return (
     <main className="bg-background">
-      <MarketingNav />
+      <MarketingNav signedIn={Boolean(userId)} />
 
       <section className="relative border-b">
         <div className="absolute inset-0 hairline-grid opacity-45 [mask-image:linear-gradient(to_bottom,black,transparent_88%)]" />

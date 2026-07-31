@@ -1,12 +1,18 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
 import { Brand } from "@/components/brand";
-import { SiteAuthNav } from "@/components/site-auth-nav";
 import { Button } from "@/components/ui/button";
+import { getSession } from "@/lib/auth/session";
 import { getPlatformSettings } from "@/lib/services/settings";
 
 export default async function PricingPage() {
-  const settings = await getPlatformSettings();
+  const [session, settings] = await Promise.all([
+    getSession(),
+    getPlatformSettings(),
+  ]);
+  const userId = session?.user.id;
 
   const corePrice = settings.planPrices.core;
   const engagePrice = settings.planPrices.engage;
@@ -54,9 +60,11 @@ export default async function PricingPage() {
       <header className="sticky top-0 z-50 border-b border-border/80 bg-background/92 backdrop-blur-md">
         <div className="mx-auto flex h-18 max-w-[1400px] items-center px-5 sm:px-8 lg:px-12">
           <Brand />
-          <div className="ml-auto flex items-center gap-2">
-            <SiteAuthNav />
-          </div>
+          <Button asChild variant="ghost" size="sm" className="ml-auto gap-2">
+            <Link href={userId ? "/app" : "/"}>
+              <ArrowLeft className="size-3.5" /> {userId ? "Workspace" : "Home"}
+            </Link>
+          </Button>
         </div>
       </header>
 
@@ -113,8 +121,8 @@ export default async function PricingPage() {
                 variant={plan.featured ? "secondary" : "outline"}
                 className="mt-auto shadow-none"
               >
-                <Link href="/sign-up">
-                  Create an organization
+                <Link href={userId ? "/app" : "/sign-up"}>
+                  {userId ? "Manage in workspace" : "Create an organization"}
                 </Link>
               </Button>
             </article>

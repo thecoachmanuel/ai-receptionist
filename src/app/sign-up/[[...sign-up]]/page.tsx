@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { AuthShell } from "@/components/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,13 +34,10 @@ export default function SignUpPage() {
         throw new Error(data.error || "Sign up failed");
       }
 
-      toast.success("Account created successfully");
       router.push(`/app/${data.orgSlug}`);
       router.refresh();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Sign up failed";
-      setError(msg);
-      toast.error(msg);
+      setError(err instanceof Error ? err.message : "Sign up failed");
     } finally {
       setLoading(false);
     }

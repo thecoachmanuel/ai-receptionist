@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 
 function cleanEnv(val?: string): string {
   if (!val) return "";
-  return val.replace(/^["']+|["']+$/g, "").trim();
+  return val.replace(/^["']|["']$/g, "").trim();
 }
 
 export async function POST(request: NextRequest) {
@@ -20,21 +20,18 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const rawAdminEmail = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-    const rawAdminPassword = process.env.ADMIN_PASSWORD || process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
-    
-    const adminEmail = (cleanEnv(rawAdminEmail) || "admin@admin.com").toLowerCase();
-    const adminPassword = cleanEnv(rawAdminPassword) || "admin123";
-
-    console.log(`[Sign In] Attempting login for: ${normalizedEmail}`);
-    console.log(`[Sign In] Configured Admin Email: ${adminEmail}`);
+    const adminEmail = (cleanEnv(process.env.ADMIN_EMAIL) || "admin@admin.com").toLowerCase();
+    const adminPassword = cleanEnv(process.env.ADMIN_PASSWORD) || "admin123";
 
     const db = await getDb();
     let user = await db.collection<DbUser>("users").findOne({ email: normalizedEmail });
 
     // Handle Super Admin authentication using env ADMIN_EMAIL and ADMIN_PASSWORD
     if (normalizedEmail === adminEmail) {
-      if (password !== adminPassword) {
+      const isEnvPasswordValid = password === adminPassword;
+      const isDbPasswordValid = user ? await comparePassword(password, user.passwordHash) : false;
+
+      if (!isEnvPasswordValid && !isDbPasswordValid) {
         return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
       }
 
@@ -67,7 +64,7 @@ export async function POST(request: NextRequest) {
           createdAt: now,
           updatedAt: now,
         };
-      } else {
+      } else if (isEnvPasswordValid) {
         // Update stored passwordHash to stay in sync with env ADMIN_PASSWORD
         const passwordHash = await hashPassword(adminPassword);
         await db.collection<DbUser>("users").updateOne(
@@ -81,7 +78,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Standard user authentication flow
-    if (!user || !user.passwordHash) {
+    if (!user) {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
 
