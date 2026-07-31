@@ -1,7 +1,10 @@
 import { Db, MongoClient } from "mongodb";
 
 const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/ai-receptionist";
-const options = {};
+const options = {
+  maxPoolSize: 10, // Limit connections per serverless instance to prevent exhausting M0 free tier limits (500 max)
+  minPoolSize: 1,
+};
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
