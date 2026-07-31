@@ -88,10 +88,11 @@ export function sanitizeSiteConfig(config: SiteConfig): SiteConfig {
       showVoiceChat: config.agent?.showVoiceChat ?? true,
       showElevenLabsWidget: config.agent?.showElevenLabsWidget ?? false,
       welcomeMessage: requiredTrimmed(
-        config.agent?.welcomeMessage,
+        config.agent?.welcomeMessage || "Hi, I'm the assistant. How can I help?",
         "agent.welcomeMessage",
         500,
       ),
     },
   };
 }
+

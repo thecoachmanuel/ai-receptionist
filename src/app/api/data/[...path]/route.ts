@@ -77,6 +77,7 @@ export async function POST(
     // Require session authentication for dashboard endpoints
     const session = await getSession();
     if (!session || !session.user || !session.organization) {
+      console.error(`[API Auth Failed] endpoint=${endpoint}, session=`, !!session, `user=`, !!session?.user, `org=`, !!session?.organization);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
