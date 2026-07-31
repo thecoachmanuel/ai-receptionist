@@ -41,7 +41,7 @@ export function VoiceOrbIndicator({
   return (
     <div
       className={cn(
-        "relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-b from-slate-900/90 via-slate-900/70 to-slate-950/95 p-6 text-white shadow-2xl backdrop-blur-xl transition-all duration-500",
+        "relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-foreground/15 bg-background/90 p-6 text-foreground shadow-2xl backdrop-blur-xl transition-all duration-500",
         state === "speaking" && "border-cyan-400/40 shadow-[0_0_50px_rgba(56,189,248,0.25)]",
         state === "listening" && "border-emerald-400/40 shadow-[0_0_50px_rgba(16,185,129,0.25)]",
         state === "connecting" && "border-indigo-400/40 shadow-[0_0_50px_rgba(99,102,241,0.25)]",
@@ -207,14 +207,14 @@ export function VoiceOrbIndicator({
             )}
             style={state === "idle" && accentColor ? { backgroundColor: accentColor } : undefined}
           />
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-100">
+          <span className="text-xs font-semibold uppercase tracking-wider text-foreground/90">
             {state === "idle" && `${businessName} Voice AI`}
             {state === "listening" && "AI Assistant Listening"}
             {state === "speaking" && "AI Assistant Speaking"}
             {state === "connecting" && "Connecting Voice Session"}
           </span>
         </div>
-        <p className="mt-1 text-[11px] font-normal leading-4 text-slate-300/90 max-w-xs">
+        <p className="mt-1 text-[11px] font-normal leading-4 text-muted-foreground max-w-xs">
           {state === "idle" && "Click 'Speak with AI' below to start live voice chat"}
           {state === "listening" && "Speak into your microphone now"}
           {state === "speaking" && "Responding to your question in real-time"}
