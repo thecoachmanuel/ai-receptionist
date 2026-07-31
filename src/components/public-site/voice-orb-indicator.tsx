@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Mic, Volume2, Sparkles, Radio } from "lucide-react";
+import { Mic, Volume2, Bot, Radio } from "lucide-react";
 
 export type VoiceOrbState = "idle" | "connecting" | "listening" | "speaking";
 
@@ -11,6 +11,7 @@ interface VoiceOrbIndicatorProps {
   businessName?: string;
   className?: string;
   volume?: number; // 0 to 1 for dynamic voice scaling
+  accentColor?: string;
 }
 
 export function VoiceOrbIndicator({
@@ -18,6 +19,7 @@ export function VoiceOrbIndicator({
   businessName = "AI Assistant",
   className,
   volume = 0.5,
+  accentColor,
 }: VoiceOrbIndicatorProps) {
   // Generate floating waveform particles for speaking state
   const [particles, setParticles] = useState<
@@ -43,20 +45,33 @@ export function VoiceOrbIndicator({
         state === "speaking" && "border-cyan-400/40 shadow-[0_0_50px_rgba(56,189,248,0.25)]",
         state === "listening" && "border-emerald-400/40 shadow-[0_0_50px_rgba(16,185,129,0.25)]",
         state === "connecting" && "border-indigo-400/40 shadow-[0_0_50px_rgba(99,102,241,0.25)]",
-        state === "idle" && "border-sky-500/20 shadow-[0_0_35px_rgba(56,189,248,0.15)]",
+        state === "idle" && !accentColor && "border-sky-500/20 shadow-[0_0_35px_rgba(56,189,248,0.15)]",
         className
       )}
+      style={
+        state === "idle" && accentColor
+          ? {
+              borderColor: `${accentColor}40`,
+              boxShadow: `0 0 35px ${accentColor}33`,
+            }
+          : undefined
+      }
     >
       {/* Dynamic Ambient Background Glow */}
       <div className="pointer-events-none absolute inset-0 opacity-50">
         <div
           className={cn(
             "absolute -top-1/2 -left-1/2 h-[200%] w-[200%] rounded-full blur-3xl transition-all duration-1000",
-            state === "idle" && "bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.25),transparent_60%)]",
+            state === "idle" && !accentColor && "bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.25),transparent_60%)]",
             state === "listening" && "bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.3),transparent_60%)]",
             state === "speaking" && "bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.35),rgba(56,189,248,0.25),transparent_70%)]",
             state === "connecting" && "bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.25),transparent_60%)]"
           )}
+          style={
+            state === "idle" && accentColor
+              ? { background: `radial-gradient(circle at center, ${accentColor}66, transparent 60%)` }
+              : undefined
+          }
         />
       </div>
 
@@ -124,8 +139,10 @@ export function VoiceOrbIndicator({
           className={cn(
             "relative flex size-24 sm:size-28 items-center justify-center rounded-full shadow-2xl transition-all duration-500 cursor-pointer group",
             // IDLE: Soft blue-to-cyan glow, gentle pulse
-            state === "idle" &&
+            state === "idle" && !accentColor &&
               "bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-600 shadow-[0_0_40px_rgba(56,189,248,0.5)] animate-[voice-orb-idle_4s_ease-in-out_infinite]",
+            state === "idle" && accentColor &&
+              "animate-[voice-orb-idle_4s_ease-in-out_infinite]",
             // LISTENING: Emerald-cyan pulse with ripple aura
             state === "listening" &&
               "bg-gradient-to-br from-emerald-300 via-teal-400 to-cyan-500 shadow-[0_0_50px_rgba(16,185,129,0.65)] animate-[voice-orb-listening_1.6s_ease-in-out_infinite]",
@@ -137,7 +154,12 @@ export function VoiceOrbIndicator({
               "bg-gradient-to-br from-sky-400 via-indigo-500 to-purple-600 shadow-[0_0_35px_rgba(99,102,241,0.5)] animate-pulse"
           )}
           style={
-            state === "speaking"
+            state === "idle" && accentColor
+              ? {
+                  background: `linear-gradient(135deg, ${accentColor}, color-mix(in srgb, ${accentColor} 75%, #020617))`,
+                  boxShadow: `0 0 45px ${accentColor}80`,
+                }
+              : state === "speaking"
               ? {
                   transform: `scale(${1 + Math.min(volume, 0.4) * 0.22})`,
                 }
@@ -153,7 +175,7 @@ export function VoiceOrbIndicator({
               "size-12 rounded-full bg-white/40 blur-md transition-all duration-500",
               state === "speaking" && "scale-125 bg-white/70 blur-lg",
               state === "listening" && "scale-110 bg-emerald-100/60 blur-md",
-              state === "idle" && "bg-cyan-100/50"
+              state === "idle" && "bg-white/40 blur-md"
             )}
           />
 
@@ -166,7 +188,7 @@ export function VoiceOrbIndicator({
             ) : state === "connecting" ? (
               <Radio className="size-8 text-white/90 animate-spin" />
             ) : (
-              <Sparkles className="size-7 text-white/90 transition-transform duration-300 group-hover:scale-110" />
+              <Bot className="size-8 text-white/90 transition-transform duration-300 group-hover:scale-110" />
             )}
           </div>
         </div>
@@ -178,11 +200,12 @@ export function VoiceOrbIndicator({
           <span
             className={cn(
               "size-2 rounded-full",
-              state === "idle" && "bg-cyan-400 animate-pulse",
+              state === "idle" && !accentColor && "bg-cyan-400 animate-pulse",
               state === "listening" && "bg-emerald-400 animate-ping",
               state === "speaking" && "bg-indigo-400 animate-bounce",
               state === "connecting" && "bg-amber-400 animate-pulse"
             )}
+            style={state === "idle" && accentColor ? { backgroundColor: accentColor } : undefined}
           />
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-100">
             {state === "idle" && `${businessName} Voice AI`}

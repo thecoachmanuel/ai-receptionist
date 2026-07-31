@@ -77,6 +77,7 @@ type AgentLauncherProps = {
   timezone: string;
   locale: string;
   voiceGender?: "female" | "male";
+  accentColor?: string;
   onActivity?: (activity: AgentToolActivity) => void;
 };
 
@@ -193,6 +194,7 @@ function AgentLauncherInner({
   timezone,
   locale,
   voiceGender,
+  accentColor,
   timeline,
   toolActivity,
   clearTimeline,
@@ -211,6 +213,7 @@ function AgentLauncherInner({
   timezone: string;
   locale: string;
   voiceGender: "female" | "male";
+  accentColor?: string;
   timeline: ChatTimelineItem[];
   toolActivity: AgentToolActivity | null;
   clearTimeline: () => void;
@@ -926,6 +929,7 @@ function AgentLauncherInner({
                 state={voiceOrbState}
                 businessName={businessName}
                 volume={vapiVolume}
+                accentColor={accentColor}
                 className="mb-3"
               />
             )}
@@ -961,6 +965,7 @@ function AgentLauncherInner({
                   state={voiceOrbState}
                   businessName={businessName}
                   volume={vapiVolume}
+                  accentColor={accentColor}
                   className="w-full"
                 />
                 <Button
@@ -1129,6 +1134,7 @@ export function AgentLauncher(props: AgentLauncherProps) {
         timezone={props.timezone}
         locale={props.locale}
         voiceGender={props.voiceGender ?? "female"}
+        accentColor={props.accentColor}
         timeline={timeline}
         toolActivity={toolActivity}
         clearTimeline={() => {
