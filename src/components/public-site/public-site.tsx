@@ -51,6 +51,7 @@ type TenantStyle = CSSProperties &
 
 function safeHttpUrl(value?: string) {
   if (!value) return undefined;
+  if (value.startsWith("/") || value.startsWith("data:")) return value;
   try {
     const url = new URL(value);
     return url.protocol === "https:" || url.protocol === "http:"
@@ -245,7 +246,7 @@ export function PublicSite({
 
   const heroVisualStyle: CSSProperties = heroImageUrl
     ? {
-        backgroundImage: `linear-gradient(180deg, transparent 48%, color-mix(in srgb, var(--foreground) 38%, transparent)), url(${JSON.stringify(heroImageUrl)})`,
+        backgroundImage: `linear-gradient(180deg, transparent 48%, color-mix(in srgb, var(--foreground) 38%, transparent)), url("${heroImageUrl.replace(/"/g, '\\"')}")`,
         backgroundPosition: "center",
         backgroundSize: "cover",
       }
@@ -685,9 +686,11 @@ export function PublicSite({
           </div>
         </section>
 
-        {config.sections.map((section: any) => (
-          <div key={section}>{sections[section]()}</div>
-        ))}
+        {(config.sections || []).map((section: string) => {
+          const renderSection = sections[section as keyof typeof sections];
+          if (typeof renderSection !== "function") return null;
+          return <div key={section}>{renderSection()}</div>;
+        })}
       </main>
 
       <footer className="border-t border-border px-5 py-10 sm:px-8 lg:px-12">
