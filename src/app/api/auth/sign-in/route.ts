@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
           createdAt: now,
           updatedAt: now,
         };
-      } else if (isEnvPasswordValid) {
+      } else {
         // Update stored passwordHash to stay in sync with env ADMIN_PASSWORD
         const passwordHash = await hashPassword(adminPassword);
         await db.collection<DbUser>("users").updateOne(
