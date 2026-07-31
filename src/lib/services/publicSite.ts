@@ -210,7 +210,11 @@ export async function getCurrentDraft(orgId: string) {
 
 export async function updateDraft(orgId: string, config: SiteConfig, requestedSlug?: string) {
   const db = await getDb();
-  const site = await db.collection<DbPublicSite>("publicSites").findOne({ organizationId: orgId });
+  let site = await db.collection<DbPublicSite>("publicSites").findOne({ organizationId: orgId });
+  if (!site) {
+    const current = await getCurrentDraft(orgId);
+    site = await db.collection<DbPublicSite>("publicSites").findOne({ _id: new ObjectId(current.site._id) });
+  }
   if (!site) throw new Error("Public site not initialized.");
 
   let siteSlug = site.siteSlug;
@@ -235,7 +239,11 @@ export async function updateDraft(orgId: string, config: SiteConfig, requestedSl
 
 export async function publish(orgId: string) {
   const db = await getDb();
-  const site = await db.collection<DbPublicSite>("publicSites").findOne({ organizationId: orgId });
+  let site = await db.collection<DbPublicSite>("publicSites").findOne({ organizationId: orgId });
+  if (!site) {
+    const current = await getCurrentDraft(orgId);
+    site = await db.collection<DbPublicSite>("publicSites").findOne({ _id: new ObjectId(current.site._id) });
+  }
   if (!site) throw new Error("Public site not initialized.");
 
   const now = Date.now();

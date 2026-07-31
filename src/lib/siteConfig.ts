@@ -2,21 +2,26 @@ import type { SiteConfig } from "@/lib/db/types";
 import { boundedInteger, optionalTrimmed, requiredTrimmed } from "./validation";
 
 function safeOptionalUrl(value: unknown, label: string): string | undefined {
-  const url = optionalTrimmed(value, label, 2_000);
+  const url = optionalTrimmed(value, label, 10_000);
   if (!url) return undefined;
+  if (url.startsWith("/") || url.startsWith("data:")) return url;
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error();
   } catch {
-    throw new Error(`${label} must be a valid http(s) URL.`);
+    throw new Error(`${label} must be a valid http(s) or relative URL.`);
   }
   return url;
 }
 
 function safeColor(value: unknown, label: string): string {
-  const color = requiredTrimmed(value, label, 30);
+  let color = requiredTrimmed(value, label, 30);
+  if (!color.startsWith("#")) color = `#${color}`;
+  if (/^#[0-9a-f]{3}$/i.test(color)) {
+    color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
+  }
   if (!/^#[0-9a-f]{6}$/i.test(color)) {
-    throw new Error(`${label} must be a six-digit hex color.`);
+    throw new Error(`${label} must be a valid hex color code (e.g. #2446D8).`);
   }
   return color.toUpperCase();
 }
