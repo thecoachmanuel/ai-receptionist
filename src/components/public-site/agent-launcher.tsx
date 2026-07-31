@@ -547,8 +547,8 @@ function AgentLauncherInner({
         
         vapi.on("speech-start", () => setVapiState("speaking"));
         vapi.on("speech-end", () => setVapiState("idle"));
-        vapi.on("user-speech-start", () => setVapiState("listening"));
-        vapi.on("user-speech-end", () => setVapiState("idle"));
+        (vapi as any).on("user-speech-start", () => setVapiState("listening"));
+        (vapi as any).on("user-speech-end", () => setVapiState("idle"));
         vapi.on("volume-level", (vol: number) => setVapiVolume(vol));
         vapi.on("call-start", () => setVapiState("idle"));
         vapi.on("call-end", () => {
