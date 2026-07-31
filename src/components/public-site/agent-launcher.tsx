@@ -229,6 +229,7 @@ function AgentLauncherInner({
   const [vapiState, setVapiState] = useState<VoiceOrbState>("idle");
   const [vapiVolume, setVapiVolume] = useState<number>(0);
   const [geminiSpeaking, setGeminiSpeaking] = useState<boolean>(false);
+  const [hasAiResponded, setHasAiResponded] = useState<boolean>(false);
 
   const transcriptRef = useRef<HTMLDivElement>(null);
   const followLatestRef = useRef(true);
@@ -242,6 +243,17 @@ function AgentLauncherInner({
 
   const isConnected = activeProvider === "elevenlabs" ? status === "connected" : sessionKind !== null;
   const isConnecting = (status === "connecting" || isRequestingSession || geminiLoading);
+
+  useEffect(() => {
+    if (
+      mode === "speaking" ||
+      vapiState === "speaking" ||
+      geminiSpeaking ||
+      timeline.some((item) => item.role === "agent" || item.kind === "tool")
+    ) {
+      setHasAiResponded(true);
+    }
+  }, [mode, vapiState, geminiSpeaking, timeline]);
 
   useEffect(() => {
     const transcript = transcriptRef.current;
@@ -497,6 +509,7 @@ function AgentLauncherInner({
     setSessionKind(kind);
     followLatestRef.current = true;
     clearTimeline();
+    setHasAiResponded(false);
 
     try {
       const response = await fetch(
@@ -547,8 +560,6 @@ function AgentLauncherInner({
         
         vapi.on("speech-start", () => setVapiState("speaking"));
         vapi.on("speech-end", () => setVapiState("idle"));
-        (vapi as any).on("user-speech-start", () => setVapiState("listening"));
-        (vapi as any).on("user-speech-end", () => setVapiState("idle"));
         vapi.on("volume-level", (vol: number) => setVapiVolume(vol));
         vapi.on("call-start", () => setVapiState("idle"));
         vapi.on("call-end", () => {
@@ -562,7 +573,15 @@ function AgentLauncherInner({
         });
 
         vapi.on("message", async (msg: any) => {
-          if (msg.type === "transcript" && msg.transcriptType === "final") {
+          if (msg.type === "speech-update") {
+            if (msg.role === "user") {
+              if (msg.status === "started") {
+                setVapiState("listening");
+              } else if (msg.status === "stopped") {
+                setVapiState("idle");
+              }
+            }
+          } else if (msg.type === "transcript" && msg.transcriptType === "final") {
             const role = msg.role === "user" ? "user" : "agent";
             const text = msg.transcript;
             if (role === "user") {
@@ -751,6 +770,7 @@ function AgentLauncherInner({
     setVapiState("idle");
     setVapiVolume(0);
     setGeminiSpeaking(false);
+    setHasAiResponded(false);
     vapiSessionIdRef.current = null;
     clearTimeline();         // ← clears chat history + toolActivity
     setSessionError(null);  // ← dismiss any previous error banners
@@ -901,7 +921,7 @@ function AgentLauncherInner({
         {/* Action Controls */}
         {isConnected ? (
           <>
-            {sessionKind === "voice" && (
+            {sessionKind === "voice" && !hasAiResponded && (
               <VoiceOrbIndicator
                 state={voiceOrbState}
                 businessName={businessName}
