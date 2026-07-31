@@ -34,10 +34,7 @@ export async function POST(request: NextRequest) {
 
     // Handle Super Admin authentication using env ADMIN_EMAIL and ADMIN_PASSWORD
     if (normalizedEmail === adminEmail) {
-      const isEnvPasswordValid = password === adminPassword;
-      const isDbPasswordValid = user ? await comparePassword(password, user.passwordHash) : false;
-
-      if (!isEnvPasswordValid && !isDbPasswordValid) {
+      if (password !== adminPassword) {
         return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
       }
 
