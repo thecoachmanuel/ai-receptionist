@@ -34,6 +34,9 @@ export const metadata: Metadata = {
   },
   description:
     "Run bookings, customer conversations, and a text-and-audio web assistant from one multi-tenant workspace.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
