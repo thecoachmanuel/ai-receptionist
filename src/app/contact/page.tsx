@@ -13,17 +13,14 @@ import {
 } from "lucide-react";
 
 import { Brand } from "@/components/brand";
+import { SiteAuthNav } from "@/components/site-auth-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getSession } from "@/lib/auth/session";
 import { getPlatformSettings } from "@/lib/services/settings";
 import { ContactForm } from "./contact-form";
 
 export default async function ContactPage() {
-  const [session, settings] = await Promise.all([
-    getSession(),
-    getPlatformSettings(),
-  ]);
+  const settings = await getPlatformSettings();
 
   const phone = settings.contactPhone || "+2348168882014";
   const email = settings.contactEmail || "oneboardng@gmail.com";
@@ -50,24 +47,7 @@ export default async function ContactPage() {
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            {!session?.user ? (
-              <>
-                <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-                  <Link href="/sign-in">Sign in</Link>
-                </Button>
-                <Button asChild size="sm" className="gap-1.5 shadow-none">
-                  <Link href="/sign-up">
-                    Start free <ArrowRight className="size-3.5" />
-                  </Link>
-                </Button>
-              </>
-            ) : (
-              <Button asChild size="sm" className="gap-1.5 shadow-none">
-                <Link href="/app">
-                  Open workspace <ArrowRight className="size-3.5" />
-                </Link>
-              </Button>
-            )}
+            <SiteAuthNav />
           </div>
         </div>
       </header>
