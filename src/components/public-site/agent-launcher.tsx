@@ -249,7 +249,7 @@ function AgentLauncherInner({
       mode === "speaking" ||
       vapiState === "speaking" ||
       geminiSpeaking ||
-      timeline.some((item) => item.role === "agent" || item.kind === "tool")
+      timeline.some((item) => item.kind === "tool" || (item.kind === "message" && item.role === "agent"))
     ) {
       setHasAiResponded(true);
     }
