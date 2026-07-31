@@ -49,7 +49,8 @@ export async function getUserOrganizations(userId: string) {
   const userObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
   const user = await db.collection("users").findOne({ _id: userObjectId as any });
   
-  const adminEmail = (process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.replace(/^["']|["']$/g, "").trim() : "admin@admin.com").toLowerCase();
+  const rawAdminEmail = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+  const adminEmail = (rawAdminEmail ? rawAdminEmail.replace(/^["']+|["']+$/g, "").trim() : "admin@admin.com").toLowerCase();
   const isSiteAdmin = user?.email?.trim().toLowerCase() === adminEmail;
 
   if (isSiteAdmin) {

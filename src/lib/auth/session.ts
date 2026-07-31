@@ -138,7 +138,8 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
       }
     }
 
-    const adminEmail = (process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.replace(/^["']|["']$/g, "").trim() : "admin@admin.com").toLowerCase();
+    const rawAdminEmail = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+    const adminEmail = (rawAdminEmail ? rawAdminEmail.replace(/^["']+|["']+$/g, "").trim() : "admin@admin.com").toLowerCase();
     const isSiteAdmin = user.email.trim().toLowerCase() === adminEmail;
 
     if (!organization && isSiteAdmin) {
