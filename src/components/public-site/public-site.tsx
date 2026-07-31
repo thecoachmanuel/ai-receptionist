@@ -19,10 +19,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { AgentLauncher } from "@/components/public-site/agent-launcher";
-import { BookingFlow } from "@/components/public-site/booking-flow";
-import { ElevenLabsEmbed } from "@/components/public-site/elevenlabs-embed";
+import dynamic from "next/dynamic";
 import type { PublishedSite, PublicOffering } from "@/components/public-site/types";
+
+const AgentLauncher = dynamic(() => import("@/components/public-site/agent-launcher").then(mod => mod.AgentLauncher), { ssr: false });
+const BookingFlow = dynamic(() => import("@/components/public-site/booking-flow").then(mod => mod.BookingFlow), { ssr: false });
+const ElevenLabsEmbed = dynamic(() => import("@/components/public-site/elevenlabs-embed").then(mod => mod.ElevenLabsEmbed), { ssr: false });
 
 type TenantStyle = CSSProperties &
   Record<

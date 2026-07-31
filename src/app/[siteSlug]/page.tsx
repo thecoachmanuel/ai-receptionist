@@ -2,6 +2,8 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+export const revalidate = 60;
+
 import { PublicSite } from "@/components/public-site/public-site";
 import { PublicSiteUnavailable } from "@/components/public-site/public-site-states";
 import { organizationHasFeature } from "@/lib/billing";
