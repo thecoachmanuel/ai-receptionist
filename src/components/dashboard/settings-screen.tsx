@@ -47,7 +47,6 @@ function CurrencySettingsCard({ organization }: { organization: any }) {
     try {
       await updateCurrent({ currency: newCurrency });
       toast.success(`Business currency updated to ${newCurrency === "NGN" ? "Naira (₦)" : "USD ($)"}`);
-      window.location.reload();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not update business currency");
     } finally {
@@ -109,7 +108,6 @@ function NameSettingsCard({ organization }: { organization: any }) {
     try {
       await updateCurrent({ name: name.trim() });
       toast.success("Workspace name updated successfully");
-      window.location.reload();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not update name");
     } finally {
@@ -178,7 +176,6 @@ function TimezoneSettingsCard({ organization }: { organization: any }) {
     try {
       await updateCurrent({ timezone: newTimezone });
       toast.success(`Business timezone updated to ${newTimezone}`);
-      window.location.reload();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not update timezone");
     } finally {

@@ -233,20 +233,30 @@ export async function updateDraft(orgId: string, config: SiteConfig, requestedSl
   return { _id: site._id!.toString() };
 }
 
-export async function publish(orgId: string) {
+export async function publish(orgId: string, config?: SiteConfig, requestedSlug?: string) {
   const db = await getDb();
   const site = await db.collection<DbPublicSite>("publicSites").findOne({ organizationId: orgId });
   if (!site) throw new Error("Public site not initialized.");
 
+  let siteSlug = site.siteSlug;
+  if (requestedSlug !== undefined) {
+    siteSlug = slugify(requiredTrimmed(requestedSlug, "siteSlug", 80));
+    const existing = await db.collection<DbPublicSite>("publicSites").findOne({ siteSlug });
+    if (existing && existing._id!.toString() !== site._id!.toString()) {
+      throw new Error("That public site slug is already in use.");
+    }
+  }
+
+  const sanitized = config ? sanitizeSiteConfig(config) : site.draft;
   const now = Date.now();
   await db.collection<DbPublicSite>("publicSites").updateOne(
     { _id: site._id },
-    { $set: { published: site.draft, publishedAt: now, updatedAt: now } },
+    { $set: { siteSlug, draft: sanitized, published: sanitized, publishedAt: now, updatedAt: now } },
   );
 
   return {
-    siteSlug: site.siteSlug,
+    siteSlug,
     publishedAt: now,
-    config: site.draft,
+    config: sanitized,
   };
 }

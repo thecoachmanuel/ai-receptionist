@@ -257,7 +257,6 @@ export function WorkspaceLanguageEditor({
         setBaseline({ ...updated.terminology });
       }
       toast.success("Workspace language updated");
-      window.location.reload();
     } catch (error) {
       toast.error(
         error instanceof Error

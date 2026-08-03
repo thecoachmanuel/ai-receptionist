@@ -552,10 +552,9 @@ function SiteEditor({
   async function handlePublish() {
     setPublishing(true);
     try {
-      await saveDraft();
-      const published = (await publish({})) as any;
-      setPublishedAt(published?.publishedAt);
-      toast.success("Public site published");
+      const published = (await publish({ config, siteSlug })) as any;
+      setPublishedAt(published?.publishedAt ?? Date.now());
+      toast.success("Public site published instantly!");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not publish site");
     } finally {

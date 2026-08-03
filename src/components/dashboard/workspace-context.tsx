@@ -36,7 +36,13 @@ export function WorkspaceProvider({
   orgSlug: string;
 }) {
   const { organization: activeOrg, isLoaded } = useAuth();
-  const organization = useQuery<Organization | null>(dashboardApi.organizations.current, {});
+  const fetchedOrg = useQuery<Organization | null>(
+    dashboardApi.organizations.current,
+    {},
+    { initialData: activeOrg as any },
+  );
+  const organization = fetchedOrg ?? (activeOrg as any) ?? null;
+
   const bootstrapCurrent = useMutation<
     { name?: string; timezone?: string; locale?: string },
     Organization
@@ -72,13 +78,13 @@ export function WorkspaceProvider({
   const value = useMemo<WorkspaceContextValue>(
     () => ({
       orgSlug,
-      organization: organization ?? null,
-      terminology: organization
+      organization,
+      terminology: organization?.terminology
         ? normalizeTerminology(organization.terminology)
         : defaultTerminology,
-      isBootstrapping: organization === undefined || isCreating,
+      isBootstrapping: (!isLoaded && organization === null) || isCreating,
     }),
-    [isCreating, organization, orgSlug],
+    [isCreating, isLoaded, organization, orgSlug],
   );
 
   return (

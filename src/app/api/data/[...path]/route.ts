@@ -179,7 +179,7 @@ export async function POST(
         return NextResponse.json(data);
       }
       case "publicSite/publish": {
-        const data = await publicSiteService.publish(orgId);
+        const data = await publicSiteService.publish(orgId, body.config, body.siteSlug);
         return NextResponse.json(data);
       }
       case "conversations/listRecent": {

@@ -69,23 +69,23 @@ function MarketingNav({ signedIn }: { signedIn: boolean }) {
         <div className="ml-auto flex items-center gap-2">
           {!signedIn ? (
             <>
-            <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-              <Link href="/sign-in">Sign in</Link>
-            </Button>
-            <Button asChild size="sm" className="gap-1.5 shadow-none">
-              <Link href="/sign-up">
-                Start free <ArrowRight className="size-3.5" />
-              </Link>
-            </Button>
+              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+                <Link href="/sign-in">Sign in</Link>
+              </Button>
+              <Button asChild size="sm" className="gap-1.5 shadow-none">
+                <Link href="/sign-up">
+                  Start free <ArrowRight className="size-3.5" />
+                </Link>
+              </Button>
             </>
           ) : (
             <>
-            <Button asChild size="sm" className="gap-1.5 shadow-none">
-              <Link href="/app">
-                Open workspace <ArrowRight className="size-3.5" />
-              </Link>
-            </Button>
-            <UserButton />
+              <Button asChild size="sm" className="gap-1.5 shadow-none">
+                <Link href="/app">
+                  Open workspace <ArrowRight className="size-3.5" />
+                </Link>
+              </Button>
+              <UserButton />
             </>
           )}
         </div>
@@ -305,7 +305,7 @@ export default async function Home() {
         <div className="mx-auto flex max-w-[1400px] flex-col gap-5 px-5 py-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:px-8 lg:px-12">
           <Brand />
           <p className="sm:ml-auto">
-            Website built by <a href="https://www.instagram.com/thecoachmanuel" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 hover:underline">Coach Manuel</a>.
+            Website developed by <a href="https://www.instagram.com/thecoachmanuel" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 hover:underline">Coach Manuel</a>.
           </p>
           <Link href="/pricing" className="hover:text-foreground">Pricing</Link>
           <Link href="/contact" className="hover:text-foreground">Contact</Link>
