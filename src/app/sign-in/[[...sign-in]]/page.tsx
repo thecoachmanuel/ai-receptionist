@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { AuthShell } from "@/components/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,11 +14,13 @@ export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
@@ -32,11 +35,13 @@ export default function SignInPage() {
         throw new Error(data.error || "Sign in failed");
       }
 
+      setSuccess("Welcome back! Signed in successfully. Redirecting to workspace...");
+      toast.success("Welcome back! Signed in successfully.");
+
       const targetUrl = data.orgSlug ? `/app/${data.orgSlug}` : "/app";
       router.push(targetUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
-    } finally {
       setLoading(false);
     }
   };
@@ -44,8 +49,13 @@ export default function SignInPage() {
   return (
     <AuthShell eyebrow="Welcome back" title="Open your workspace">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {success && (
+          <div className="rounded-md bg-emerald-50 border border-emerald-200 p-3 text-xs font-medium text-emerald-800 animate-in fade-in duration-200">
+            ✓ {success}
+          </div>
+        )}
         {error && (
-          <div className="rounded-md bg-red-50 p-3 text-xs text-red-700">
+          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-xs text-red-700 animate-in fade-in duration-200">
             {error}
           </div>
         )}
