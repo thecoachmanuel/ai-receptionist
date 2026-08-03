@@ -193,111 +193,15 @@ export async function POST(
       return NextResponse.json({ error: "Public site not found." }, { status: 404 });
     }
 
-    const allKeys = settings.geminiApiKeys;
-    const model = settings.geminiModel || "gemini-2.5-flash-lite";
-
-    if (!allKeys.length) {
-      // Graceful: no keys configured at all
-      return NextResponse.json({
-        success: true,
-        provider: "gemini",
-        model,
-        reply: USER_FRIENDLY_REPLIES.default,
-      });
-    }
-
-    // Initialize or advance the synchronous memory index
-    if (memoryRotationIndex === -1) {
-      memoryRotationIndex = settings.geminiCurrentIndex || 0;
-    }
-    const startIndex = memoryRotationIndex % allKeys.length;
-    memoryRotationIndex = (memoryRotationIndex + 1) % allKeys.length;
-
-    const dynamicVars = createAgentDynamicVariables({
-      siteSlug: published.site.siteSlug,
-      businessName:
-        (published.site as any).config?.businessName ||
-        (published.site as any).businessName ||
-        published.organization.name,
-      description:
-        (published.site as any).config?.about ||
-        (published.site as any).about ||
-        "",
-      timezone: published.organization.timezone,
-      locale: published.organization.locale,
-      currency: published.organization.currency,
-      terminology: published.organization.terminology,
-      offerings: published.offerings,
-      teamMembers: published.teamMembers,
-      knowledgeItems: published.knowledgeItems,
+    return NextResponse.json({
+      success: true,
+      provider: "vapi",
+      reply: "Thank you for reaching out! Please use the 'Speak with AI' button to talk directly to our AI assistant.",
     });
-
-    const systemInstruction = `You are the front-desk AI Assistant for ${dynamicVars.business_name}.
-Your job is to answer questions, guide visitors, and help book appointments warmly and concisely as a real human assistant would.
-
-BUSINESS DETAILS & KNOWLEDGE BASE:
-${dynamicVars.business_description}
-
-Offerings & Services:
-${dynamicVars.business_offerings}
-
-Team Roster:
-${dynamicVars.business_team}
-
-Knowledge Base:
-${dynamicVars.business_knowledge}
-
-Booking Instructions:
-${dynamicVars.booking_instruction}
-
-RULES:
-1. Always introduce yourself as the front-desk AI assistant for ${dynamicVars.business_name}.
-2. Keep responses natural, warm, conversational, and concise (1-3 sentences max).
-3. Do not invent fake availability; use provided offerings and business hours.
-4. Speak naturally in standard, humanlike conversational English.`;
-
-    // Build conversation history
-    const contents: unknown[] = [];
-    if (Array.isArray(history)) {
-      for (const h of history as Array<{ role?: string; content?: string }>) {
-        if (h.role && h.content) {
-          contents.push({
-            role: h.role === "user" ? "user" : "model",
-            parts: [{ text: h.content }],
-          });
-        }
-      }
-    }
-    contents.push({ role: "user", parts: [{ text: message }] });
-
-    // Execute with rotation + graceful fallback
-    const { reply, usedKeyIndex, usedModel } = await callGeminiWithRotation(
-      allKeys,
-      startIndex,
-      model,
-      contents,
-      systemInstruction,
-    );
-
-    // Sync the successful memory index state to DB in background
-    getDb()
-      .then((db) =>
-        db
-          .collection("platformSettings")
-          .updateOne(
-            { key: "elevenlabs" },
-            { $set: { geminiCurrentIndex: memoryRotationIndex } },
-            { upsert: true },
-          ),
-      )
-      .catch(() => null);
-
-    return NextResponse.json({ success: true, provider: "gemini", model: usedModel, reply });
   } catch (error) {
-    // Final safety net — never show raw errors to the public
-    console.error("Gemini chat route unhandled error", { siteSlug, error });
     return NextResponse.json(
-      { success: true, provider: "gemini", model: "gemini-2.5-flash-lite", reply: USER_FRIENDLY_REPLIES.default },
+      { error: "The assistant is unavailable right now." },
+      { status: 500 },
     );
   }
 }

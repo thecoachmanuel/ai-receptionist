@@ -107,7 +107,6 @@ export default async function PublicSitePage({
         publishedSite={publishedSite as any}
         textAgentEnabled={agentFeatures.text}
         voiceAgentEnabled={agentFeatures.voice}
-        voiceGender={elevenLabsSettings.geminiVoiceGender}
       />
     );
   } catch (error) {

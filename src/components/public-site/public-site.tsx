@@ -21,7 +21,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { cn } from "@/lib/utils";
 import { AgentLauncher } from "@/components/public-site/agent-launcher";
 import { BookingFlow } from "@/components/public-site/booking-flow";
-import { ElevenLabsEmbed } from "@/components/public-site/elevenlabs-embed";
 import type { PublishedSite, PublicOffering } from "@/components/public-site/types";
 
 type TenantStyle = CSSProperties &
@@ -714,18 +713,6 @@ export function PublicSite({
         </div>
       </footer>
 
-      {elevenLabsWidgetIsVisible ? (
-        <ElevenLabsEmbed
-          siteSlug={siteSlug}
-          businessName={config.businessName}
-          primaryColor={config.theme.accentColor}
-          secondaryColor={config.theme.foregroundColor}
-          offerings={offerings}
-          teamMembers={teamMembers}
-          timezone={organization.timezone}
-          locale={organization.locale}
-        />
-      ) : null}
     </div>
   );
 }

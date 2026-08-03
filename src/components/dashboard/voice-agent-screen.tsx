@@ -2,11 +2,6 @@
 
 import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  ConversationProvider,
-  useConversationControls,
-  useConversationStatus,
-} from "@elevenlabs/react";
 import { useQuery } from "@/lib/api-client/use-data";
 import {
   Activity,
@@ -51,54 +46,75 @@ type AgentSessionResponse = {
 
 function WebAgentSession() {
   const { terminology } = useWorkspace();
-  const { startSession, endSession } = useConversationControls();
-  const { status } = useConversationStatus();
   const [agentState, setAgentState] = useState<AgentState>(null);
+  const [connected, setConnected] = useState(false);
+  const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const connected = status === "connected";
+  const vapiRef = useRef<any>(null);
 
-  const stop = useCallback(async () => {
-    await endSession();
-    streamRef.current?.getTracks().forEach((track) => track.stop());
-    streamRef.current = null;
+  const stop = useCallback(() => {
+    if (vapiRef.current) {
+      try {
+        vapiRef.current.stop();
+      } catch {}
+      vapiRef.current = null;
+    }
+    setConnected(false);
+    setConnecting(false);
     setAgentState(null);
-  }, [endSession]);
+  }, []);
 
   const start = useCallback(async () => {
     setError(null);
+    setConnecting(true);
     try {
-      streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
       const response = await fetch("/api/app/agent-session", { method: "POST" });
-      const payload = (await response.json().catch(() => ({}))) as
-        | AgentSessionResponse
-        | { error?: string };
-      if (!response.ok || !("signedUrl" in payload)) {
+      const payload = (await response.json().catch(() => ({}))) as any;
+      if (!response.ok || payload.error) {
+        throw new Error(payload.error || "The agent test could not be started.");
+      }
+      if (!payload.vapiPublicKey || !payload.vapiAssistantId) {
         throw new Error(
-          "error" in payload && payload.error
-            ? payload.error
-            : "The agent test could not be started.",
+          "Vapi AI Assistant is not configured yet. Set Vapi Public Key and Assistant ID in Super Admin Settings.",
         );
       }
-      await startSession({
-        signedUrl: payload.signedUrl,
-        dynamicVariables: payload.dynamicVariables,
-        connectionType: "websocket",
-        onModeChange: ({ mode }) =>
-          setAgentState(mode === "speaking" ? "talking" : "listening"),
+
+      const { default: Vapi } = await import("@vapi-ai/web");
+      const vapi = new Vapi(payload.vapiPublicKey);
+      vapiRef.current = vapi;
+
+      vapi.on("call-start", () => {
+        setConnected(true);
+        setConnecting(false);
+        setAgentState("listening");
       });
-      setAgentState("listening");
+
+      vapi.on("speech-start", () => setAgentState("talking"));
+      vapi.on("speech-end", () => setAgentState("listening"));
+
+      vapi.on("call-end", () => {
+        stop();
+      });
+
+      vapi.on("error", (e: any) => {
+        console.error("Vapi voice test error:", e);
+        setError(typeof e === "string" ? e : e?.message || "Voice session ended.");
+        stop();
+      });
+
+      await vapi.start(payload.vapiAssistantId, {
+        firstMessageMode: "assistant-speaks-first",
+        variableValues: payload.dynamicVariables,
+      });
     } catch (caught) {
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-      setAgentState(null);
+      stop();
       setError(
         caught instanceof Error
           ? caught.message
-          : "Microphone access is required to start a web conversation.",
+          : "Microphone access or Vapi configuration issue.",
       );
     }
-  }, [startSession]);
+  }, [stop]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-center">
@@ -121,7 +137,7 @@ function WebAgentSession() {
           Talk to the same agent your visitors meet.
         </h2>
         <p className="mt-3 max-w-lg text-xs leading-5 text-white/55">
-          This live browser check uses the organization’s current ElevenLabs agent.
+          This live browser check uses the organization’s Vapi AI assistant.
           Test the greeting, knowledge, and {terminology.booking.toLowerCase()} flow
           before sharing the public page.
         </p>
@@ -133,10 +149,10 @@ function WebAgentSession() {
           ) : (
             <Button
               onClick={() => void start()}
-              disabled={status === "connecting"}
+              disabled={connecting}
               className="bg-primary text-primary-foreground hover:bg-primary/85"
             >
-              <Mic /> {status === "connecting" ? "Connecting…" : "Start voice test"}
+              <Mic /> {connecting ? "Connecting…" : "Start voice test"}
             </Button>
           )}
           <span className="inline-flex items-center gap-1.5 text-[11px] text-white/40">
@@ -154,16 +170,6 @@ function WebAgentSession() {
         />
       </div>
     </div>
-  );
-}
-
-function WebAgentConsole() {
-  return (
-    <ConversationProvider
-      onError={(error) => console.error("Web agent session error", error)}
-    >
-      <WebAgentSession />
-    </ConversationProvider>
   );
 }
 
@@ -209,8 +215,8 @@ export function VoiceAgentScreen() {
                   Loading agent configuration…
                 </div>
               </div>
-            ) : entitlements.browserVoice && agent.integration?.webEnabled ? (
-              <WebAgentConsole />
+            ) : entitlements.browserVoice ? (
+              <WebAgentSession />
             ) : (
               <div className="grid min-h-80 place-items-center px-5 py-10 text-center">
                 <div className="max-w-md">
@@ -218,14 +224,10 @@ export function VoiceAgentScreen() {
                     <Bot className="size-5 text-primary" />
                   </span>
                   <h2 className="mt-5 font-heading text-2xl font-semibold tracking-tight">
-                    {agent.integration?.webEnabled
-                      ? "Unlock browser conversations"
-                      : "Agent setup in progress"}
+                    Voice Agent Test
                   </h2>
                   <p className="mt-2 text-xs leading-5 text-white/50">
-                    {agent.integration?.webEnabled
-                      ? "Add browser audio to test the live microphone experience. Text chat can still run independently on the public page."
-                      : "Connect an ElevenLabs agent to this organization before starting a live test."}
+                    Connect Vapi AI keys in Super Admin Settings to test the live voice assistant experience.
                   </p>
                   <Button asChild className="mt-5 bg-primary text-primary-foreground hover:bg-primary/85">
                     <Link

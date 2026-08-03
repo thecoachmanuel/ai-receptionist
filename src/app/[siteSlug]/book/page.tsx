@@ -53,7 +53,6 @@ export default async function PublicBookingPage({
         publishedSite={publishedSite as any}
         textAgentEnabled={agentFeatures.text}
         voiceAgentEnabled={agentFeatures.voice}
-        voiceGender={elevenLabsSettings.geminiVoiceGender}
       />
     );
   } catch (error) {

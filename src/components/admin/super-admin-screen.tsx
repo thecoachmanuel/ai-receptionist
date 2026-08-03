@@ -292,17 +292,11 @@ export function SuperAdminScreen() {
   const priceFormRef = useRef<HTMLFormElement>(null);
 
   // AI engine state
-  const [activeProvider, setActiveProvider] = useState<"elevenlabs" | "gemini" | "vapi">("elevenlabs");
-  const [geminiModel, setGeminiModel] = useState("gemini-2.5-flash-lite");
+  const [activeProvider, setActiveProvider] = useState<"vapi">("vapi");
   const [vapiPublicKey, setVapiPublicKey] = useState("");
   const [vapiPrivateKey, setVapiPrivateKey] = useState("");
   const [vapiAssistantId, setVapiAssistantId] = useState("");
   const [showVapiKeys, setShowVapiKeys] = useState(false);
-  const [geminiApiKeys, setGeminiApiKeys] = useState<string[]>([]);
-  const [apiKeys, setApiKeys] = useState<string[]>([]);
-  const [defaultAgentId, setDefaultAgentId] = useState("");
-  const [showAgentId, setShowAgentId] = useState(false);
-  const [geminiVoiceGender, setGeminiVoiceGender] = useState<"female" | "male">("female");
   const [savingElevenLabs, setSavingElevenLabs] = useState(false);
 
   // Platform contact state
@@ -372,15 +366,6 @@ export function SuperAdminScreen() {
           setIsWaitlistActive(data.settings.isWaitlistActive || false);
         }
         if (data.elevenlabs) {
-          setActiveProvider(data.elevenlabs.activeProvider || "elevenlabs");
-          setGeminiApiKeys(
-            data.elevenlabs.geminiApiKeys ||
-              (data.elevenlabs.geminiApiKey ? [data.elevenlabs.geminiApiKey] : []),
-          );
-          setGeminiModel(data.elevenlabs.geminiModel || "gemini-2.5-flash-lite");
-          setApiKeys(data.elevenlabs.apiKeys || []);
-          setDefaultAgentId(data.elevenlabs.defaultAgentId || "");
-          setGeminiVoiceGender(data.elevenlabs.geminiVoiceGender || "female");
           setVapiPublicKey(data.elevenlabs.vapiPublicKey || "");
           setVapiPrivateKey(data.elevenlabs.vapiPrivateKey || "");
           setVapiAssistantId(data.elevenlabs.vapiAssistantId || "");
@@ -493,23 +478,16 @@ export function SuperAdminScreen() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          activeProvider,
-          geminiApiKeys,
-          geminiModel: geminiModel.trim(),
-          geminiVoiceGender,
-          elevenLabsApiKeys: apiKeys,
-          elevenLabsDefaultAgentId: defaultAgentId.trim(),
+          activeProvider: "vapi",
           vapiPublicKey: vapiPublicKey.trim(),
           vapiPrivateKey: vapiPrivateKey.trim(),
           vapiAssistantId: vapiAssistantId.trim(),
         }),
       });
-      if (!res.ok) throw new Error("Failed to save AI Provider settings.");
-      toast.success(
-        `AI engine updated to ${activeProvider === "gemini" ? "Google Gemini" : activeProvider === "vapi" ? "Vapi" : "ElevenLabs"}.`,
-      );
+      if (!res.ok) throw new Error("Failed to save Vapi AI settings.");
+      toast.success("Vapi AI engine configuration saved.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save AI engine settings.");
+      toast.error(err instanceof Error ? err.message : "Failed to save Vapi AI settings.");
     } finally {
       setSavingElevenLabs(false);
     }
@@ -971,245 +949,77 @@ export function SuperAdminScreen() {
                   description="Choose the active AI provider and manage API key rotation for zero-downtime."
                 />
                 <form onSubmit={handleSaveAIEngine} className="space-y-6">
-                  {/* Provider switcher */}
-                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
-                    {(
-                      [
-                        {
-                          id: "elevenlabs",
-                          label: "ElevenLabs",
-                          desc: "Ultra-realistic voices via WebSocket.",
-                          activeColor: "ring-purple-500 border-purple-400/60 bg-purple-50/50",
-                          dot: "bg-purple-500",
-                        },
-                        {
-                          id: "gemini",
-                          label: "Google Gemini",
-                          desc: "Fast text-first AI with speech synthesis.",
-                          activeColor: "ring-emerald-500 border-emerald-400/60 bg-emerald-50/50",
-                          dot: "bg-emerald-500",
-                        },
-                        {
-                          id: "vapi",
-                          label: "Vapi AI",
-                          desc: "WebRTC voice agents.",
-                          activeColor: "ring-orange-500 border-orange-400/60 bg-orange-50/50",
-                          dot: "bg-orange-500",
-                        },
-                      ] as const
-                    ).map(({ id, label, desc, activeColor, dot }) => (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => setActiveProvider(id)}
-                        className={cn(
-                          "group flex w-full items-start gap-3 rounded-2xl border bg-white p-4 text-left shadow-sm transition-all hover:shadow-md",
-                          activeProvider === id ? cn("ring-2", activeColor) : "hover:border-border",
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg",
-                            activeProvider === id ? dot + " opacity-100" : "bg-muted",
-                          )}
-                        >
-                          {activeProvider === id ? (
-                            <Check className="size-4 text-white" />
-                          ) : (
-                            <Zap className="size-4 text-muted-foreground/40" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold">{label}</p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Provider-specific config */}
-                  <div className={cn(
-                    "rounded-2xl border bg-white p-5 shadow-sm space-y-5",
-                    activeProvider === "gemini" ? "ring-1 ring-emerald-500/15" : activeProvider === "vapi" ? "ring-1 ring-orange-500/15" : "ring-1 ring-purple-500/15",
-                  )}>
-                    <h3 className={cn(
-                      "text-xs font-bold uppercase tracking-widest",
-                      activeProvider === "gemini" ? "text-emerald-700" : activeProvider === "vapi" ? "text-orange-700" : "text-purple-700",
-                    )}>
-                      {activeProvider === "gemini" ? "Google Gemini Settings" : activeProvider === "vapi" ? "Vapi Settings" : "ElevenLabs Settings"}
+                  {/* Vapi AI Config */}
+                  <div className="rounded-2xl border bg-white p-5 shadow-sm space-y-5 ring-1 ring-orange-500/15">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-orange-700">
+                      Vapi AI Configuration
                     </h3>
 
-                    {activeProvider === "gemini" ? (
-                      <>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="gemini-model" className="text-xs font-semibold">Active Model</Label>
-                          <Input
-                            id="gemini-model"
-                            placeholder="e.g. gemini-2.5-flash-lite or gemini-2.0-flash"
-                            value={geminiModel}
-                            onChange={(e) => setGeminiModel(e.target.value)}
-                            className="max-w-sm font-mono text-xs"
-                          />
-                          <p className="text-[11px] text-muted-foreground">
-                            Supports: gemini-2.5-flash-lite · gemini-2.0-flash · gemini-1.5-flash
-                          </p>
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-semibold flex items-center gap-1.5">
-                            AI Voice Gender
-                          </Label>
-                          <p className="text-[11px] text-muted-foreground">
-                            Sets the preferred voice gender for Gemini text-to-speech across all client pages.
-                          </p>
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={geminiVoiceGender === "female" ? "default" : "outline"}
-                              onClick={() => setGeminiVoiceGender("female")}
-                              className="gap-1.5"
-                            >
-                              ♀ Female
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={geminiVoiceGender === "male" ? "default" : "outline"}
-                              onClick={() => setGeminiVoiceGender("male")}
-                              className="gap-1.5"
-                            >
-                              ♂ Male
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-semibold flex items-center gap-1.5">
-                            <KeyRound className="size-3.5 text-emerald-600" />
-                            API Key Rotation Pool
-                          </Label>
-                          <p className="text-[11px] text-muted-foreground">
-                            Keys are rotated round-robin on every request to prevent quota exhaustion.
-                          </p>
-                          <KeyRotationList
-                            keys={geminiApiKeys}
-                            onAdd={(k) => setGeminiApiKeys((prev) => [...prev, k])}
-                            onRemove={(k) => setGeminiApiKeys((prev) => prev.filter((x) => x !== k))}
-                            placeholder="Add Gemini API key (AIza…)"
-                            accent="bg-emerald-500"
-                          />
-                        </div>
-                      </>
-                    ) : activeProvider === "vapi" ? (
-                      <>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="vapi-public-key" className="text-xs font-semibold">
-                            Public Key
-                          </Label>
-                          <div className="flex max-w-sm gap-2">
-                            <Input
-                              id="vapi-public-key"
-                              type={showVapiKeys ? "text" : "password"}
-                              placeholder="e.g. 1a2b3c4d5e6f..."
-                              value={vapiPublicKey}
-                              onChange={(e) => setVapiPublicKey(e.target.value)}
-                              className="font-mono text-xs"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              onClick={() => setShowVapiKeys(!showVapiKeys)}
-                              className="shrink-0"
-                            >
-                              {showVapiKeys ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="vapi-private-key" className="text-xs font-semibold">
-                            Private API Key
-                          </Label>
-                          <div className="flex max-w-sm gap-2">
-                            <Input
-                              id="vapi-private-key"
-                              type={showVapiKeys ? "text" : "password"}
-                              placeholder="e.g. 1a2b3c4d5e6f..."
-                              value={vapiPrivateKey}
-                              onChange={(e) => setVapiPrivateKey(e.target.value)}
-                              className="font-mono text-xs"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              onClick={() => setShowVapiKeys(!showVapiKeys)}
-                              className="shrink-0"
-                            >
-                              {showVapiKeys ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                            </Button>
-                          </div>
-                          <p className="text-[11px] text-muted-foreground">
-                            Required for routing secure text chats to Vapi without requiring a microphone.
-                          </p>
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="vapi-assistant-id" className="text-xs font-semibold">
-                            Assistant ID
-                          </Label>
-                          <Input
-                            id="vapi-assistant-id"
-                            placeholder="e.g. uuid-of-assistant"
-                            value={vapiAssistantId}
-                            onChange={(e) => setVapiAssistantId(e.target.value)}
-                            className="max-w-sm font-mono text-xs"
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="elevenlabs-agent-id" className="text-xs font-semibold">
-                            Default Agent ID
-                          </Label>
-                          <div className="flex max-w-sm gap-2">
-                            <Input
-                              id="elevenlabs-agent-id"
-                              type={showAgentId ? "text" : "password"}
-                              placeholder="e.g. agent_abc123xyz"
-                              value={defaultAgentId}
-                              onChange={(e) => setDefaultAgentId(e.target.value)}
-                              className="font-mono text-xs"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              onClick={() => setShowAgentId(!showAgentId)}
-                              className="shrink-0"
-                              title={showAgentId ? "Hide Agent ID" : "Reveal Agent ID"}
-                            >
-                              {showAgentId ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-semibold flex items-center gap-1.5">
-                            <KeyRound className="size-3.5 text-purple-600" />
-                            API Key Rotation Pool
-                          </Label>
-                          <p className="text-[11px] text-muted-foreground">
-                            Multiple keys rotate to prevent credit exhaustion per key.
-                          </p>
-                          <KeyRotationList
-                            keys={apiKeys}
-                            onAdd={(k) => setApiKeys((prev) => [...prev, k])}
-                            onRemove={(k) => setApiKeys((prev) => prev.filter((x) => x !== k))}
-                            placeholder="Add ElevenLabs API key"
-                            accent="bg-purple-500"
-                          />
-                        </div>
-                      </>
-                    )}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="vapi-public-key" className="text-xs font-semibold">
+                        Public Key
+                      </Label>
+                      <div className="flex max-w-sm gap-2">
+                        <Input
+                          id="vapi-public-key"
+                          type={showVapiKeys ? "text" : "password"}
+                          placeholder="e.g. 1a2b3c4d5e6f..."
+                          value={vapiPublicKey}
+                          onChange={(e) => setVapiPublicKey(e.target.value)}
+                          className="font-mono text-xs"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setShowVapiKeys(!showVapiKeys)}
+                          className="shrink-0"
+                        >
+                          {showVapiKeys ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="vapi-private-key" className="text-xs font-semibold">
+                        Private API Key
+                      </Label>
+                      <div className="flex max-w-sm gap-2">
+                        <Input
+                          id="vapi-private-key"
+                          type={showVapiKeys ? "text" : "password"}
+                          placeholder="e.g. 1a2b3c4d5e6f..."
+                          value={vapiPrivateKey}
+                          onChange={(e) => setVapiPrivateKey(e.target.value)}
+                          className="font-mono text-xs"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setShowVapiKeys(!showVapiKeys)}
+                          className="shrink-0"
+                        >
+                          {showVapiKeys ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                        </Button>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Required for secure Vapi AI API interactions.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="vapi-assistant-id" className="text-xs font-semibold">
+                        Assistant ID
+                      </Label>
+                      <Input
+                        id="vapi-assistant-id"
+                        placeholder="e.g. uuid-of-assistant"
+                        value={vapiAssistantId}
+                        onChange={(e) => setVapiAssistantId(e.target.value)}
+                        className="max-w-sm font-mono text-xs"
+                      />
+                    </div>
                   </div>
 
                   <Button type="submit" disabled={savingElevenLabs} className="gap-2">

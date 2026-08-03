@@ -1,16 +1,11 @@
 import { createHash } from "node:crypto";
-import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { NextRequest, NextResponse } from "next/server";
 
 import { createAgentDynamicVariables } from "@/lib/agent-context";
 import { organizationHasFeature } from "@/lib/billing";
 import * as agentsService from "@/lib/services/agents";
 import * as publicSiteService from "@/lib/services/publicSite";
-import {
-  getElevenLabsSettings,
-  getRotatedGeminiKey,
-  getRotatedElevenLabsKey,
-} from "@/lib/services/settings";
+import { getElevenLabsSettings } from "@/lib/services/settings";
 
 export const runtime = "nodejs";
 
@@ -99,51 +94,12 @@ export async function POST(
       knowledgeItems: published.knowledgeItems,
     });
 
-    if (activeProvider === "vapi") {
-      if (mode === "text") {
-        return NextResponse.json(
-          { error: "Vapi AI is configured for voice interaction only. Please use Speak with AI." },
-          { status: 400 },
-        );
-      }
-      return NextResponse.json({
-        provider: "vapi",
-        vapiPublicKey: aiSettings.vapiPublicKey,
-        vapiAssistantId: aiSettings.vapiAssistantId,
-        dynamicVariables,
-      });
-    }
-
-    if (activeProvider === "gemini") {
-      const { model } = await getRotatedGeminiKey();
-      return NextResponse.json({
-        provider: "gemini",
-        model,
-        siteSlug: published.site.siteSlug,
-        dynamicVariables,
-      });
-    }
-
-    // Default to ElevenLabs
-    const credentials = await getRotatedElevenLabsKey();
-    const elevenlabs = new ElevenLabsClient({ apiKey: credentials.apiKey });
-    const { signedUrl } =
-      await elevenlabs.conversationalAi.conversations.getSignedUrl({
-        agentId: credentials.agentId,
-      });
-
-    return NextResponse.json(
-      {
-        provider: "elevenlabs",
-        signedUrl,
-        dynamicVariables,
-      },
-      {
-        headers: {
-          "Cache-Control": "no-store",
-        },
-      },
-    );
+    return NextResponse.json({
+      provider: "vapi",
+      vapiPublicKey: aiSettings.vapiPublicKey,
+      vapiAssistantId: aiSettings.vapiAssistantId,
+      dynamicVariables,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     const rateLimited = message.includes("Too many assistant sessions") || message.includes("Too many concierge sessions");
