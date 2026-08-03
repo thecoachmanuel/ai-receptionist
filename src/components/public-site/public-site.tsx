@@ -602,7 +602,6 @@ export function PublicSite({
             <div className="relative z-10 max-w-3xl">
               <div className="flex flex-wrap items-center gap-3">
                 <Badge variant="outline" className="rounded-full bg-background/55 px-3 py-1 text-[0.68rem] uppercase tracking-[0.15em] backdrop-blur">
-                  <Sparkles className="size-3" />
                   Now accepting {terminology.bookingPlural.toLowerCase()} online
                 </Badge>
               </div>
