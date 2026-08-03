@@ -84,7 +84,37 @@ export type DbOrgMember = {
   _id?: ObjectId | string;
   organizationId: string;
   userId: string;
+  teamMemberId?: string;
   role: "admin" | "operator" | "member";
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type DbLocation = {
+  _id?: ObjectId | string;
+  organizationId: string;
+  name: string;
+  slug: string;
+  address: string;
+  city: string;
+  phone?: string;
+  email?: string;
+  active: boolean;
+  isPrimary: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type DbCalendarIntegration = {
+  _id?: ObjectId | string;
+  organizationId: string;
+  teamMemberId: string;
+  provider: "google";
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+  calendarId: string;
+  syncEnabled: boolean;
   createdAt: number;
   updatedAt: number;
 };

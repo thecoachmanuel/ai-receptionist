@@ -4,6 +4,7 @@ import type { CSSProperties, ReactNode } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
+  Building2,
   CalendarCheck2,
   Clock3,
   Mail,

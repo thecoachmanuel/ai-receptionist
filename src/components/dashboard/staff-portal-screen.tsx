@@ -33,10 +33,11 @@ export function StaffPortalScreen() {
 
     return normalized.filter((b) => {
       if (!userEmail && !userName) return true;
+      const memberName = b.teamMemberName?.toLowerCase() || "";
       const isStaffMatch =
-        (userEmail && b.teamMemberName.toLowerCase().includes(userEmail)) ||
-        (userName && b.teamMemberName.toLowerCase().includes(userName));
-      return isStaffMatch || true; // Show all organization bookings assigned to staff
+        (userEmail && memberName.includes(userEmail)) ||
+        (userName && memberName.includes(userName));
+      return isStaffMatch || true;
     });
   }, [bookings, user]);
 

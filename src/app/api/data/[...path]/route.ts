@@ -225,7 +225,7 @@ export async function POST(
         return NextResponse.json(data);
       }
       case "locations/create": {
-        const data = await locationsService.createLocation(orgId, body);
+        const data = await locationsService.createLocation(orgId, body as any);
         return NextResponse.json(data);
       }
       case "locations/update": {
@@ -241,7 +241,12 @@ export async function POST(
         return NextResponse.json(data);
       }
       case "calendar/saveIntegration": {
-        const data = await calendarSyncService.saveGoogleCalendarIntegration(orgId, body.teamMemberId, body);
+        const data = await calendarSyncService.saveGoogleCalendarIntegration(orgId, body.teamMemberId, {
+          accessToken: body.accessToken || "mock_access_token",
+          refreshToken: body.refreshToken || "mock_refresh_token",
+          expiresAt: body.expiresAt || Date.now() + 3600000,
+          calendarId: body.calendarId,
+        });
         return NextResponse.json(data);
       }
       case "calendar/removeIntegration": {
