@@ -20,6 +20,7 @@ export type AuthOrg = {
   locale: string;
   plan: string;
   role?: string;
+  terminology?: any;
 };
 
 export type UserOrgSummary = {

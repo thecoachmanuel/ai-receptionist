@@ -75,16 +75,26 @@ export function WorkspaceProvider({
     orgSlug,
   ]);
 
+  const lastKnownTerminology = useRef<Terminology>(defaultTerminology);
+
+  const terminology = useMemo(() => {
+    const raw = organization?.terminology || activeOrg?.terminology;
+    if (raw) {
+      const normalized = normalizeTerminology(raw);
+      lastKnownTerminology.current = normalized;
+      return normalized;
+    }
+    return lastKnownTerminology.current;
+  }, [organization?.terminology, activeOrg?.terminology]);
+
   const value = useMemo<WorkspaceContextValue>(
     () => ({
       orgSlug,
       organization,
-      terminology: organization?.terminology
-        ? normalizeTerminology(organization.terminology)
-        : defaultTerminology,
+      terminology,
       isBootstrapping: (!isLoaded && organization === null) || isCreating,
     }),
-    [isCreating, isLoaded, organization, orgSlug],
+    [isCreating, isLoaded, organization, orgSlug, terminology],
   );
 
   return (

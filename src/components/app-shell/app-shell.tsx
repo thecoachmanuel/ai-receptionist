@@ -199,7 +199,7 @@ function ShellChrome({
     dashboardApi.publicSite.getCurrentDraft,
     organization ? {} : "skip",
   );
-  const navigation = navigationFor(terminology);
+  const navigation = useMemo(() => navigationFor(terminology), [terminology]);
   const routeLabels = Object.fromEntries(
     navigation.flatMap((section) =>
       section.items.map((item) => [item.segment, item.label]),
