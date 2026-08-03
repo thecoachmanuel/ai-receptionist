@@ -38,6 +38,21 @@ export async function callApi(endpoint: string, args: Record<string, unknown> = 
   return data;
 }
 
+export function invalidateQueries(domain?: string) {
+  if (!domain) {
+    queryCache.clear();
+  } else {
+    for (const key of queryCache.keys()) {
+      if (key.includes(domain) || key.includes("dashboard/overview")) {
+        queryCache.delete(key);
+      }
+    }
+  }
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("app:query-invalidated", { detail: { domain } }));
+  }
+}
+
 export function useQuery<T>(
   endpoint: string,
   args: Record<string, unknown> | "skip" = {},
@@ -77,10 +92,10 @@ export function useQuery<T>(
     };
   }, [cacheKey]);
 
-  const fetcher = useCallback(async () => {
+  const fetcher = useCallback(async (forceFetch = false) => {
     if (args === "skip" || !cacheKey) return;
-    // Serve from cache immediately; only fetch if data is not in cache yet
-    if (queryCache.has(cacheKey)) return;
+    // Serve from cache immediately; only fetch if data is not in cache or forced
+    if (!forceFetch && queryCache.has(cacheKey)) return;
     try {
       const result = await callApi(endpoint, args);
       setData(result);
@@ -91,18 +106,22 @@ export function useQuery<T>(
   }, [endpoint, cacheKey, args]);
 
   useEffect(() => {
-    void fetcher();
+    void fetcher(false);
   }, [fetcher]);
 
   useEffect(() => {
-    const handleDataUpdated = () => {
-      void fetcher();
+    const handleInvalidated = (event: Event) => {
+      const detail = (event as CustomEvent)?.detail;
+      const domain = detail?.domain;
+      if (!domain || !cacheKey || cacheKey.includes(domain) || cacheKey.includes("dashboard/overview")) {
+        void fetcher(true);
+      }
     };
-    window.addEventListener("app:data-updated", handleDataUpdated);
+    window.addEventListener("app:query-invalidated", handleInvalidated);
     return () => {
-      window.removeEventListener("app:data-updated", handleDataUpdated);
+      window.removeEventListener("app:query-invalidated", handleInvalidated);
     };
-  }, [fetcher]);
+  }, [fetcher, cacheKey]);
 
   return data;
 }
@@ -111,6 +130,8 @@ export function useMutation<TArgs extends Record<string, unknown> = Record<strin
   return useCallback(
     async (args: TArgs): Promise<TResult> => {
       const result = await callApi(endpoint, args);
+      const domain = endpoint.split("/")[0];
+      invalidateQueries(domain);
       return result as TResult;
     },
     [endpoint],
@@ -122,6 +143,9 @@ export async function fetchQuery<T>(endpoint: string, args: Record<string, unkno
 }
 
 export async function fetchMutation<T>(endpoint: string, args: Record<string, unknown> = {}) {
-  return callApi(endpoint, args) as Promise<T>;
+  const result = await callApi(endpoint, args);
+  const domain = endpoint.split("/")[0];
+  invalidateQueries(domain);
+  return result as T;
 }
 
