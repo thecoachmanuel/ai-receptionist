@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/db/mongodb";
 import type { DbOrgMember, DbOrganization, DbSession, DbUser } from "@/lib/db/types";
 import { PLAN_FEATURES } from "@/lib/billing";
+import { createOrganizationForUser } from "@/lib/services/organizations";
 
 const SESSION_COOKIE_NAME = "oneboard_session";
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
