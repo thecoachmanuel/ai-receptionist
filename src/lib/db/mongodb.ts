@@ -40,6 +40,9 @@ async function ensureIndexes(db: Db) {
       db.collection("publicSites").createIndex({ organizationId: 1 }),
       db.collection("orgMembers").createIndex({ organizationId: 1, userId: 1 }),
       db.collection("bookings").createIndex({ organizationId: 1, confirmationCode: 1 }),
+      db.collection("conversations").createIndex({ organizationId: 1, startedAt: -1 }),
+      db.collection("conversations").createIndex({ createdAt: 1 }, { expireAfterSeconds: 2592000 }), // 30-day auto cleanup
+      db.collection("agentSessionRateLimits").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     ]);
   } catch (err) {
     console.warn("Index initialization warning:", err);

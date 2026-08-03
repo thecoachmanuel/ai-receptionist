@@ -43,6 +43,14 @@ export async function logConversation(
   const db = await getDb();
   const now = Date.now();
 
+  // Truncate fields to prevent bloat in MongoDB storage
+  const cleanSummary = data.summary
+    ? data.summary.trim().slice(0, 1000)
+    : "AI Conversation completed.";
+  const cleanTranscript = data.transcript
+    ? data.transcript.trim().slice(0, 1000)
+    : undefined;
+
   const conversationDoc: DbConversation = {
     organizationId: orgId,
     externalConversationId:
@@ -50,9 +58,9 @@ export async function logConversation(
       `conv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     channel: data.channel || "web",
     status: data.status || "completed",
-    caller: data.caller,
-    transcript: data.transcript,
-    summary: data.summary,
+    caller: data.caller ? data.caller.trim().slice(0, 150) : "Web Visitor",
+    transcript: cleanTranscript,
+    summary: cleanSummary,
     durationSeconds: data.durationSeconds || 0,
     outcome: data.outcome || "AI Assistant Interaction",
     startedAt: now,
@@ -62,6 +70,26 @@ export async function logConversation(
   };
 
   const res = await db.collection<DbConversation>("conversations").insertOne(conversationDoc);
+
+  // Asynchronously prune conversations beyond the top 50 for this organization
+  void (async () => {
+    try {
+      const excessDocs = await db
+        .collection("conversations")
+        .find({ organizationId: orgId }, { projection: { _id: 1 } })
+        .sort({ startedAt: -1 })
+        .skip(50)
+        .toArray();
+
+      if (excessDocs.length > 0) {
+        const idsToDelete = excessDocs.map((doc) => doc._id);
+        await db.collection("conversations").deleteMany({ _id: { $in: idsToDelete } });
+      }
+    } catch (err) {
+      console.warn("Conversation cap pruning warning:", err);
+    }
+  })();
+
   return { ...conversationDoc, _id: res.insertedId.toString() };
 }
 
