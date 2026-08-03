@@ -15,7 +15,7 @@ function cleanEnv(val?: string): string {
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
-    if (!email || !password) {
+    if (!email || typeof email !== "string" || !password || typeof password !== "string") {
       return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
     }
 
@@ -24,21 +24,28 @@ export async function POST(request: NextRequest) {
     const adminPassword = cleanEnv(process.env.ADMIN_PASSWORD) || "admin123";
 
     const db = await getDb();
-    let user = await db.collection<DbUser>("users").findOne({ email: normalizedEmail });
 
-    // Handle Super Admin authentication using env ADMIN_EMAIL and ADMIN_PASSWORD
+    // Robust case-insensitive exact match
+    const escapedEmail = normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    let user = await db.collection<DbUser>("users").findOne({
+      $or: [
+        { email: normalizedEmail },
+        { email: { $regex: `^${escapedEmail}$`, $options: "i" } },
+      ],
+    });
+
+    // Super Admin Authentication
     if (normalizedEmail === adminEmail) {
       const isEnvPasswordValid = password === adminPassword;
-      const isDbPasswordValid = user ? await comparePassword(password, user.passwordHash) : false;
+      const isDbPasswordValid = user?.passwordHash ? await comparePassword(password, user.passwordHash) : false;
 
       if (!isEnvPasswordValid && !isDbPasswordValid) {
         return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
       }
 
+      const now = Date.now();
       if (!user) {
-        // Automatically bootstrap super admin user and workspace if missing
         const passwordHash = await hashPassword(password);
-        const now = Date.now();
         const insertUserResult = await db.collection<DbUser>("users").insertOne({
           email: adminEmail,
           passwordHash,
@@ -65,19 +72,43 @@ export async function POST(request: NextRequest) {
           updatedAt: now,
         };
       } else if (isEnvPasswordValid) {
-        // Update stored passwordHash to stay in sync with env ADMIN_PASSWORD
         const passwordHash = await hashPassword(adminPassword);
         await db.collection<DbUser>("users").updateOne(
           { _id: user._id },
-          { $set: { passwordHash, updatedAt: Date.now() } },
+          { $set: { passwordHash, updatedAt: now } },
+        );
+        user.passwordHash = passwordHash;
+      }
+
+      // Ensure super admin has an active organization
+      let activeOrgId = user.activeOrgId;
+      let orgSlug = "";
+      if (activeOrgId) {
+        const org = await db.collection("organizations").findOne({
+          $or: [
+            { clerkOrgId: activeOrgId },
+            { slug: activeOrgId },
+            ...(activeOrgId.length === 24 ? [{ _id: new (await import("mongodb")).ObjectId(activeOrgId) }] : []),
+          ],
+        });
+        if (org) orgSlug = (org as any).slug;
+      }
+
+      if (!orgSlug) {
+        const org = await createOrganizationForUser(user._id!.toString(), "Oneboard Admin Workspace");
+        activeOrgId = org._id.toString();
+        orgSlug = org.slug;
+        await db.collection<DbUser>("users").updateOne(
+          { _id: user._id },
+          { $set: { activeOrgId } },
         );
       }
 
-      await createSession(user._id!.toString(), user.activeOrgId);
-      return NextResponse.json({ success: true, userId: user._id!.toString() });
+      await createSession(user._id!.toString(), activeOrgId);
+      return NextResponse.json({ success: true, userId: user._id!.toString(), orgSlug });
     }
 
-    // Standard user authentication flow
+    // Standard User Authentication
     if (!user) {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
@@ -87,11 +118,58 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
 
-    await createSession(user._id!.toString(), user.activeOrgId);
+    // Resolve active organization & slug
+    let activeOrgId = user.activeOrgId;
+    let orgSlug = "";
 
-    return NextResponse.json({ success: true, userId: user._id!.toString() });
+    if (activeOrgId) {
+      const org = await db.collection("organizations").findOne({
+        $or: [
+          { clerkOrgId: activeOrgId },
+          { slug: activeOrgId },
+          ...(activeOrgId.length === 24 ? [{ _id: new (await import("mongodb")).ObjectId(activeOrgId) }] : []),
+        ],
+      });
+      if (org) orgSlug = (org as any).slug;
+    }
+
+    if (!orgSlug) {
+      const userIdStr = user._id!.toString();
+      const member = await db.collection("orgMembers").findOne({
+        $or: [{ userId: userIdStr }, { userId: user._id as any }],
+      });
+      if (member) {
+        const orgIdStr = (member as any).organizationId;
+        const org = await db.collection("organizations").findOne({
+          $or: [
+            { clerkOrgId: orgIdStr },
+            { slug: orgIdStr },
+            ...(orgIdStr.length === 24 ? [{ _id: new (await import("mongodb")).ObjectId(orgIdStr) }] : []),
+          ],
+        });
+        if (org) {
+          activeOrgId = (org as any)._id.toString();
+          orgSlug = (org as any).slug;
+        }
+      }
+    }
+
+    if (!orgSlug) {
+      const newOrg = await createOrganizationForUser(user._id!.toString(), `${user.name || "User"}'s Workspace`);
+      activeOrgId = newOrg._id.toString();
+      orgSlug = newOrg.slug;
+    }
+
+    await db.collection<DbUser>("users").updateOne(
+      { _id: user._id },
+      { $set: { activeOrgId, updatedAt: Date.now() } },
+    );
+
+    await createSession(user._id!.toString(), activeOrgId);
+
+    return NextResponse.json({ success: true, userId: user._id!.toString(), orgSlug });
   } catch (error) {
     console.error("Sign in error", error);
-    return NextResponse.json({ error: "Sign in failed." }, { status: 500 });
+    return NextResponse.json({ error: "Sign in failed. Please try again." }, { status: 500 });
   }
 }

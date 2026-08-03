@@ -32,8 +32,8 @@ export default function SignInPage() {
         throw new Error(data.error || "Sign in failed");
       }
 
-      router.push("/app");
-      router.refresh();
+      const targetUrl = data.orgSlug ? `/app/${data.orgSlug}` : "/app";
+      router.push(targetUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
     } finally {

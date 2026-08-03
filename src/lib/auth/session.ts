@@ -102,10 +102,11 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
       return null;
     }
 
-    const userObjectId = ObjectId.isValid(session.userId)
-      ? new ObjectId(session.userId)
-      : session.userId;
-    const user = await db.collection<DbUser>("users").findOne({ _id: userObjectId as ObjectId });
+    const userFilters: any[] = [{ _id: session.userId as any }];
+    if (ObjectId.isValid(session.userId)) {
+      userFilters.push({ _id: new ObjectId(session.userId) });
+    }
+    const user = await db.collection<DbUser>("users").findOne({ $or: userFilters });
 
     if (!user) return null;
 
@@ -114,43 +115,46 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
     let orgMember: DbOrgMember | null = null;
 
     if (targetOrgId) {
+      const orgFilters: any[] = [{ clerkOrgId: targetOrgId }, { slug: targetOrgId }];
       if (ObjectId.isValid(targetOrgId)) {
-        organization = await db
-          .collection<DbOrganization>("organizations")
-          .findOne({ _id: new ObjectId(targetOrgId) });
+        orgFilters.unshift({ _id: new ObjectId(targetOrgId) });
       }
-      if (!organization) {
-        organization = await db
-          .collection<DbOrganization>("organizations")
-          .findOne({ clerkOrgId: targetOrgId });
-      }
+      organization = await db.collection<DbOrganization>("organizations").findOne({ $or: orgFilters });
     }
 
+    const userIdStr = user._id!.toString();
     if (!organization) {
       const firstMember = await db
         .collection<DbOrgMember>("orgMembers")
-        .findOne({ userId: user._id!.toString() });
+        .findOne({ $or: [{ userId: userIdStr }, { userId: user._id as any }] });
 
       if (firstMember) {
-        organization = await db
-          .collection<DbOrganization>("organizations")
-          .findOne({ _id: new ObjectId(firstMember.organizationId) });
+        const orgIdStr = firstMember.organizationId;
+        const orgFilters: any[] = [{ clerkOrgId: orgIdStr }, { slug: orgIdStr }];
+        if (ObjectId.isValid(orgIdStr)) {
+          orgFilters.unshift({ _id: new ObjectId(orgIdStr) });
+        }
+        organization = await db.collection<DbOrganization>("organizations").findOne({ $or: orgFilters });
       }
     }
 
     const adminEmail = (process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.replace(/^["']|["']$/g, "").trim() : "admin@admin.com").toLowerCase();
     const isSiteAdmin = user.email.trim().toLowerCase() === adminEmail;
 
-    if (!organization && isSiteAdmin) {
+    if (!organization) {
       organization = await db.collection<DbOrganization>("organizations").findOne({});
+    }
+
+    if (!organization) {
+      const newOrg = await createOrganizationForUser(userIdStr, `${user.name || "Default"}'s Workspace`);
+      organization = newOrg as any;
     }
 
     if (organization && organization._id) {
       const orgIdStr = organization._id.toString();
-      const userIdStr = user._id!.toString();
       orgMember = await db.collection<DbOrgMember>("orgMembers").findOne({
         organizationId: orgIdStr,
-        userId: userIdStr,
+        $or: [{ userId: userIdStr }, { userId: user._id as any }],
       });
     }
 
@@ -171,7 +175,7 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
 
     return {
       user: {
-        id: user._id!.toString(),
+        id: userIdStr,
         email: user.email,
         name: user.name,
         avatarUrl: user.avatarUrl,
