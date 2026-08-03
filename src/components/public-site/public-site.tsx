@@ -642,44 +642,70 @@ export function PublicSite({
               </div>
             </div>
 
-            {agentIsVisible ? (
-              <div id="assistant" className="scroll-mt-24">
-                <AgentLauncher
-                  siteSlug={siteSlug}
-                  businessName={config.businessName}
-                  welcomeMessage={config.agent.welcomeMessage}
-                  textEnabled={textAgentIsVisible}
-                  voiceEnabled={voiceAgentIsVisible}
-                  offerings={offerings}
-                  teamMembers={teamMembers}
-                  timezone={organization.timezone}
-                  locale={organization.locale}
-                  voiceGender={voiceGender}
-                />
-              </div>
-            ) : (
-              <div
-                className={cn(
-                  "relative isolate min-h-[30rem] overflow-hidden rounded-[calc(var(--radius)*2.2)] border shadow-[0_35px_100px_-45px_color-mix(in_srgb,var(--foreground)_45%,transparent)] sm:min-h-[36rem]",
-                  isCompact && "min-h-[22rem] sm:min-h-[26rem]",
-                )}
-                style={heroVisualStyle}
-                aria-label={heroImageUrl ? `${config.businessName} feature image` : undefined}
-                role={heroImageUrl ? "img" : undefined}
-              >
-                <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-4 rounded-[calc(var(--radius)*1.25)] border border-white/15 bg-black/35 p-4 text-white backdrop-blur-md sm:inset-x-6 sm:bottom-6">
-                  <div>
-                    <p className="text-[0.65rem] uppercase tracking-[0.18em] text-white/60">Welcome to</p>
-                    <p className="mt-1 font-heading text-lg">{config.businessName}</p>
+            <div className="space-y-6">
+              {heroImageUrl && agentIsVisible ? (
+                <div
+                  className={cn(
+                    "relative isolate min-h-[16rem] overflow-hidden rounded-[calc(var(--radius)*2.2)] border shadow-lg transition-all sm:min-h-[18rem]",
+                    isCompact && "min-h-[14rem]",
+                  )}
+                  style={heroVisualStyle}
+                  aria-label={`${config.businessName} feature image`}
+                  role="img"
+                >
+                  <div className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-4 rounded-[calc(var(--radius)*1.25)] border border-white/15 bg-black/45 p-3.5 text-white backdrop-blur-md sm:inset-x-5 sm:bottom-5 sm:p-4">
+                    <div>
+                      <p className="text-[0.62rem] uppercase tracking-[0.18em] text-white/70">Welcome to</p>
+                      <p className="mt-0.5 font-heading text-base sm:text-lg font-medium">{config.businessName}</p>
+                    </div>
+                    {bookingIsVisible ? (
+                      <a href="#book" className="grid size-9 shrink-0 place-items-center rounded-full bg-white text-black transition hover:scale-105 sm:size-10" aria-label="Book now">
+                        <ArrowRight className="size-4" />
+                      </a>
+                    ) : null}
                   </div>
-                  {bookingIsVisible ? (
-                    <a href="#book" className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-black transition hover:scale-105" aria-label="Book now">
-                      <ArrowRight className="size-4" />
-                    </a>
-                  ) : null}
                 </div>
-              </div>
-            )}
+              ) : null}
+
+              {agentIsVisible ? (
+                <div id="assistant" className="scroll-mt-24">
+                  <AgentLauncher
+                    siteSlug={siteSlug}
+                    businessName={config.businessName}
+                    welcomeMessage={config.agent.welcomeMessage}
+                    textEnabled={textAgentIsVisible}
+                    voiceEnabled={voiceAgentIsVisible}
+                    offerings={offerings}
+                    teamMembers={teamMembers}
+                    timezone={organization.timezone}
+                    locale={organization.locale}
+                    voiceGender={voiceGender}
+                  />
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    "relative isolate min-h-[30rem] overflow-hidden rounded-[calc(var(--radius)*2.2)] border shadow-[0_35px_100px_-45px_color-mix(in_srgb,var(--foreground)_45%,transparent)] sm:min-h-[36rem]",
+                    isCompact && "min-h-[22rem] sm:min-h-[26rem]",
+                  )}
+                  style={heroVisualStyle}
+                  aria-label={heroImageUrl ? `${config.businessName} feature image` : undefined}
+                  role={heroImageUrl ? "img" : undefined}
+                >
+                  <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-4 rounded-[calc(var(--radius)*1.25)] border border-white/15 bg-black/35 p-4 text-white backdrop-blur-md sm:inset-x-6 sm:bottom-6">
+                    <div>
+                      <p className="text-[0.65rem] uppercase tracking-[0.18em] text-white/60">Welcome to</p>
+                      <p className="mt-1 font-heading text-lg font-medium">{config.businessName}</p>
+                    </div>
+                    {bookingIsVisible ? (
+                      <a href="#book" className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-black transition hover:scale-105" aria-label="Book now">
+                        <ArrowRight className="size-4" />
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </section>
 

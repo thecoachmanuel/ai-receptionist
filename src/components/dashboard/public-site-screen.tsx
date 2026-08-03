@@ -480,6 +480,7 @@ function SiteEditor({
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingHero, setUploadingHero] = useState(false);
   const [clientPageUrl, setClientPageUrl] = useState("");
 
   useEffect(() => {
@@ -528,6 +529,40 @@ function SiteEditor({
       toast.error(error instanceof Error ? error.message : "Failed to upload logo file.");
     } finally {
       setUploadingLogo(false);
+      event.target.value = "";
+    }
+  }
+
+  async function handleHeroFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Hero banner image file size must be under 8MB.");
+      return;
+    }
+
+    setUploadingHero(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/storage", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "Failed to upload hero image.");
+      }
+
+      update("heroImageUrl", data.url);
+      toast.success("Homepage hero banner image uploaded successfully!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload hero image.");
+    } finally {
+      setUploadingHero(false);
       event.target.value = "";
     }
   }
@@ -777,6 +812,74 @@ function SiteEditor({
               ) : (
                 <p className="text-[11px] text-muted-foreground">
                   Upload a PNG, JPG, WEBP, or SVG logo file from your device, or paste an external URL.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="heroImageUrl">Homepage hero banner image</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="heroImageUrl"
+                  type="url"
+                  value={config.heroImageUrl ?? ""}
+                  onChange={(event) =>
+                    update("heroImageUrl", event.target.value.trim() || undefined)
+                  }
+                  placeholder="https://... or upload local image"
+                  className="flex-1 text-xs font-mono"
+                />
+                <Label
+                  htmlFor="hero-file-upload"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "cursor-pointer shrink-0 gap-1.5 font-normal text-xs",
+                    uploadingHero && "opacity-50 pointer-events-none",
+                  )}
+                >
+                  <Upload className="size-3.5 text-primary" />
+                  {uploadingHero ? "Uploading..." : "Upload hero image"}
+                </Label>
+                <input
+                  id="hero-file-upload"
+                  type="file"
+                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                  className="hidden"
+                  onChange={handleHeroFileUpload}
+                />
+              </div>
+
+              {config.heroImageUrl ? (
+                <div className="mt-1 flex items-center justify-between gap-3 rounded-lg border border-black/8 bg-muted/20 p-2.5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={config.heroImageUrl}
+                      alt="Homepage hero banner preview"
+                      className="h-10 w-16 rounded object-cover border border-black/10 shrink-0 bg-white"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = "none";
+                      }}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-foreground truncate">Hero feature banner</p>
+                      <p className="text-[10px] text-muted-foreground truncate font-mono">
+                        {config.heroImageUrl}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => update("heroImageUrl", undefined)}
+                    className="text-destructive h-6 px-2 text-[10px] shrink-0 hover:bg-destructive/10"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">
+                  Upload a cover image for the main feature banner on your public homepage rectangle.
                 </p>
               )}
             </div>
