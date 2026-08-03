@@ -50,9 +50,10 @@ type TenantStyle = CSSProperties &
 
 function safeHttpUrl(value?: string) {
   if (!value) return undefined;
+  if (value.startsWith("/") || value.startsWith("data:image/")) return value;
   try {
     const url = new URL(value);
-    return url.protocol === "https:" || url.protocol === "http:"
+    return url.protocol === "https:" || url.protocol === "http:" || url.protocol === "data:"
       ? url.toString()
       : undefined;
   } catch {

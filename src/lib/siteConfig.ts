@@ -2,13 +2,16 @@ import type { SiteConfig } from "@/lib/db/types";
 import { boundedInteger, optionalTrimmed, requiredTrimmed } from "./validation";
 
 function safeOptionalUrl(value: unknown, label: string): string | undefined {
-  const url = optionalTrimmed(value, label, 2_000);
+  const url = optionalTrimmed(value, label, 1_000_000);
   if (!url) return undefined;
+  if (url.startsWith("/") || url.startsWith("data:image/")) return url;
   try {
     const parsed = new URL(url);
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error();
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:" && parsed.protocol !== "data:") {
+      throw new Error();
+    }
   } catch {
-    throw new Error(`${label} must be a valid http(s) URL.`);
+    throw new Error(`${label} must be a valid image URL or uploaded file.`);
   }
   return url;
 }
