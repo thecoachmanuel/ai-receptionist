@@ -4,6 +4,7 @@ import type { BookingStatus, DbAvailabilityRule, DbBooking, DbContact, DbOfferin
 import { dayOfWeek, localPartsAt, zonedDateTimeToUtc } from "@/lib/time";
 import { normalizedEmail, normalizedPhone, optionalTrimmed, requiredTrimmed } from "@/lib/validation";
 import { upsertContact } from "./contacts";
+import { syncBookingToExternalCalendar } from "./calendar-sync";
 
 function generateConfirmationCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -174,6 +175,12 @@ export async function createBooking(
   };
 
   const result = await db.collection<DbBooking>("bookings").insertOne(newBooking);
+  const createdBooking = { ...newBooking, _id: result.insertedId.toString() };
+
+  // Trigger Google Calendar sync in background
+  void syncBookingToExternalCalendar(createdBooking).catch((err) =>
+    console.error("External calendar sync error:", err),
+  );
 
   // Capture client details into contacts collection for this tenant
   await upsertContact(orgId, {
@@ -345,7 +352,7 @@ export async function getPublicAvailableSlots(
     for (let min = rule.startMinute; min + offering.durationMinutes <= rule.endMinute; min += slotIntervalMinutes) {
       const hour = Math.floor(min / 60);
       const minute = min % 60;
-      
+
       const wallClockUtc = zonedDateTimeToUtc({ year, month, day, hour, minute }, timezone);
       const startAt = wallClockUtc ?? Date.UTC(year, month - 1, day, hour, minute);
 

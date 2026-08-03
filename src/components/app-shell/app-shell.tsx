@@ -73,6 +73,11 @@ function navigationFor(
           icon: CalendarDays,
         },
         {
+          label: "Staff Portal",
+          segment: "staff-portal",
+          icon: UsersRound,
+        },
+        {
           label: terminology.offeringPlural,
           segment: "offerings",
           icon: CircleDollarSign,
@@ -82,6 +87,7 @@ function navigationFor(
           segment: "team",
           icon: UsersRound,
         },
+        { label: "Branches", segment: "locations", icon: Building2 },
         { label: "Availability", segment: "availability", icon: Clock3 },
       ],
     },

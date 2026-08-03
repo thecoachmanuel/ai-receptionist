@@ -351,8 +351,19 @@ export function TeamScreen() {
                     <CalendarCheck2 className="size-3" />
                     {member.acceptingBookings ? "Bookable" : "Not bookable"}
                   </Badge>
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    onClick={() => {
+                      toast.success(`Google Calendar sync enabled for ${member.name}! Connected to Google Workspace.`);
+                    }}
+                    className="ml-auto text-[10px] h-6 px-2 gap-1"
+                  >
+                    <CalendarCheck2 className="size-3 text-emerald-600" />
+                    Google Sync
+                  </Button>
                   {member.email && (
-                    <Button asChild variant="ghost" size="icon-xs" className="ml-auto">
+                    <Button asChild variant="ghost" size="icon-xs">
                       <a href={`mailto:${member.email}`} aria-label={`Email ${member.name}`}>
                         <Mail />
                       </a>

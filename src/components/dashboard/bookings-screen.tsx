@@ -56,6 +56,7 @@ import {
   SubmitButton,
 } from "@/components/dashboard/screen-kit";
 import { useWorkspace } from "@/components/dashboard/workspace-context";
+import { CalendarView } from "@/components/dashboard/calendar-view";
 
 const statuses: BookingStatus[] = [
   "pending",
@@ -363,6 +364,7 @@ export function BookingsScreen() {
   );
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [displayMode, setDisplayMode] = useState<"calendar" | "table">("calendar");
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const normalizedBookings = useMemo(
@@ -410,7 +412,7 @@ export function BookingsScreen() {
                 aria-label={`Search ${terminology.bookingPlural.toLowerCase()}`}
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <SlidersHorizontal className="size-4 text-muted-foreground" />
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full min-w-36 sm:w-auto">
@@ -425,11 +427,44 @@ export function BookingsScreen() {
                   ))}
                 </SelectContent>
               </Select>
+
+              <div className="inline-flex rounded-md border border-input bg-muted/40 p-0.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setDisplayMode("calendar")}
+                  className={cn(
+                    "rounded px-2.5 py-1 transition-all font-medium flex items-center gap-1.5",
+                    displayMode === "calendar"
+                      ? "bg-background text-foreground shadow-xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <CalendarDays className="size-3.5" />
+                  Calendar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDisplayMode("table")}
+                  className={cn(
+                    "rounded px-2.5 py-1 transition-all font-medium",
+                    displayMode === "table"
+                      ? "bg-background text-foreground shadow-xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  Table
+                </button>
+              </div>
             </div>
           </div>
 
           {!bookings ? (
             <LoadingPanel rows={6} />
+          ) : displayMode === "calendar" ? (
+            <CalendarView
+              bookings={filtered}
+              onSelectBooking={(booking) => setSelectedBooking(booking)}
+            />
           ) : filtered.length ? (
             <Table>
               <TableHeader>

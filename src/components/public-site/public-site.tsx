@@ -604,6 +604,9 @@ export function PublicSite({
                 <Badge variant="outline" className="rounded-full bg-background/55 px-3 py-1 text-[0.68rem] uppercase tracking-[0.15em] backdrop-blur">
                   Now accepting {terminology.bookingPlural.toLowerCase()} online
                 </Badge>
+                <Badge variant="outline" className="rounded-full bg-primary/10 text-primary border-primary/20 px-3 py-1 text-[0.68rem] font-medium backdrop-blur flex items-center gap-1">
+                  <Building2 className="size-3" /> Multi-Branch Workspace
+                </Badge>
               </div>
               <h1 className={cn("mt-7 max-w-4xl font-heading text-5xl leading-[0.96] tracking-[-0.06em] text-balance sm:text-6xl lg:text-7xl", isCompact && "lg:text-6xl")}>
                 {config.headline}

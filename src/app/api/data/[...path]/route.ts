@@ -9,6 +9,8 @@ import * as contactsService from "@/lib/services/contacts";
 import * as conversationsService from "@/lib/services/conversations";
 import * as dashboardService from "@/lib/services/dashboard";
 import * as knowledgeService from "@/lib/services/knowledge";
+import * as locationsService from "@/lib/services/locations";
+import * as calendarSyncService from "@/lib/services/calendar-sync";
 import * as organizationsService from "@/lib/services/organizations";
 import * as publicSiteService from "@/lib/services/publicSite";
 import * as teamService from "@/lib/services/team";
@@ -216,6 +218,34 @@ export async function POST(
       }
       case "knowledge/list": {
         const data = await knowledgeService.listKnowledgeItems(orgId, body.includeUnpublished);
+        return NextResponse.json(data);
+      }
+      case "locations/list": {
+        const data = await locationsService.listLocations(orgId, body.includeInactive);
+        return NextResponse.json(data);
+      }
+      case "locations/create": {
+        const data = await locationsService.createLocation(orgId, body);
+        return NextResponse.json(data);
+      }
+      case "locations/update": {
+        const data = await locationsService.updateLocation(orgId, body.locationId, body);
+        return NextResponse.json(data);
+      }
+      case "locations/delete": {
+        const data = await locationsService.deleteLocation(orgId, body.locationId);
+        return NextResponse.json(data);
+      }
+      case "calendar/listIntegrations": {
+        const data = await calendarSyncService.listCalendarIntegrations(orgId, body.teamMemberId);
+        return NextResponse.json(data);
+      }
+      case "calendar/saveIntegration": {
+        const data = await calendarSyncService.saveGoogleCalendarIntegration(orgId, body.teamMemberId, body);
+        return NextResponse.json(data);
+      }
+      case "calendar/removeIntegration": {
+        const data = await calendarSyncService.removeGoogleCalendarIntegration(orgId, body.teamMemberId);
         return NextResponse.json(data);
       }
       default:

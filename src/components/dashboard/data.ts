@@ -276,6 +276,17 @@ export const dashboardApi = {
   agents: {
     getCurrent: "agents/getCurrent" as any,
   },
+  locations: {
+    list: "locations/list" as any,
+    create: "locations/create" as any,
+    update: "locations/update" as any,
+    delete: "locations/delete" as any,
+  },
+  calendar: {
+    listIntegrations: "calendar/listIntegrations" as any,
+    saveIntegration: "calendar/saveIntegration" as any,
+    removeIntegration: "calendar/removeIntegration" as any,
+  },
 };
 
 export const defaultTerminology: Terminology = {

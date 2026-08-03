@@ -97,6 +97,7 @@ export function createAgentDynamicVariables({
   terminology,
   offerings,
   teamMembers,
+  locations,
   knowledgeItems,
   bookingInstruction,
 }: {
@@ -109,6 +110,7 @@ export function createAgentDynamicVariables({
   terminology: Terminology;
   offerings: OfferingContext[];
   teamMembers?: TeamMemberContext[];
+  locations?: Array<{ name: string; address: string; city: string; phone?: string }>;
   knowledgeItems: KnowledgeContext[];
   bookingInstruction?: string;
 }) {
@@ -155,6 +157,15 @@ export function createAgentDynamicVariables({
         .join("\n"),
     ),
     business_team: teamRoster,
+    business_branches:
+      locations && locations.length > 0
+        ? clamp(
+            locations
+              .map((l) => `${l.name}: ${l.address}, ${l.city}${l.phone ? " (Phone: " + l.phone + ")" : ""}`)
+              .join("\n"),
+            2_000,
+          )
+        : "Single location workspace.",
     business_knowledge: clamp(
       knowledgeItems
         .map((item: any) => `${item.title}: ${item.content}`)
