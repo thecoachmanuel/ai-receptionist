@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { clearAllCache } from "@/lib/api-client/use-data";
 import { AuthShell } from "@/components/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,9 @@ export default function SignInPage() {
       if (!res.ok) {
         throw new Error(data.error || "Sign in failed");
       }
+
+      // Completely wipe any stale memory/storage cache from previous account before entering workspace
+      clearAllCache();
 
       setSuccess("Welcome back! Signed in successfully. Redirecting to workspace...");
       toast.success("Welcome back! Signed in successfully.");

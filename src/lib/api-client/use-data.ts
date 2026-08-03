@@ -53,6 +53,19 @@ export function invalidateQueries(domain?: string) {
   }
 }
 
+export function clearAllCache() {
+  queryCache.clear();
+  listeners.clear();
+  if (typeof window !== "undefined") {
+    try {
+      sessionStorage.removeItem("oneboard_auth_user");
+      sessionStorage.removeItem("oneboard_auth_org");
+      sessionStorage.clear();
+    } catch {}
+    window.dispatchEvent(new CustomEvent("app:query-invalidated", { detail: {} }));
+  }
+}
+
 export function useQuery<T>(
   endpoint: string,
   args: Record<string, unknown> | "skip" = {},

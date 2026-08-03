@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { clearAllCache, invalidateQueries } from "@/lib/api-client/use-data";
 
 export type AuthUser = {
   id: string;
@@ -114,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const switchOrganization = async (orgIdOrSlug: string) => {
+    invalidateQueries();
     const res = await fetch("/api/auth/switch-org", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -157,9 +159,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await fetch("/api/auth/sign-out", { method: "POST" });
+    try {
+      await fetch("/api/auth/sign-out", { method: "POST" });
+    } catch {}
+    clearAllCache();
     setUser(null);
     setOrganization(null);
+    setUserOrganizations([]);
+    setRole(undefined);
+    setPermissions([]);
+    setIsLoaded(true);
     router.push("/sign-in");
   };
 
