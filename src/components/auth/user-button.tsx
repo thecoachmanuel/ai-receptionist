@@ -18,7 +18,17 @@ export function UserButton({ appearance }: { appearance?: { elements?: { avatarB
   const { user, signOut } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <Button variant="ghost" className="relative size-8 rounded-md p-0 outline-none">
+        <Avatar className={appearance?.elements?.avatarBox || "size-8 rounded-md"}>
+          <AvatarFallback className="rounded-md bg-primary/10 text-xs font-semibold text-primary">
+            <User className="size-4" />
+          </AvatarFallback>
+        </Avatar>
+      </Button>
+    );
+  }
 
   const initials = user.name
     .split(/\s+/)

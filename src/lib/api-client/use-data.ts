@@ -33,12 +33,8 @@ export async function callApi(endpoint: string, args: Record<string, unknown> = 
   }
   const data = await res.json();
   
-  // Store result in queryCache immediately
+  // Store result in queryCache immediately and notify subscribers
   updateQueryCache(endpoint, data, args);
-
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event("app:data-updated"));
-  }
   return data;
 }
 
@@ -83,6 +79,8 @@ export function useQuery<T>(
 
   const fetcher = useCallback(async () => {
     if (args === "skip" || !cacheKey) return;
+    // Serve from cache immediately; only fetch if data is not in cache yet
+    if (queryCache.has(cacheKey)) return;
     try {
       const result = await callApi(endpoint, args);
       setData(result);
@@ -90,7 +88,7 @@ export function useQuery<T>(
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
     }
-  }, [endpoint, cacheKey]);
+  }, [endpoint, cacheKey, args]);
 
   useEffect(() => {
     void fetcher();

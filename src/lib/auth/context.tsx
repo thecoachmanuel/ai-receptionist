@@ -52,24 +52,51 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [organization, setOrganization] = useState<AuthOrg | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = sessionStorage.getItem("oneboard_auth_user");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [organization, setOrganization] = useState<AuthOrg | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = sessionStorage.getItem("oneboard_auth_org");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
   const [userOrganizations, setUserOrganizations] = useState<UserOrgSummary[]>([]);
   const [role, setRole] = useState<string | undefined>(undefined);
   const [permissions, setPermissions] = useState<string[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(() => Boolean(user && organization));
 
   const fetchSession = async () => {
     try {
       const res = await fetch("/api/auth/me", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user || null);
-        setOrganization(data.organization || null);
+        const freshUser = data.user || null;
+        const freshOrg = data.organization || null;
+        setUser(freshUser);
+        setOrganization(freshOrg);
         setUserOrganizations(data.userOrganizations || []);
         setRole(data.role);
         setPermissions(data.permissions || []);
+
+        if (typeof window !== "undefined") {
+          if (freshUser) sessionStorage.setItem("oneboard_auth_user", JSON.stringify(freshUser));
+          if (freshOrg) sessionStorage.setItem("oneboard_auth_org", JSON.stringify(freshOrg));
+        }
       } else {
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("oneboard_auth_user");
+          sessionStorage.removeItem("oneboard_auth_org");
+        }
         setUser(null);
         setOrganization(null);
         setUserOrganizations([]);
