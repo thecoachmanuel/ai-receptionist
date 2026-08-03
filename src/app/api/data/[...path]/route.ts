@@ -82,6 +82,22 @@ export async function POST(
 
     const orgId = session.organization.id;
 
+    if (
+      endpoint !== "organizations/listUserOrganizations" &&
+      endpoint !== "organizations/create"
+    ) {
+      const isAuthorized = await organizationsService.isUserAuthorizedForOrg(
+        session.user.id,
+        orgId,
+      );
+      if (!isAuthorized) {
+        return NextResponse.json(
+          { error: "Forbidden: You are authorized to access and modify only organizations you created." },
+          { status: 403 },
+        );
+      }
+    }
+
     switch (endpoint) {
       case "organizations/current": {
         const org = await organizationsService.getOrganizationByIdOrSlug(orgId);

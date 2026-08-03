@@ -68,6 +68,7 @@ export type DbOrganization = {
   clerkOrgId: string;
   name: string;
   slug: string;
+  createdBy?: string;
   timezone: string;
   currency: string;
   locale: string;

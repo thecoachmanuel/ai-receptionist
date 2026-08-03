@@ -48,44 +48,57 @@ export async function getUserOrganizations(userId: string) {
   const db = await getDb();
   const userObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
   const user = await db.collection("users").findOne({ _id: userObjectId as any });
-  
-  const adminEmail = (process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.replace(/^["']|["']$/g, "").trim() : "admin@admin.com").toLowerCase();
-  const isSiteAdmin = user?.email?.trim().toLowerCase() === adminEmail;
+  const userIdStr = user?._id ? user._id.toString() : userId;
 
-  if (isSiteAdmin) {
-    const allOrgs = await db.collection<DbOrganization>("organizations").find({}).toArray();
-    return allOrgs.map((org: any) => ({
-      id: org._id!.toString(),
-      clerkOrgId: org.clerkOrgId,
-      name: org.name,
-      slug: org.slug,
-      role: "admin",
-    }));
-  }
-
-  const members = await db
+  // Find orgMembers matching string, raw userId, or ObjectId representation
+  const memberDocs = await db
     .collection<DbOrgMember>("orgMembers")
-    .find({ userId })
+    .find({
+      $or: [{ userId: userIdStr }, { userId: userId }, { userId: userObjectId as any }],
+    })
     .toArray();
 
-  const orgIds = members
-    .map((m: any) => (ObjectId.isValid(m.organizationId) ? new ObjectId(m.organizationId) : null))
-    .filter((id: any): id is ObjectId => id !== null);
+  const memberOrgIdStrs = memberDocs.map((m) => m.organizationId);
+  const memberOrgObjectIds = memberOrgIdStrs
+    .filter((id) => ObjectId.isValid(id))
+    .map((id) => new ObjectId(id));
+
+  // Query organizations where createdBy matches OR organization ID matches membership
+  const orgFilters: any[] = [
+    { createdBy: userIdStr },
+    { createdBy: userId },
+    { _id: { $in: memberOrgObjectIds } },
+  ];
+
+  if (memberOrgIdStrs.length > 0) {
+    orgFilters.push({ clerkOrgId: { $in: memberOrgIdStrs } });
+    orgFilters.push({ slug: { $in: memberOrgIdStrs } });
+  }
 
   const orgs = await db
     .collection<DbOrganization>("organizations")
-    .find({ _id: { $in: orgIds } })
+    .find({ $or: orgFilters })
+    .sort({ createdAt: -1 })
     .toArray();
 
-  const memberRoleMap = new Map(members.map((m: any) => [m.organizationId, m.role]));
+  const memberRoleMap = new Map(memberDocs.map((m) => [m.organizationId, m.role]));
 
-  return orgs.map((org: any) => ({
-    id: org._id!.toString(),
-    clerkOrgId: org.clerkOrgId,
-    name: org.name,
-    slug: org.slug,
-    role: memberRoleMap.get(org._id!.toString()) || "member",
-  }));
+  return orgs.map((org: any) => {
+    const orgIdStr = org._id!.toString();
+    const isCreator = org.createdBy === userIdStr || org.createdBy === userId;
+    const assignedRole =
+      memberRoleMap.get(orgIdStr) ||
+      memberRoleMap.get(org.clerkOrgId) ||
+      memberRoleMap.get(org.slug);
+
+    return {
+      id: orgIdStr,
+      clerkOrgId: org.clerkOrgId,
+      name: org.name,
+      slug: org.slug,
+      role: isCreator ? "admin" : (assignedRole || "member"),
+    };
+  });
 }
 
 export async function createOrganizationForUser(
@@ -124,6 +137,7 @@ export async function createOrganizationForUser(
     clerkOrgId,
     name,
     slug,
+    createdBy: userId,
     timezone,
     currency,
     locale,
@@ -304,6 +318,40 @@ export async function deleteOrganizationData(orgId: string) {
   ]);
 
   return true;
+}
+
+export async function isUserAuthorizedForOrg(userId: string, orgId: string): Promise<boolean> {
+  const db = await getDb();
+
+  const userObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
+  const user = await db.collection("users").findOne({
+    $or: [{ _id: userId as any }, { _id: userObjectId as any }],
+  });
+
+  const adminEmail = (process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.replace(/^["']|["']$/g, "").trim() : "admin@admin.com").toLowerCase();
+  const isSiteAdmin = user?.email?.trim().toLowerCase() === adminEmail;
+  if (isSiteAdmin) return true;
+
+  const orgFilters: any[] = [{ clerkOrgId: orgId }, { slug: orgId }];
+  if (ObjectId.isValid(orgId)) {
+    orgFilters.unshift({ _id: new ObjectId(orgId) });
+  }
+  const org = await db.collection<DbOrganization>("organizations").findOne({ $or: orgFilters });
+  if (!org) return false;
+
+  const orgIdStr = org._id!.toString();
+  const userIdStr = user?._id ? user._id.toString() : userId;
+
+  if (org.createdBy && (org.createdBy === userIdStr || org.createdBy === userId)) {
+    return true;
+  }
+
+  const member = await db.collection<DbOrgMember>("orgMembers").findOne({
+    organizationId: orgIdStr,
+    $or: [{ userId: userIdStr }, { userId: userId }, { userId: userObjectId as any }],
+  });
+
+  return Boolean(member && (member.role === "admin" || member.role === "operator"));
 }
 
 export { getUserOrganizations as listUserOrganizations };
