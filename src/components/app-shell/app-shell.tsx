@@ -21,7 +21,7 @@ import {
   Sparkles,
   UsersRound,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { BrandIcon } from "@/components/brand";
 import { Badge } from "@/components/ui/badge";
