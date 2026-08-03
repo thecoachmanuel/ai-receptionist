@@ -19,13 +19,15 @@ export type PlatformSettings = {
 
 export type AIProvider = "vapi";
 
-export type ElevenLabsSettings = {
+export type VapiSettings = {
   activeProvider: "vapi";
   vapiPublicKey: string;
   vapiPrivateKey: string;
   vapiAssistantId: string;
   updatedAt: number;
 };
+
+export type ElevenLabsSettings = VapiSettings;
 
 const DEFAULTS: PlatformSettings = {
   baseCurrency: "USD",
