@@ -105,7 +105,39 @@ export async function POST(request: NextRequest) {
       }
 
       await createSession(user._id!.toString(), activeOrgId);
-      return NextResponse.json({ success: true, userId: user._id!.toString(), orgSlug });
+
+      const targetOrg = await db.collection("organizations").findOne({
+        $or: [
+          { clerkOrgId: activeOrgId },
+          { slug: activeOrgId },
+          ...(activeOrgId && activeOrgId.length === 24 ? [{ _id: new (await import("mongodb")).ObjectId(activeOrgId) }] : []),
+        ],
+      });
+
+      return NextResponse.json({
+        success: true,
+        userId: user._id!.toString(),
+        orgSlug,
+        user: {
+          id: user._id!.toString(),
+          email: user.email,
+          name: user.name,
+          avatarUrl: user.avatarUrl,
+        },
+        organization: targetOrg
+          ? {
+              id: targetOrg._id!.toString(),
+              clerkOrgId: targetOrg.clerkOrgId,
+              name: targetOrg.name,
+              slug: targetOrg.slug,
+              timezone: targetOrg.timezone,
+              currency: targetOrg.currency,
+              locale: targetOrg.locale,
+              plan: targetOrg.plan || "free_org",
+              terminology: targetOrg.terminology,
+            }
+          : null,
+      });
     }
 
     // Standard User Authentication
@@ -167,7 +199,38 @@ export async function POST(request: NextRequest) {
 
     await createSession(user._id!.toString(), activeOrgId);
 
-    return NextResponse.json({ success: true, userId: user._id!.toString(), orgSlug });
+    const targetOrg = await db.collection("organizations").findOne({
+      $or: [
+        { clerkOrgId: activeOrgId },
+        { slug: activeOrgId },
+        ...(activeOrgId && activeOrgId.length === 24 ? [{ _id: new (await import("mongodb")).ObjectId(activeOrgId) }] : []),
+      ],
+    });
+
+    return NextResponse.json({
+      success: true,
+      userId: user._id!.toString(),
+      orgSlug,
+      user: {
+        id: user._id!.toString(),
+        email: user.email,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+      },
+      organization: targetOrg
+        ? {
+            id: targetOrg._id!.toString(),
+            clerkOrgId: targetOrg.clerkOrgId,
+            name: targetOrg.name,
+            slug: targetOrg.slug,
+            timezone: targetOrg.timezone,
+            currency: targetOrg.currency,
+            locale: targetOrg.locale,
+            plan: targetOrg.plan || "free_org",
+            terminology: targetOrg.terminology,
+          }
+        : null,
+    });
   } catch (error) {
     console.error("Sign in error", error);
     return NextResponse.json({ error: "Sign in failed. Please try again." }, { status: 500 });

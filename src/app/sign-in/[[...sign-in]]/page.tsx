@@ -39,6 +39,11 @@ export default function SignInPage() {
       // Completely wipe any stale memory/storage cache from previous account before entering workspace
       clearAllCache();
 
+      if (typeof window !== "undefined" && data.user && data.organization) {
+        sessionStorage.setItem("oneboard_auth_user", JSON.stringify(data.user));
+        sessionStorage.setItem("oneboard_auth_org", JSON.stringify(data.organization));
+      }
+
       setSuccess("Welcome back! Signed in successfully. Redirecting to workspace...");
       toast.success("Welcome back! Signed in successfully.");
 
