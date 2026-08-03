@@ -451,10 +451,10 @@ function SitePreview({
         )}
       </div>
 
-      {config.agent.showElevenLabsWidget ? (
+      {(config.agent as any).showVapiWidget || config.agent.showElevenLabsWidget ? (
         <div className="pointer-events-none absolute right-3 bottom-3 z-10 inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 py-2 text-[8px] font-semibold text-foreground shadow-lg">
           <AudioLines className="size-3 text-primary" />
-          Official ElevenLabs embed
+          Official Vapi embed
         </div>
       ) : null}
     </div>
@@ -958,8 +958,8 @@ function SiteEditor({
               </div>
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <Label htmlFor="showElevenLabsWidget">
-                    Also show ElevenLabs embed
+                  <Label htmlFor="showVapiWidget">
+                    Also show Vapi embed
                   </Label>
                   {!entitlements.isLoaded ? (
                     <p className="mt-0.5 text-[10px] text-muted-foreground">
@@ -971,24 +971,25 @@ function SiteEditor({
                     </p>
                   ) : (
                     <p className="mt-0.5 text-[10px] text-muted-foreground">
-                      Adds ElevenLabs’ official floating text and audio widget
+                      Adds Vapi’s official floating text and audio widget
                       alongside the custom agent experience.
                     </p>
                   )}
                 </div>
                 <Switch
-                  id="showElevenLabsWidget"
-                  checked={Boolean(config.agent.showElevenLabsWidget)}
-                  onCheckedChange={(showElevenLabsWidget) =>
+                  id="showVapiWidget"
+                  checked={Boolean((config.agent as any).showVapiWidget || config.agent.showElevenLabsWidget)}
+                  onCheckedChange={(showVapiWidget) =>
                     update("agent", {
                       ...config.agent,
-                      showElevenLabsWidget,
+                      showVapiWidget,
+                      showElevenLabsWidget: showVapiWidget,
                     })
                   }
                   disabled={
                     !entitlements.isLoaded ||
                     (!entitlements.browserVoice &&
-                      !config.agent.showElevenLabsWidget)
+                      !Boolean((config.agent as any).showVapiWidget || config.agent.showElevenLabsWidget))
                   }
                 />
               </div>

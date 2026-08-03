@@ -80,7 +80,7 @@ export function BillingScreen() {
       name: "Engage",
       price: loaded ? (isNgn ? `₦${engageNgn.toLocaleString()}` : `$${prices.engage}`) : null,
       subPrice: loaded && !isNgn ? `≈ ₦${engageNgn.toLocaleString()} NGN` : null,
-      description: "Add an ElevenLabs web assistant to every customer touchpoint.",
+      description: "Add a Vapi AI web assistant to every customer touchpoint.",
       features: [
         "Everything in Core",
         "AI text assistant (Web agent)",
@@ -101,7 +101,7 @@ export function BillingScreen() {
         "Everything in Engage",
         "Live browser audio (Microphone chat)",
         "Advanced analytics & outcome reporting",
-        "Priority ElevenLabs agent routing",
+        "Priority Vapi AI agent routing",
       ],
     },
   ];

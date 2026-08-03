@@ -47,7 +47,7 @@ export type SiteConfig = {
   agent: {
     showWebChat: boolean;
     showVoiceChat: boolean;
-    showElevenLabsWidget: boolean;
+    showVapiWidget: boolean;
     welcomeMessage: string;
   };
 };
@@ -236,7 +236,7 @@ export type DbConversation = {
 export type DbAgentIntegration = {
   _id?: ObjectId | string;
   organizationId: string;
-  provider: "elevenlabs";
+  provider: "vapi";
   webAgentId?: string;
   webEnabled: boolean;
   knowledgeBaseId?: string;

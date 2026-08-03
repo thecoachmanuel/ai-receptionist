@@ -222,7 +222,7 @@ function AgentLauncherInner({
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [sessionKind, setSessionKind] = useState<"text" | "voice" | null>(null);
-  const [activeProvider, setActiveProvider] = useState<"elevenlabs" | "gemini" | "vapi">("elevenlabs");
+  const [activeProvider, setActiveProvider] = useState<"elevenlabs" | "gemini" | "vapi">("vapi");
   const [geminiLoading, setGeminiLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
 
@@ -640,8 +640,8 @@ function AgentLauncherInner({
         return;
       }
 
-      // ElevenLabs provider
-      setActiveProvider("elevenlabs");
+      // Vapi provider default
+      setActiveProvider(session.provider || "vapi");
       const sharedOptions = {
         clientTools,
         dynamicVariables: {

@@ -4,7 +4,7 @@ import { PublicSite } from "@/components/public-site/public-site";
 import { PublicSiteUnavailable } from "@/components/public-site/public-site-states";
 import { organizationHasFeature } from "@/lib/billing";
 import * as publicSiteService from "@/lib/services/publicSite";
-import { getElevenLabsSettings } from "@/lib/services/settings";
+import { getVapiSettings } from "@/lib/services/settings";
 
 export const revalidate = 0;
 
@@ -33,10 +33,10 @@ export default async function PublicBookingPage({
   const { siteSlug } = await params;
 
   try {
-    const [publishedSite, agentSessionConfig, elevenLabsSettings] = await Promise.all([
+    const [publishedSite, agentSessionConfig, vapiSettings] = await Promise.all([
       getPublishedSite(siteSlug),
       getAgentSessionConfig(siteSlug),
-      getElevenLabsSettings(),
+      getVapiSettings(),
     ]);
 
     if (!publishedSite) {

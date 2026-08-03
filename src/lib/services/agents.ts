@@ -6,11 +6,11 @@ export async function getCurrentAgent(orgId: string) {
   const db = await getDb();
   const integration = await db.collection<DbAgentIntegration>("agentIntegrations").findOne({
     organizationId: orgId,
-    provider: "elevenlabs",
+    $or: [{ provider: "vapi" }, { provider: "elevenlabs" as any }],
   });
 
   return {
-    provider: "elevenlabs" as const,
+    provider: "vapi" as const,
     integration: integration
       ? {
           _id: integration._id!.toString(),
@@ -35,7 +35,7 @@ export async function requestPublicSession(
     !site.publishedAt ||
     (mode === "text" && !site.published.agent.showWebChat) ||
     (mode === "voice" && !site.published.agent.showVoiceChat) ||
-    (mode === "widget" && !site.published.agent.showElevenLabsWidget)
+    (mode === "widget" && !(site.published.agent as any).showVapiWidget && !(site.published.agent as any).showElevenLabsWidget)
   ) {
     return null;
   }
@@ -48,7 +48,7 @@ export async function requestPublicSession(
   const effectiveOrgId = organization._id!.toString();
   const integration = await db.collection<DbAgentIntegration>("agentIntegrations").findOne({
     organizationId: effectiveOrgId,
-    provider: "elevenlabs",
+    $or: [{ provider: "vapi" }, { provider: "elevenlabs" as any }],
   });
 
   if (!integration?.webEnabled) return null;

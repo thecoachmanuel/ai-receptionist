@@ -84,7 +84,7 @@ export function sanitizeSiteConfig(config: SiteConfig): SiteConfig {
     agent: {
       showWebChat: config.agent?.showWebChat ?? true,
       showVoiceChat: config.agent?.showVoiceChat ?? true,
-      showElevenLabsWidget: config.agent?.showElevenLabsWidget ?? false,
+      showVapiWidget: (config.agent as any)?.showVapiWidget ?? false,
       welcomeMessage: requiredTrimmed(
         config.agent?.welcomeMessage,
         "agent.welcomeMessage",

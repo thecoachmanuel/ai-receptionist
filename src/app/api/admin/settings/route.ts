@@ -130,12 +130,12 @@ export async function PATCH(request: NextRequest) {
       });
     }
 
-    const [settings, elevenlabs] = await Promise.all([
+    const [settings, vapi] = await Promise.all([
       getPlatformSettings(),
       getElevenLabsSettings(),
     ]);
 
-    return NextResponse.json({ success: true, settings, elevenlabs });
+    return NextResponse.json({ success: true, settings, vapi, elevenlabs: vapi });
   } catch (error) {
     console.error("Admin PATCH settings error", error);
     return NextResponse.json(

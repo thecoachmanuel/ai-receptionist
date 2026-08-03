@@ -83,7 +83,7 @@ function currentLocalTime(timezone: string) {
 }
 
 /**
- * Builds the dynamic variables injected into each ElevenLabs agent session.
+ * Builds the dynamic variables injected into each Vapi AI agent session.
  * Every variable is scoped strictly to the requesting organization — the agent
  * has no knowledge of any other business's data.
  */

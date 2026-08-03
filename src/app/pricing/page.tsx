@@ -37,7 +37,7 @@ export default async function PricingPage() {
       name: "Engage",
       price: `${sym}${engagePrice}`,
       ngnNote: !isNgn ? `≈ ₦${(engagePrice * rate).toLocaleString()} NGN` : null,
-      description: "Add an ElevenLabs agent to every client page.",
+      description: "Add a Vapi AI agent to every client page.",
       features: ["Everything in Core", "Web text agent", "Conversation history"],
       featured: true,
     },

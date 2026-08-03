@@ -365,10 +365,11 @@ export function SuperAdminScreen() {
           setClientPageUrl(data.settings.clientPageUrl || "");
           setIsWaitlistActive(data.settings.isWaitlistActive || false);
         }
-        if (data.elevenlabs) {
-          setVapiPublicKey(data.elevenlabs.vapiPublicKey || "");
-          setVapiPrivateKey(data.elevenlabs.vapiPrivateKey || "");
-          setVapiAssistantId(data.elevenlabs.vapiAssistantId || "");
+        const aiSettings = data.vapi || data.elevenlabs;
+        if (aiSettings) {
+          setVapiPublicKey(aiSettings.vapiPublicKey || "");
+          setVapiPrivateKey(aiSettings.vapiPrivateKey || "");
+          setVapiAssistantId(aiSettings.vapiAssistantId || "");
         }
         setPricesLoaded(true);
       })

@@ -23,7 +23,7 @@ const featureCopy = {
   web_agent: {
     title: "AI text chat",
     description:
-      "Let visitors message your ElevenLabs assistant from the public page.",
+      "Let visitors message your Vapi AI assistant from the public page.",
     icon: Bot,
     capability: "Secure live text chat",
   },

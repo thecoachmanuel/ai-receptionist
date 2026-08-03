@@ -40,7 +40,7 @@ export function defaultSiteConfig(businessName: string): SiteConfig {
     agent: {
       showWebChat: false,
       showVoiceChat: false,
-      showElevenLabsWidget: false,
+      showVapiWidget: false,
       welcomeMessage: `Hi, I'm the ${businessName} assistant. How can I help?`,
     },
   };

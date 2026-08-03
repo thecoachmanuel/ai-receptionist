@@ -110,7 +110,7 @@ export default async function Home() {
       name: "Engage",
       price: `${symbol}${settings.planPrices.engage}`,
       copy: "Give every visitor an AI assistant on the web.",
-      features: ["Everything in Core", "ElevenLabs web agent", "Conversation history"],
+      features: ["Everything in Core", "Vapi AI web agent", "Conversation history"],
       featured: true,
     },
     {
@@ -160,7 +160,7 @@ export default async function Home() {
             <div className="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t pt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
               <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> Start free</span>
               <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> No card required</span>
-              <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> Built on ElevenLabs</span>
+              <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> Built on Vapi AI</span>
             </div>
           </div>
 
@@ -213,7 +213,7 @@ export default async function Home() {
           <div className="grid border-t md:grid-cols-3">
             {[
               { icon: CalendarDays, n: "01", title: "Operations", copy: "Bookings, availability, offerings, contacts, and the people who deliver the work." },
-              { icon: Bot, n: "02", title: "Web agent", copy: "An ElevenLabs assistant that knows the organization and can help visitors take action." },
+              { icon: Bot, n: "02", title: "Web agent", copy: "A Vapi AI assistant that knows the organization and can help visitors take action." },
               { icon: Headphones, n: "03", title: "Browser audio", copy: "A live voice conversation in the public page, powered by the same organization context." },
             ].map(({ icon: Icon, n, title, copy }) => (
               <article key={n} className="border-b border-r px-0 py-8 pr-7 md:px-7 md:first:pl-0 md:last:border-r-0">

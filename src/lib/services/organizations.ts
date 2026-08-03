@@ -131,7 +131,7 @@ export async function createOrganizationForUser(
   const slug = existingSlug ? `${preferredSlug}-${uniqueSuffix}` : preferredSlug;
   const clerkOrgId = `org_${slugify(name).replace(/-/g, "_")}_${uniqueSuffix}`;
   const now = Date.now();
-  const defaultAgentId = process.env.ELEVENLABS_DEFAULT_AGENT_ID?.trim();
+  const defaultAgentId = process.env.VAPI_ASSISTANT_ID?.trim() || process.env.VAPI_DEFAULT_ASSISTANT_ID?.trim() || process.env.ELEVENLABS_DEFAULT_AGENT_ID?.trim();
 
   const newOrg: DbOrganization = {
     clerkOrgId,
@@ -171,7 +171,7 @@ export async function createOrganizationForUser(
 
   await db.collection<DbAgentIntegration>("agentIntegrations").insertOne({
     organizationId: orgId,
-    provider: "elevenlabs",
+    provider: "vapi",
     ...(defaultAgentId ? { webAgentId: defaultAgentId } : {}),
     webEnabled: Boolean(defaultAgentId),
     createdAt: now,

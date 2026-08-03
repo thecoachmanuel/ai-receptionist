@@ -157,7 +157,7 @@ export async function updatePlatformContact(phone?: string, email?: string, clie
   );
 }
 
-export async function getElevenLabsSettings(): Promise<ElevenLabsSettings> {
+export async function getVapiSettings(): Promise<VapiSettings> {
   const db = await getDb();
   const doc = await db.collection("platformSettings").findOne({ key: "vapi" }) ||
               await db.collection("platformSettings").findOne({ key: "elevenlabs" });
@@ -175,7 +175,9 @@ export async function getElevenLabsSettings(): Promise<ElevenLabsSettings> {
   };
 }
 
-export async function updateElevenLabsSettings(data: {
+export const getElevenLabsSettings = getVapiSettings;
+
+export async function updateVapiSettings(data: {
   vapiPublicKey?: string;
   vapiPrivateKey?: string;
   vapiAssistantId?: string;
@@ -192,3 +194,5 @@ export async function updateElevenLabsSettings(data: {
     .collection("platformSettings")
     .updateOne({ key: "vapi" }, { $set }, { upsert: true });
 }
+
+export const updateElevenLabsSettings = updateVapiSettings;

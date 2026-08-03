@@ -7,7 +7,7 @@ import * as publicSiteService from "@/lib/services/publicSite";
 import * as catalogService from "@/lib/services/catalog";
 import * as knowledgeService from "@/lib/services/knowledge";
 import * as teamService from "@/lib/services/team";
-import { getElevenLabsSettings } from "@/lib/services/settings";
+import { getVapiSettings } from "@/lib/services/settings";
 
 export const runtime = "nodejs";
 
@@ -39,7 +39,7 @@ export async function POST() {
   }
 
   try {
-    const aiSettings = await getElevenLabsSettings();
+    const aiSettings = await getVapiSettings();
     const [organization, site, offerings, knowledgeItems, teamMembers] =
       await Promise.all([
         organizationsService.getOrganizationByIdOrSlug(orgId),

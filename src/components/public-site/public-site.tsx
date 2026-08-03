@@ -238,8 +238,8 @@ export function PublicSite({
     textAgentEnabled && config.agent?.showWebChat;
   const voiceAgentIsVisible =
     voiceAgentEnabled && config.agent?.showVoiceChat;
-  const elevenLabsWidgetIsVisible =
-    voiceAgentEnabled && config.agent?.showElevenLabsWidget;
+  const vapiWidgetIsVisible =
+    voiceAgentEnabled && ((config.agent as any)?.showVapiWidget || (config.agent as any)?.showElevenLabsWidget);
   const agentIsVisible = textAgentIsVisible || voiceAgentIsVisible;
   const sectionSet = new Set(config.sections || []);
 

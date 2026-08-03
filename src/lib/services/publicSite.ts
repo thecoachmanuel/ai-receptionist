@@ -156,7 +156,8 @@ export async function getAgentSessionConfig(siteSlug: string) {
     !site.publishedAt ||
     (!agent?.showWebChat &&
       !agent?.showVoiceChat &&
-      !agent?.showElevenLabsWidget)
+      !(agent as any)?.showVapiWidget &&
+      !(agent as any)?.showElevenLabsWidget)
   ) {
     return null;
   }
@@ -169,7 +170,7 @@ export async function getAgentSessionConfig(siteSlug: string) {
   const effectiveOrgId = organization._id ? organization._id.toString() : (organization.clerkOrgId || slug);
   const integration = await db.collection<DbAgentIntegration>("agentIntegrations").findOne({
     organizationId: effectiveOrgId,
-    provider: "elevenlabs",
+    $or: [{ provider: "vapi" }, { provider: "elevenlabs" as any }],
   });
 
   if (!integration?.webEnabled) return null;

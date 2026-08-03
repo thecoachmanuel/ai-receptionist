@@ -5,7 +5,7 @@ import { createAgentDynamicVariables } from "@/lib/agent-context";
 import { organizationHasFeature } from "@/lib/billing";
 import * as agentsService from "@/lib/services/agents";
 import * as publicSiteService from "@/lib/services/publicSite";
-import { getElevenLabsSettings } from "@/lib/services/settings";
+import { getVapiSettings } from "@/lib/services/settings";
 
 export const runtime = "nodejs";
 
@@ -28,14 +28,14 @@ export async function POST(
 
   if (mode !== "text" && mode !== "voice" && mode !== "widget") {
     return NextResponse.json(
-      { error: "Choose text chat, browser audio, or the ElevenLabs widget." },
+      { error: "Choose text chat, browser audio, or the Vapi widget." },
       { status: 400 },
     );
   }
 
   try {
-    const aiSettings = await getElevenLabsSettings();
-    const activeProvider = aiSettings.activeProvider || "elevenlabs";
+    const aiSettings = await getVapiSettings();
+    const activeProvider = aiSettings.activeProvider || "vapi";
 
     const sessionConfig = await agentsService.requestPublicSession(
       siteSlug,

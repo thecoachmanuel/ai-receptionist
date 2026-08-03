@@ -143,7 +143,7 @@ export type Conversation = {
 };
 
 export type AgentConfiguration = {
-  provider: "elevenlabs";
+  provider: "vapi";
   integration: {
     _id: string;
     webEnabled: boolean;
@@ -185,7 +185,8 @@ export type SiteConfig = {
   agent: {
     showWebChat: boolean;
     showVoiceChat: boolean;
-    showElevenLabsWidget: boolean;
+    showVapiWidget?: boolean;
+    showElevenLabsWidget?: boolean;
     welcomeMessage: string;
   };
 };
