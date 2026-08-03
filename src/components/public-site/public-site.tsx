@@ -691,9 +691,20 @@ export function PublicSite({
       <footer className="border-t border-border px-5 py-10 sm:px-8 lg:px-12">
         <div className="mx-auto flex w-full max-w-7xl flex-col justify-between gap-7 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-              {initials(config.businessName)}
-            </span>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={`${config.businessName} logo`}
+                className="size-9 shrink-0 rounded-full object-cover border border-border"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = "none";
+                }}
+              />
+            ) : (
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                {initials(config.businessName)}
+              </span>
+            )}
             <div>
               <p className="font-heading text-sm font-semibold">{config.businessName}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">Secure online {terminology.bookingPlural.toLowerCase()}</p>
