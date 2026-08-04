@@ -250,18 +250,30 @@ export async function POST(request: NextRequest) {
     });
 
     const isSuperAdminEmail = normalizedEmail === adminEmail;
+    const userIdStr = user._id!.toString();
+    const orgMember = activeOrgId
+      ? await db.collection("orgMembers").findOne({
+          organizationId: activeOrgId,
+          $or: [{ userId: userIdStr }, { userId: user._id as any }],
+        })
+      : null;
+
+    const userRole = isSuperAdminEmail
+      ? "admin"
+      : ((orgMember as any)?.role || "member");
+
     const permissions = isSuperAdminEmail
       ? ["admin:all", "admin:full_control", "org:operations_hub:manage"]
       : ["org:operations_hub:manage"];
 
     return NextResponse.json({
       success: true,
-      userId: user._id!.toString(),
+      userId: userIdStr,
       orgSlug,
-      role: isSuperAdminEmail ? "admin" : ((member as any)?.role || "member"),
+      role: userRole,
       permissions,
       user: {
-        id: user._id!.toString(),
+        id: userIdStr,
         email: user.email,
         name: user.name,
         avatarUrl: user.avatarUrl,
