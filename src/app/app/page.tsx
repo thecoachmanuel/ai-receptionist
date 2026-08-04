@@ -13,6 +13,9 @@ export default async function AppIndexPage() {
   }
 
   if (session.organization?.slug) {
+    if (session.role === "member" || session.role === "operator") {
+      redirect(`/${session.organization.slug}/staff-portal`);
+    }
     redirect(`/app/${session.organization.slug}`);
   }
 

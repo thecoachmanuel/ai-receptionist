@@ -64,6 +64,34 @@ function navigationFor(
   userRole: "admin" | "operator" | "member" | "viewer" = "admin",
 ): Array<{ label: string; items: NavItem[] }> {
   const isAdmin = userRole === "admin";
+  const isStaff = userRole === "member" || userRole === "operator";
+
+  // Dedicated sidebar navigation strictly applicable to staff members
+  if (isStaff && !isAdmin) {
+    const staffItems: NavItem[] = [
+      {
+        label: "Staff Portal",
+        segment: "staff-portal",
+        icon: UsersRound,
+      },
+      {
+        label: terminology.bookingPlural,
+        segment: "bookings",
+        icon: CalendarDays,
+      },
+      {
+        label: terminology.offeringPlural,
+        segment: "offerings",
+        icon: CircleDollarSign,
+      },
+      { label: "Branches", segment: "locations", icon: Building2 },
+      { label: "Availability", segment: "availability", icon: Clock3 },
+    ];
+
+    return [
+      { label: "Staff Workspace", items: staffItems },
+    ];
+  }
 
   const operateItems: NavItem[] = [
     { label: "Overview", segment: "", icon: LayoutDashboard },
@@ -82,15 +110,11 @@ function navigationFor(
       segment: "offerings",
       icon: CircleDollarSign,
     },
-    ...(isAdmin
-      ? [
-          {
-            label: terminology.teamMemberPlural,
-            segment: "team",
-            icon: UsersRound,
-          },
-        ]
-      : []),
+    {
+      label: terminology.teamMemberPlural,
+      segment: "team",
+      icon: UsersRound,
+    },
     { label: "Branches", segment: "locations", icon: Building2 },
     { label: "Availability", segment: "availability", icon: Clock3 },
   ];
@@ -100,19 +124,15 @@ function navigationFor(
     { label: "Public Site", segment: "public-site", icon: PanelsTopLeft },
   ];
 
-  const workspaceItems: NavItem[] = isAdmin
-    ? [
-        { label: "Billing", segment: "billing", icon: CreditCard },
-        { label: "Settings", segment: "settings", icon: Settings2 },
-      ]
-    : [];
+  const workspaceItems: NavItem[] = [
+    { label: "Billing", segment: "billing", icon: CreditCard },
+    { label: "Settings", segment: "settings", icon: Settings2 },
+  ];
 
   return [
     { label: "Operate", items: operateItems },
     { label: "Experience", items: experienceItems },
-    ...(workspaceItems.length > 0
-      ? [{ label: "Workspace", items: workspaceItems }]
-      : []),
+    { label: "Workspace", items: workspaceItems },
   ];
 }
 

@@ -61,7 +61,10 @@ function SignInForm() {
       setSuccess("Welcome back! Signed in successfully. Redirecting to workspace...");
       toast.success("Welcome back! Signed in successfully.");
 
-      const targetUrl = redirectUrl || (data.orgSlug ? `/app/${data.orgSlug}` : "/app");
+      const defaultTarget = (data.role === "member" || data.role === "operator") && data.orgSlug
+        ? `/${data.orgSlug}/staff-portal`
+        : data.orgSlug ? `/app/${data.orgSlug}` : "/app";
+      const targetUrl = redirectUrl || defaultTarget;
       router.push(targetUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
