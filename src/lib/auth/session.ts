@@ -1,13 +1,39 @@
 import { cookies } from "next/headers";
 import { randomBytes } from "node:crypto";
 import { ObjectId } from "mongodb";
+import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/mongodb";
 import type { DbOrgMember, DbOrganization, DbSession, DbUser } from "@/lib/db/types";
 import { PLAN_FEATURES } from "@/lib/billing";
 import { createOrganizationForUser } from "@/lib/services/organizations";
 
-const SESSION_COOKIE_NAME = "oneboard_session";
+export const SESSION_COOKIE_NAME = "oneboard_session";
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+/**
+ * Explicitly sets the session cookie on a NextResponse.
+ * Must be used instead of cookies().set() because cookies().set() inside
+ * Route Handlers does NOT reliably add Set-Cookie to the HTTP response on
+ * all runtimes and mobile browsers.
+ */
+export function applySessionCookie(response: NextResponse, token: string): NextResponse {
+  response.cookies.set(SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    expires: new Date(Date.now() + SESSION_DURATION_MS),
+  });
+  return response;
+}
+
+/**
+ * Explicitly clears the session cookie on a NextResponse.
+ */
+export function clearSessionCookie(response: NextResponse): NextResponse {
+  response.cookies.delete(SESSION_COOKIE_NAME);
+  return response;
+}
 
 export type ActiveAuthContext = {
   user: {
@@ -44,15 +70,9 @@ export async function createSession(userId: string, activeOrgId?: string): Promi
     createdAt: Date.now(),
   });
 
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    expires: new Date(expiresAt),
-  });
-
+  // NOTE: Do NOT call cookies().set() here. Cookie must be set on the
+  // NextResponse in the route handler via applySessionCookie() to guarantee
+  // the Set-Cookie header appears in the HTTP response on all mobile browsers.
   return token;
 }
 
@@ -65,7 +85,8 @@ export async function clearSession(): Promise<void> {
     await db.collection<DbSession>("sessions").deleteOne({ token });
   }
 
-  cookieStore.delete(SESSION_COOKIE_NAME);
+  // NOTE: Cookie deletion must be applied to the NextResponse in the route
+  // handler via clearSessionCookie() — not here — for reliable cross-browser behaviour.
 }
 
 export async function updateActiveOrganization(userId: string, orgId: string): Promise<void> {

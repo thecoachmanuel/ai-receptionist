@@ -61,8 +61,11 @@ function SignInForm() {
         : data.orgSlug ? `/app/${data.orgSlug}` : "/app";
       const targetUrl = redirectUrl || defaultTarget;
 
-      router.push(targetUrl);
-      router.refresh();
+      // Hard-navigate so the browser sends the newly set session cookie with
+      // the very first request to the protected route (goes through middleware).
+      // window.location.replace() is the most reliable approach across all mobile
+      // browsers since router.push() + router.refresh() was causing exceptions.
+      window.location.replace(targetUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
       setLoading(false);

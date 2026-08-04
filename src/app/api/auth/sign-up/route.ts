@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hashPassword } from "@/lib/auth/password";
-import { createSession } from "@/lib/auth/session";
+import { applySessionCookie, createSession } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/mongodb";
 import type { DbUser } from "@/lib/db/types";
 import { createOrganizationForUser } from "@/lib/services/organizations";
@@ -92,9 +92,12 @@ export async function POST(request: NextRequest) {
       { $set: { activeOrgId: orgId } },
     );
 
-    await createSession(userId, orgId);
+    const sessionToken = await createSession(userId, orgId);
 
-    return NextResponse.json({ success: true, userId, orgSlug });
+    return applySessionCookie(
+      NextResponse.json({ success: true, userId, orgSlug }),
+      sessionToken,
+    );
   } catch (error) {
     console.error("Sign up error", error);
     return NextResponse.json(

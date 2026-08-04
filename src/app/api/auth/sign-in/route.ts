@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { comparePassword, hashPassword } from "@/lib/auth/password";
-import { createSession } from "@/lib/auth/session";
+import { applySessionCookie, createSession } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/mongodb";
 import type { DbUser } from "@/lib/db/types";
 import { createOrganizationForUser } from "@/lib/services/organizations";
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      await createSession(user._id!.toString(), activeOrgId);
+      const sessionToken = await createSession(user._id!.toString(), activeOrgId);
 
       const targetOrg = await db.collection("organizations").findOne({
         $or: [
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         ],
       });
 
-      return NextResponse.json({
+      return applySessionCookie(NextResponse.json({
         success: true,
         userId: user._id!.toString(),
         orgSlug,
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
               terminology: targetOrg.terminology,
             }
           : null,
-      });
+      }), sessionToken);
     }
 
     // Standard User Authentication
@@ -239,7 +239,7 @@ export async function POST(request: NextRequest) {
       { $set: { activeOrgId, updatedAt: Date.now() } },
     );
 
-    await createSession(user._id!.toString(), activeOrgId);
+    const sessionToken = await createSession(user._id!.toString(), activeOrgId);
 
     const targetOrg = await db.collection("organizations").findOne({
       $or: [
@@ -266,7 +266,7 @@ export async function POST(request: NextRequest) {
       ? ["admin:all", "admin:full_control", "org:operations_hub:manage"]
       : ["org:operations_hub:manage"];
 
-    return NextResponse.json({
+    return applySessionCookie(NextResponse.json({
       success: true,
       userId: userIdStr,
       orgSlug,
@@ -292,7 +292,7 @@ export async function POST(request: NextRequest) {
             terminology: targetOrg.terminology,
           }
         : null,
-    });
+    }), sessionToken);
   } catch (error) {
     console.error("Sign in error", error);
     return NextResponse.json({ error: "Sign in failed. Please try again." }, { status: 500 });
