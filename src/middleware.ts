@@ -8,13 +8,8 @@ export function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Protect /app and staff portal routes
-  if (
-    (pathname.startsWith("/app") ||
-      pathname.includes("/staff-portal") ||
-      pathname.endsWith("/staff")) &&
-    !sessionToken
-  ) {
+  // Protect /app routes
+  if (pathname.startsWith("/app") && !sessionToken) {
     const signInUrl = new URL("/sign-in", request.url);
     signInUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(signInUrl);
