@@ -73,8 +73,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   });
   const [userOrganizations, setUserOrganizations] = useState<UserOrgSummary[]>([]);
-  const [role, setRole] = useState<string | undefined>(undefined);
-  const [permissions, setPermissions] = useState<string[]>([]);
+  const [role, setRole] = useState<string | undefined>(() => {
+    if (typeof window === "undefined") return undefined;
+    try {
+      const stored = sessionStorage.getItem("oneboard_auth_role");
+      return stored ? JSON.parse(stored) : undefined;
+    } catch {
+      return undefined;
+    }
+  });
+  const [permissions, setPermissions] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const stored = sessionStorage.getItem("oneboard_auth_permissions");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   const [isLoaded, setIsLoaded] = useState(() => Boolean(user && organization));
 
   const fetchSession = async () => {
@@ -93,15 +109,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (typeof window !== "undefined") {
           if (freshUser) sessionStorage.setItem("oneboard_auth_user", JSON.stringify(freshUser));
           if (freshOrg) sessionStorage.setItem("oneboard_auth_org", JSON.stringify(freshOrg));
+          if (data.permissions) sessionStorage.setItem("oneboard_auth_permissions", JSON.stringify(data.permissions));
+          if (data.role) sessionStorage.setItem("oneboard_auth_role", JSON.stringify(data.role));
         }
       } else {
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("oneboard_auth_user");
           sessionStorage.removeItem("oneboard_auth_org");
+          sessionStorage.removeItem("oneboard_auth_permissions");
+          sessionStorage.removeItem("oneboard_auth_role");
         }
         setUser(null);
         setOrganization(null);
         setUserOrganizations([]);
+        setRole(undefined);
+        setPermissions([]);
       }
     } catch (err) {
       console.error("Failed to load auth session", err);

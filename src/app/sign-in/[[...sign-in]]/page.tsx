@@ -45,6 +45,8 @@ function SignInForm() {
       if (typeof window !== "undefined" && data.user && data.organization) {
         sessionStorage.setItem("oneboard_auth_user", JSON.stringify(data.user));
         sessionStorage.setItem("oneboard_auth_org", JSON.stringify(data.organization));
+        if (data.permissions) sessionStorage.setItem("oneboard_auth_permissions", JSON.stringify(data.permissions));
+        if (data.role) sessionStorage.setItem("oneboard_auth_role", JSON.stringify(data.role));
       }
 
       setSuccess("Welcome back! Signed in successfully. Redirecting to workspace...");

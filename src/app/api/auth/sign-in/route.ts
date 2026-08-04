@@ -118,6 +118,8 @@ export async function POST(request: NextRequest) {
         success: true,
         userId: user._id!.toString(),
         orgSlug,
+        role: "admin",
+        permissions: ["admin:all", "admin:full_control", "org:operations_hub:manage"],
         user: {
           id: user._id!.toString(),
           email: user.email,
@@ -247,10 +249,17 @@ export async function POST(request: NextRequest) {
       ],
     });
 
+    const isSuperAdminEmail = normalizedEmail === adminEmail;
+    const permissions = isSuperAdminEmail
+      ? ["admin:all", "admin:full_control", "org:operations_hub:manage"]
+      : ["org:operations_hub:manage"];
+
     return NextResponse.json({
       success: true,
       userId: user._id!.toString(),
       orgSlug,
+      role: isSuperAdminEmail ? "admin" : ((member as any)?.role || "member"),
+      permissions,
       user: {
         id: user._id!.toString(),
         email: user.email,
