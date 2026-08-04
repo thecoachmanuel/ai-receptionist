@@ -18,6 +18,7 @@ import {
   LayoutDashboard,
   PanelsTopLeft,
   Settings2,
+  ShieldCheck,
   Sparkles,
   UsersRound,
 } from "lucide-react";
@@ -69,11 +70,25 @@ function navigationFor(
   // Dedicated sidebar navigation strictly applicable to staff members
   if (isStaff && !isAdmin) {
     const staffItems: NavItem[] = [
+      { label: "Overview", segment: "", icon: LayoutDashboard },
       {
-        label: "Staff Portal",
-        segment: "staff-portal",
+        label: terminology.bookingPlural || "Appointments",
+        segment: "bookings",
+        icon: CalendarDays,
+      },
+      {
+        label: terminology.offeringPlural || "Treatments",
+        segment: "offerings",
+        icon: CircleDollarSign,
+      },
+      {
+        label: terminology.teamMemberPlural || "Practitioners",
+        segment: "team",
         icon: UsersRound,
       },
+      { label: "Branches", segment: "locations", icon: Building2 },
+      { label: "Availability", segment: "availability", icon: Clock3 },
+      { label: "Staff Portal", segment: "staff-portal", icon: ShieldCheck },
     ];
 
     return [
