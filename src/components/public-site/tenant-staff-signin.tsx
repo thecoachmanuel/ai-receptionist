@@ -21,7 +21,13 @@ export function TenantStaffSignInScreen({
   const router = useRouter();
   const { organization, site } = publishedSite;
   const { config } = site;
-  const businessName = config.businessName || organization.name;
+  const businessName = config?.businessName || site?.businessName || organization.name;
+
+  // Resolve business accent color chosen in site configuration
+  const accentColor =
+    config?.theme?.accentColor ||
+    site?.primaryColor ||
+    "#2446D8";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -70,24 +76,43 @@ export function TenantStaffSignInScreen({
   ];
 
   return (
-    <main className="grid min-h-dvh bg-card lg:grid-cols-[minmax(0,0.95fr)_minmax(560px,1.05fr)]">
-      {/* Left Panel - Tenant Brand Hero */}
+    <main
+      className="grid min-h-dvh bg-card lg:grid-cols-[minmax(0,0.95fr)_minmax(560px,1.05fr)]"
+      style={
+        {
+          "--primary": accentColor,
+          "--ring": accentColor,
+        } as React.CSSProperties
+      }
+    >
+      {/* Left Panel - Tenant Brand Hero styled with business accent color */}
       <section className="relative hidden min-h-dvh overflow-hidden bg-[#151923] px-12 py-10 text-white lg:flex lg:flex-col">
         <div className="absolute inset-0 hairline-grid opacity-[0.09]" />
-        <div className="absolute -right-44 top-1/4 size-[460px] rounded-full border border-blue-300/20" />
-        <div className="absolute -right-20 top-[34%] size-[250px] rounded-full border border-blue-300/15" />
+        
+        {/* Accent circles matching business theme */}
+        <div
+          className="absolute -right-44 top-1/4 size-[460px] rounded-full border opacity-30"
+          style={{ borderColor: accentColor }}
+        />
+        <div
+          className="absolute -right-20 top-[34%] size-[250px] rounded-full border opacity-20"
+          style={{ borderColor: accentColor }}
+        />
 
-        {/* Tenant Logo & Brand Name */}
+        {/* Tenant Logo & Brand Header */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-white border border-white/20 overflow-hidden shrink-0">
-            {config.logoUrl ? (
+          <div
+            className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-white border border-white/20 overflow-hidden shrink-0"
+            style={{ borderColor: `${accentColor}55` }}
+          >
+            {config?.logoUrl ? (
               <img
                 src={config.logoUrl}
                 alt={businessName}
                 className="size-7 rounded-lg object-cover"
               />
             ) : (
-              <ShieldCheck className="size-5 text-blue-300" />
+              <ShieldCheck className="size-5" style={{ color: accentColor }} />
             )}
           </div>
           <div>
@@ -97,7 +122,10 @@ export function TenantStaffSignInScreen({
         </div>
 
         <div className="relative z-10 my-auto max-w-xl py-16">
-          <p className="mb-4 font-mono text-[11px] font-medium uppercase tracking-[0.22em] text-blue-300">
+          <p
+            className="mb-4 font-mono text-[11px] font-medium uppercase tracking-[0.22em]"
+            style={{ color: accentColor }}
+          >
             Staff Workspace
           </p>
           <h1 className="font-heading text-5xl font-medium leading-[0.96] tracking-[-0.04em] text-balance">
@@ -112,7 +140,7 @@ export function TenantStaffSignInScreen({
                 <span className="font-mono text-[10px] text-white/35">
                   0{index + 1}
                 </span>
-                <Icon className="size-4 text-blue-300" />
+                <Icon className="size-4" style={{ color: accentColor }} />
                 <span className="text-sm text-white/78">{label}</span>
               </div>
             ))}
@@ -128,15 +156,18 @@ export function TenantStaffSignInScreen({
       <section className="flex min-h-dvh flex-col bg-background">
         <header className="flex items-center justify-between px-6 py-6 sm:px-10">
           <div className="flex items-center gap-2.5 lg:hidden">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 overflow-hidden shrink-0">
-              {config.logoUrl ? (
+            <div
+              className="flex size-8 items-center justify-center rounded-lg bg-primary/10 border overflow-hidden shrink-0"
+              style={{ borderColor: `${accentColor}33` }}
+            >
+              {config?.logoUrl ? (
                 <img
                   src={config.logoUrl}
                   alt={businessName}
                   className="size-6 rounded-md object-cover"
                 />
               ) : (
-                <ShieldCheck className="size-4 text-primary" />
+                <ShieldCheck className="size-4" style={{ color: accentColor }} />
               )}
             </div>
             <span className="font-heading text-sm font-semibold">{businessName}</span>
@@ -153,7 +184,10 @@ export function TenantStaffSignInScreen({
 
         <div className="flex flex-1 items-center justify-center px-6 pb-16 pt-4 sm:px-10">
           <div className="w-full max-w-[440px]">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
+            <p
+              className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em]"
+              style={{ color: accentColor }}
+            >
               Staff Portal Access
             </p>
             <h2 className="mb-2 mt-3 font-heading text-4xl font-medium tracking-[-0.04em]">
@@ -193,7 +227,12 @@ export function TenantStaffSignInScreen({
                   className="h-10 text-sm"
                 />
               </div>
-              <Button type="submit" className="w-full h-10 text-xs font-semibold" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full h-10 text-xs font-semibold shadow-md transition-opacity hover:opacity-90"
+                style={{ backgroundColor: accentColor, color: "#ffffff" }}
+                disabled={loading}
+              >
                 {loading ? "Signing in..." : `Sign in to ${businessName}`}
               </Button>
               <p className="pt-2 text-center text-xs text-muted-foreground">
