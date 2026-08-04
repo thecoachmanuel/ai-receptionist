@@ -33,9 +33,11 @@ function getInitials(name: string) {
 export function TenantStaffSignInScreen({
   publishedSite,
   siteSlug,
+  unauthorizedMessage,
 }: {
   publishedSite: PublishedSite;
   siteSlug: string;
+  unauthorizedMessage?: string;
 }) {
   const router = useRouter();
   const { organization, site } = publishedSite;
@@ -58,7 +60,7 @@ export function TenantStaffSignInScreen({
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(unauthorizedMessage || "");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -81,6 +83,7 @@ export function TenantStaffSignInScreen({
       const nextAuthRes = await nextAuthSignIn("credentials", {
         email: formEmail,
         password: formPassword,
+        tenantSlug: siteSlug,
         redirect: false,
       });
 
@@ -88,7 +91,7 @@ export function TenantStaffSignInScreen({
         const res = await fetch("/api/auth/sign-in", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: formEmail, password: formPassword }),
+          body: JSON.stringify({ email: formEmail, password: formPassword, tenantSlug: siteSlug }),
         });
         const data = await res.json();
         if (!res.ok) {

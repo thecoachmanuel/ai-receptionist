@@ -142,8 +142,63 @@ export const authOptions: NextAuthOptions = {
         }
 
         let activeOrgId = user.activeOrgId;
+        const tenantSlug = (credentials as any)?.tenantSlug as string | undefined;
+
+        if (tenantSlug) {
+          let targetOrg = await db.collection("organizations").findOne({
+            $or: [
+              { slug: tenantSlug },
+              { clerkOrgId: tenantSlug },
+              ...(tenantSlug.length === 24 ? [{ _id: new ObjectId(tenantSlug) }] : []),
+            ],
+          });
+
+          if (!targetOrg) {
+            const publicSite = await db.collection("public_sites").findOne({ siteSlug: tenantSlug });
+            if (publicSite?.organizationId) {
+              const orgIdStr = publicSite.organizationId.toString();
+              targetOrg = await db.collection("organizations").findOne({
+                $or: [
+                  { clerkOrgId: orgIdStr },
+                  { slug: orgIdStr },
+                  ...(orgIdStr.length === 24 ? [{ _id: new ObjectId(orgIdStr) }] : []),
+                ],
+              });
+            }
+          }
+
+          if (targetOrg) {
+            const targetOrgIdStr = targetOrg._id.toString();
+            const userIdStr = user._id!.toString();
+
+            // Check if user is a member of this specific tenant organization
+            const isOwner = (targetOrg as any).createdBy === userIdStr;
+            const memberDoc = await db.collection("orgMembers").findOne({
+              organizationId: targetOrgIdStr,
+              $or: [{ userId: userIdStr }, { userId: user._id as any }],
+            });
+            const altMemberDoc = await db.collection("organization_members").findOne({
+              organizationId: targetOrgIdStr,
+              userId: userIdStr,
+            });
+
+            const isMember = isOwner || Boolean(memberDoc) || Boolean(altMemberDoc) || isSuperAdminUser;
+
+            if (!isMember) {
+              throw new Error(`Access denied. Your staff account is not registered with ${targetOrg.name || "this business"}.`);
+            }
+
+            activeOrgId = targetOrgIdStr;
+            await db.collection<DbUser>("users").updateOne(
+              { _id: user._id },
+              { $set: { activeOrgId } }
+            );
+          }
+        }
+
         if (!activeOrgId) {
-          const firstMember = await db.collection("organization_members").findOne({ userId: user._id!.toString() });
+          const firstMember = await db.collection("orgMembers").findOne({ userId: user._id!.toString() }) ||
+                              await db.collection("organization_members").findOne({ userId: user._id!.toString() });
           if (firstMember) {
             activeOrgId = firstMember.organizationId;
             await db.collection<DbUser>("users").updateOne(
@@ -173,7 +228,10 @@ export const authOptions: NextAuthOptions = {
         });
         if (org) orgSlug = (org as any).slug;
 
-        const membership = await db.collection("organization_members").findOne({
+        const membership = await db.collection("orgMembers").findOne({
+          organizationId: activeOrgId,
+          $or: [{ userId: user._id!.toString() }, { userId: user._id as any }],
+        }) || await db.collection("organization_members").findOne({
           userId: user._id!.toString(),
           organizationId: activeOrgId,
         });
@@ -191,7 +249,7 @@ export const authOptions: NextAuthOptions = {
           orgSlug,
           role,
           permissions,
-          isSuperAdmin: false,
+          isSuperAdmin: isSuperAdminUser,
         };
       },
     }),

@@ -14,7 +14,7 @@ function cleanEnv(val?: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, tenantSlug } = await request.json();
     if (!email || typeof email !== "string" || !password || typeof password !== "string") {
       return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
     }
@@ -152,6 +152,60 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
 
+    const { ObjectId } = await import("mongodb");
+    let userIdStr = user._id!.toString();
+
+    if (tenantSlug && typeof tenantSlug === "string") {
+      let targetOrg = await db.collection("organizations").findOne({
+        $or: [
+          { slug: tenantSlug },
+          { clerkOrgId: tenantSlug },
+          ...(tenantSlug.length === 24 ? [{ _id: new ObjectId(tenantSlug) }] : []),
+        ],
+      });
+
+      if (!targetOrg) {
+        const publicSite = await db.collection("public_sites").findOne({ siteSlug: tenantSlug });
+        if (publicSite?.organizationId) {
+          const orgIdStr = publicSite.organizationId.toString();
+          targetOrg = await db.collection("organizations").findOne({
+            $or: [
+              { clerkOrgId: orgIdStr },
+              { slug: orgIdStr },
+              ...(orgIdStr.length === 24 ? [{ _id: new ObjectId(orgIdStr) }] : []),
+            ],
+          });
+        }
+      }
+
+      if (targetOrg) {
+        const targetOrgIdStr = targetOrg._id.toString();
+        const isOwner = (targetOrg as any).createdBy === userIdStr;
+        const isSiteAdmin = normalizedEmail === adminEmail;
+
+        const memberDoc = await db.collection("orgMembers").findOne({
+          organizationId: targetOrgIdStr,
+          $or: [{ userId: userIdStr }, { userId: user._id as any }],
+        }) || await db.collection("organization_members").findOne({
+          organizationId: targetOrgIdStr,
+          userId: userIdStr,
+        });
+
+        if (!isOwner && !memberDoc && !isSiteAdmin) {
+          return NextResponse.json(
+            { error: `Access denied. Your staff account is not registered with ${targetOrg.name || "this business"}.` },
+            { status: 403 }
+          );
+        }
+
+        user.activeOrgId = targetOrgIdStr;
+        await db.collection<DbUser>("users").updateOne(
+          { _id: user._id },
+          { $set: { activeOrgId: targetOrgIdStr } }
+        );
+      }
+    }
+
     // Resolve active organization & slug
     let activeOrgId = user.activeOrgId;
     let orgSlug = "";
@@ -168,7 +222,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!orgSlug) {
-      const userIdStr = user._id!.toString();
+      userIdStr = user._id!.toString();
       let member = await db.collection("orgMembers").findOne({
         $or: [{ userId: userIdStr }, { userId: user._id as any }],
       });
@@ -250,7 +304,7 @@ export async function POST(request: NextRequest) {
     });
 
     const isSuperAdminEmail = normalizedEmail === adminEmail;
-    const userIdStr = user._id!.toString();
+    userIdStr = user._id!.toString();
     const orgMember = activeOrgId
       ? await db.collection("orgMembers").findOne({
           organizationId: activeOrgId,

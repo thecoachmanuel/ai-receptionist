@@ -51,6 +51,23 @@ export default async function TenantStaffPortalPage({
     );
   }
 
+  const targetOrgId = (publishedSite.organization as any).id || publishedSite.organization.clerkOrgId;
+  const isMemberOfThisOrg =
+    session.isSuperAdmin ||
+    session.organization?.id === targetOrgId ||
+    session.organization?.slug === siteSlug ||
+    session.organization?.slug === publishedSite.organization.slug;
+
+  if (!isMemberOfThisOrg) {
+    return (
+      <TenantStaffSignInScreen
+        publishedSite={publishedSite as any}
+        siteSlug={siteSlug}
+        unauthorizedMessage={`You are currently signed in as ${session.user.email}, but you are not registered as a staff member of ${publishedSite.organization.name}. Please sign in with your authorized staff credentials.`}
+      />
+    );
+  }
+
   const orgSlug = publishedSite.organization.slug || siteSlug;
 
   return (

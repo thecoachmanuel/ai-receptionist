@@ -263,24 +263,36 @@ function ShellChrome({
             </span>
           </Link>
 
-          <div className="rounded-lg border border-black/10 bg-white/70 px-2 py-1 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
-            <OrganizationSwitcher
-              hidePersonal
-              afterCreateOrganizationUrl="/app/:slug"
-              afterSelectOrganizationUrl="/app/:slug"
-              appearance={{
-                elements: {
-                  rootBox: "w-full",
-                  organizationSwitcherTrigger:
-                    "w-full justify-between border-0 bg-transparent px-1 py-1 shadow-none",
-                  organizationPreviewMainIdentifier:
-                    "text-xs font-medium text-foreground",
-                  organizationPreviewSecondaryIdentifier:
-                    "text-[10px] text-muted-foreground",
-                },
-              }}
-            />
-          </div>
+          {userRole === "member" || userRole === "operator" ? (
+            <div className="flex items-center justify-between rounded-lg border border-black/10 bg-white/70 px-3 py-2 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+              <div className="space-y-0.5 truncate">
+                <p className="text-xs font-semibold text-foreground truncate">{organizationName}</p>
+                <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Staff Operating Portal</p>
+              </div>
+              <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 shrink-0 bg-primary/10 text-primary border-primary/20">
+                Staff
+              </Badge>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-black/10 bg-white/70 px-2 py-1 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+              <OrganizationSwitcher
+                hidePersonal
+                afterCreateOrganizationUrl="/app/:slug"
+                afterSelectOrganizationUrl="/app/:slug"
+                appearance={{
+                  elements: {
+                    rootBox: "w-full",
+                    organizationSwitcherTrigger:
+                      "w-full justify-between border-0 bg-transparent px-1 py-1 shadow-none",
+                    organizationPreviewMainIdentifier:
+                      "text-xs font-medium text-foreground",
+                    organizationPreviewSecondaryIdentifier:
+                      "text-[10px] text-muted-foreground",
+                  },
+                }}
+              />
+            </div>
+          )}
         </SidebarHeader>
 
         <Separator className="bg-black/10" />
