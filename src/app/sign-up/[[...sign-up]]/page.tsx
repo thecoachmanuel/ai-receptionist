@@ -73,7 +73,7 @@ export default function SignUpPage() {
 
   return (
     <AuthShell eyebrow="Get started" title="Build your AI front desk">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {error && (
           <div className="rounded-md bg-red-50 p-3 text-xs text-red-700">
             {error}

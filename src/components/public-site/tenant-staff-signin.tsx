@@ -232,7 +232,7 @@ export function TenantStaffSignInScreen({
               Enter your staff credentials to open your daily operating schedule and client portal.
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               {error && (
                 <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs font-medium text-destructive">
                   {error}
