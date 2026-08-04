@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { getToken } from "next-auth/jwt";
 import { authOptions } from "@/lib/auth/nextauth-options";
 import { getDb } from "@/lib/db/mongodb";
 import { ObjectId } from "mongodb";
@@ -25,7 +24,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No active organization found." }, { status: 400 });
     }
 
-    const slug = businessName
+    // Generate clean URL slug from business name
+    const baseSlug = businessName
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9\s-]/g, "")
@@ -33,38 +33,59 @@ export async function POST(request: NextRequest) {
       .replace(/-+/g, "-")
       .slice(0, 50);
 
-    // Check slug uniqueness
-    let finalSlug = slug;
-    const existing = await db.collection("organizations").findOne({ slug });
-    if (existing && existing._id.toString() !== activeOrgId) {
-      finalSlug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+    // Ensure slug is unique
+    let finalSlug = baseSlug;
+    const orgFilter = {
+      $or: [
+        ...(activeOrgId.length === 24 ? [{ _id: new ObjectId(activeOrgId) }] : []),
+        { clerkOrgId: activeOrgId },
+        { slug: activeOrgId },
+      ],
+    };
+
+    const existingWithSlug = await db.collection("organizations").findOne({
+      slug: baseSlug,
+    });
+    if (existingWithSlug && existingWithSlug._id.toString() !== activeOrgId) {
+      finalSlug = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
     }
 
-    await db.collection("organizations").updateOne(
-      {
-        $or: [
-          ...(activeOrgId.length === 24 ? [{ _id: new ObjectId(activeOrgId) }] : []),
-          { clerkOrgId: activeOrgId },
-          { slug: activeOrgId },
-        ],
+    // Update the organization name and slug
+    await db.collection("organizations").updateOne(orgFilter, {
+      $set: {
+        name: businessName.trim(),
+        slug: finalSlug,
+        ...(businessType ? { businessType } : {}),
+        updatedAt: Date.now(),
       },
+    });
+
+    // Update the public site: sync siteSlug AND business name
+    await db.collection("publicSites").updateMany(
+      { organizationId: activeOrgId },
       {
         $set: {
-          name: businessName.trim(),
-          slug: finalSlug,
-          ...(businessType ? { businessType } : {}),
+          siteSlug: finalSlug,
+          "draft.businessName": businessName.trim(),
+          "draft.config.businessName": businessName.trim(),
           updatedAt: Date.now(),
         },
       }
     );
 
-    // Also update the public site if one exists
+    // Also update alternate collection name used in some places
     await db.collection("public_sites").updateMany(
       { organizationId: activeOrgId },
-      { $set: { "config.businessName": businessName.trim(), updatedAt: Date.now() } }
+      {
+        $set: {
+          siteSlug: finalSlug,
+          "config.businessName": businessName.trim(),
+          updatedAt: Date.now(),
+        },
+      }
     );
 
-    return NextResponse.json({ success: true, slug: finalSlug });
+    return NextResponse.json({ success: true, slug: finalSlug, businessName: businessName.trim() });
   } catch (err) {
     console.error("[onboarding/complete]", err);
     return NextResponse.json({ error: "Failed to save business name." }, { status: 500 });

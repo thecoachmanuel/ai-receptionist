@@ -3,8 +3,9 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Building2, Sparkles, ArrowRight, Briefcase } from "lucide-react";
+import { Building2, ArrowRight, Briefcase } from "lucide-react";
 import { toast } from "sonner";
+import { BrandIcon } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -87,8 +88,8 @@ export default function OnboardingPage() {
       <div className="relative z-10 w-full max-w-lg">
         {/* Brand header */}
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
-            <Sparkles className="size-7" />
+          <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-foreground text-background shadow-lg">
+            <BrandIcon className="size-7 border-none bg-transparent text-background" inverted />
           </div>
           <h1 className="font-heading text-[28px] font-bold tracking-tight text-foreground">
             Let&apos;s set up your business
