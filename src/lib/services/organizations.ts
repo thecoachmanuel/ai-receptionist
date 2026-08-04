@@ -261,14 +261,42 @@ export async function getAllOrganizationsWithStats() {
   const results = await Promise.all(
     orgs.map(async (org: any) => {
       const orgIdStr = org._id!.toString();
-      const [offeringsCount, teamMembersCount, bookingsCount, conversationsCount, knowledgeCount] =
+      const [offeringsCount, teamMembersCount, bookingsCount, conversationsCount, knowledgeCount, ownerDoc, publicSiteDoc] =
         await Promise.all([
           db.collection("offerings").countDocuments({ organizationId: orgIdStr }),
           db.collection("teamMembers").countDocuments({ organizationId: orgIdStr }),
           db.collection("bookings").countDocuments({ organizationId: orgIdStr }),
           db.collection("conversations").countDocuments({ organizationId: orgIdStr }),
           db.collection("knowledgeItems").countDocuments({ organizationId: orgIdStr }),
+          (async () => {
+            if (org.createdBy) {
+              const u = await db.collection("users").findOne({
+                $or: [
+                  { _id: org.createdBy as any },
+                  ...(ObjectId.isValid(org.createdBy) ? [{ _id: new ObjectId(org.createdBy) }] : []),
+                ],
+              });
+              if (u) return u;
+            }
+            const adminMember = await db.collection("orgMembers").findOne({ organizationId: orgIdStr, role: "admin" });
+            if (adminMember?.userId) {
+              return await db.collection("users").findOne({
+                $or: [
+                  { _id: adminMember.userId as any },
+                  ...(ObjectId.isValid(adminMember.userId) ? [{ _id: new ObjectId(adminMember.userId) }] : []),
+                ],
+              });
+            }
+            return null;
+          })(),
+          (async () => {
+            const site = await db.collection("publicSites").findOne({ organizationId: orgIdStr });
+            if (site) return site;
+            return await db.collection("public_sites").findOne({ organizationId: orgIdStr });
+          })(),
         ]);
+
+      const draftConfig = publicSiteDoc?.draft?.config || publicSiteDoc?.draft || publicSiteDoc?.config || {};
 
       return {
         _id: orgIdStr,
@@ -280,8 +308,26 @@ export async function getAllOrganizationsWithStats() {
         locale: org.locale,
         plan: org.plan || "free_org",
         planStatus: org.planStatus || "active",
+        businessType: org.businessType || "",
         createdAt: org.createdAt,
         updatedAt: org.updatedAt,
+        owner: ownerDoc
+          ? {
+              id: ownerDoc._id?.toString(),
+              name: ownerDoc.name || "N/A",
+              email: ownerDoc.email || "N/A",
+            }
+          : null,
+        publicSite: publicSiteDoc
+          ? {
+              siteSlug: publicSiteDoc.siteSlug || org.slug,
+              businessName: draftConfig.businessName || org.name,
+              phone: draftConfig.contactPhone || draftConfig.phone || "N/A",
+              email: draftConfig.contactEmail || draftConfig.email || "N/A",
+              address: draftConfig.address || "N/A",
+              headline: draftConfig.headline || "",
+            }
+          : null,
         stats: {
           offeringsCount,
           teamMembersCount,

@@ -91,8 +91,22 @@ type AdminOrgStat = {
   locale: string;
   plan: "free_org" | "engage" | "voice";
   planStatus: string;
+  businessType?: string;
   createdAt: number;
   updatedAt: number;
+  owner?: {
+    id?: string;
+    name: string;
+    email: string;
+  } | null;
+  publicSite?: {
+    siteSlug: string;
+    businessName: string;
+    phone: string;
+    email: string;
+    address: string;
+    headline: string;
+  } | null;
   stats: {
     offeringsCount: number;
     teamMembersCount: number;
@@ -278,6 +292,7 @@ export function SuperAdminScreen() {
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewingOrg, setViewingOrg] = useState<AdminOrgStat | null>(null);
 
   // New org form state
   const [name, setName] = useState("");
@@ -759,13 +774,18 @@ export function SuperAdminScreen() {
                                 </div>
                                 <div>
                                   <div className="text-[13px] font-semibold text-foreground">{org.name}</div>
+                                  {org.owner?.email && (
+                                    <div className="text-[10px] font-mono text-muted-foreground/80 truncate max-w-[180px]">
+                                      {org.owner.email}
+                                    </div>
+                                  )}
                                   <a
-                                    href={`/p/${org.slug}`}
+                                    href={`/${org.slug}`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="inline-flex items-center gap-0.5 font-mono text-[10px] text-muted-foreground hover:text-primary"
+                                    className="inline-flex items-center gap-0.5 font-mono text-[10px] text-primary/80 hover:underline"
                                   >
-                                    /p/{org.slug} <ExternalLink className="size-2.5" />
+                                    /{org.slug} <ExternalLink className="size-2.5" />
                                   </a>
                                 </div>
                               </div>
@@ -1427,6 +1447,128 @@ export function SuperAdminScreen() {
                 }}
               >
                 Mark as Read
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── View Business Details Modal ── */}
+      <Dialog open={Boolean(viewingOrg)} onOpenChange={() => setViewingOrg(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold">
+              <Building2 className="size-4 text-primary" />
+              {viewingOrg?.name}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Complete business profile, owner information, and activity metrics.
+            </DialogDescription>
+          </DialogHeader>
+
+          {viewingOrg && (
+            <div className="space-y-4 pt-1 text-xs">
+              {/* Profile Card */}
+              <div className="grid grid-cols-2 gap-3 rounded-xl border bg-muted/20 p-3.5">
+                <div>
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Owner Name</span>
+                  <span className="font-semibold text-foreground">{viewingOrg.owner?.name || "N/A"}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Owner Email</span>
+                  <span className="font-mono font-medium text-foreground select-all">{viewingOrg.owner?.email || "N/A"}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Business URL Slug</span>
+                  <span className="font-mono text-primary font-semibold">/{viewingOrg.slug}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Subscription Tier</span>
+                  <span className="font-medium capitalize">{viewingOrg.plan.replace("_org", "")} ({viewingOrg.planStatus})</span>
+                </div>
+                {viewingOrg.businessType && (
+                  <div>
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Industry / Type</span>
+                    <span className="font-medium text-foreground capitalize">{viewingOrg.businessType}</span>
+                  </div>
+                )}
+                <div>
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Provisioned Date</span>
+                  <span className="text-muted-foreground">{new Date(viewingOrg.createdAt).toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Timezone & Currency</span>
+                  <span className="text-muted-foreground">{viewingOrg.timezone} ({viewingOrg.currency})</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Public Phone</span>
+                  <span className="font-mono text-muted-foreground">{viewingOrg.publicSite?.phone || "N/A"}</span>
+                </div>
+              </div>
+
+              {/* Live Portals Links */}
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-1.5">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-primary">Live Portals</div>
+                <div className="flex flex-col gap-1 font-mono text-[11px]">
+                  <a
+                    href={`/${viewingOrg.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-primary hover:underline"
+                  >
+                    <ExternalLink className="size-3" /> Public Site: /{viewingOrg.slug}
+                  </a>
+                  <a
+                    href={`/${viewingOrg.slug}/staff-portal`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-emerald-700 hover:underline"
+                  >
+                    <ExternalLink className="size-3" /> Staff Portal: /{viewingOrg.slug}/staff-portal
+                  </a>
+                </div>
+              </div>
+
+              {/* Activity Summary */}
+              <div>
+                <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Activity & Resource Counts</div>
+                <div className="grid grid-cols-5 gap-2 text-center">
+                  <div className="rounded-lg border bg-background p-2">
+                    <span className="block text-sm font-bold text-foreground">{viewingOrg.stats.bookingsCount}</span>
+                    <span className="text-[9px] text-muted-foreground">Bookings</span>
+                  </div>
+                  <div className="rounded-lg border bg-background p-2">
+                    <span className="block text-sm font-bold text-foreground">{viewingOrg.stats.offeringsCount}</span>
+                    <span className="text-[9px] text-muted-foreground">Offerings</span>
+                  </div>
+                  <div className="rounded-lg border bg-background p-2">
+                    <span className="block text-sm font-bold text-foreground">{viewingOrg.stats.teamMembersCount}</span>
+                    <span className="text-[9px] text-muted-foreground">Staff</span>
+                  </div>
+                  <div className="rounded-lg border bg-background p-2">
+                    <span className="block text-sm font-bold text-foreground">{viewingOrg.stats.conversationsCount}</span>
+                    <span className="text-[9px] text-muted-foreground">AI Chats</span>
+                  </div>
+                  <div className="rounded-lg border bg-background p-2">
+                    <span className="block text-sm font-bold text-foreground">{viewingOrg.stats.knowledgeCount}</span>
+                    <span className="text-[9px] text-muted-foreground">Knowledge</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 pt-2">
+            <Button variant="outline" onClick={() => setViewingOrg(null)}>Close</Button>
+            {viewingOrg && (
+              <Button
+                onClick={() => {
+                  handleSwitchOrg(viewingOrg);
+                  setViewingOrg(null);
+                }}
+                className="gap-1"
+              >
+                Manage Workspace <ArrowUpRight className="size-3.5" />
               </Button>
             )}
           </DialogFooter>
