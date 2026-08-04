@@ -739,6 +739,9 @@ export function PublicSite({
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+            <a href={`/${siteSlug}/staff-portal`} className="inline-flex items-center gap-1 font-medium transition hover:text-foreground">
+              Staff Portal <UsersRound className="size-3" />
+            </a>
             {config.socialLinks.map((link: any) => {
               const href = safeHttpUrl(link.url);
               return href ? (
