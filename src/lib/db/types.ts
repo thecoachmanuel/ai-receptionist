@@ -55,7 +55,7 @@ export type SiteConfig = {
 export type DbUser = {
   _id?: ObjectId | string;
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
   name: string;
   avatarUrl?: string;
   activeOrgId?: string;

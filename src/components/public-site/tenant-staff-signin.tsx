@@ -77,15 +77,23 @@ export function TenantStaffSignInScreen({
     }
 
     try {
-      const res = await fetch("/api/auth/sign-in", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formEmail, password: formPassword }),
+      const { signIn: nextAuthSignIn } = await import("next-auth/react");
+      const nextAuthRes = await nextAuthSignIn("credentials", {
+        email: formEmail,
+        password: formPassword,
+        redirect: false,
       });
-      const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || "Invalid staff credentials.");
+      if (nextAuthRes?.error) {
+        const res = await fetch("/api/auth/sign-in", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: formEmail, password: formPassword }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || nextAuthRes.error || "Invalid staff credentials.");
+        }
       }
 
       clearAllCache();

@@ -123,6 +123,59 @@ export async function updateActiveOrganization(userId: string, orgId: string): P
 
 export async function getSession(): Promise<ActiveAuthContext | null> {
   try {
+    const { getServerSession } = await import("next-auth");
+    const { authOptions } = await import("./nextauth-options");
+    const nextAuthSession = await getServerSession(authOptions);
+
+    if (nextAuthSession && nextAuthSession.user) {
+      const u = nextAuthSession.user as any;
+      const adminEmail = (process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.replace(/^["']|["']$/g, "").trim() : "admin@admin.com").toLowerCase();
+      const isSiteAdmin = Boolean(u.isSuperAdmin) || (u.email && u.email.trim().toLowerCase() === adminEmail);
+
+      let organization = null;
+      const orgId = (nextAuthSession as any).activeOrgId;
+      const orgSlug = (nextAuthSession as any).orgSlug;
+
+      if (orgId || orgSlug) {
+        const db = await getDb();
+        const orgFilters: any[] = [];
+        if (orgSlug) orgFilters.push({ slug: orgSlug });
+        if (orgId) {
+          orgFilters.push({ clerkOrgId: orgId });
+          if (ObjectId.isValid(orgId)) orgFilters.push({ _id: new ObjectId(orgId) });
+        }
+        if (orgFilters.length > 0) {
+          const doc = await db.collection("organizations").findOne({ $or: orgFilters });
+          if (doc) {
+            organization = {
+              id: doc._id.toString(),
+              clerkOrgId: doc.clerkOrgId,
+              name: doc.name,
+              slug: doc.slug,
+              timezone: doc.timezone,
+              currency: doc.currency,
+              locale: doc.locale,
+              plan: doc.plan || "free_org",
+            };
+          }
+        }
+      }
+
+      return {
+        user: {
+          id: u.id || u.userId,
+          email: u.email,
+          name: u.name,
+          avatarUrl: u.image || u.avatarUrl,
+        },
+        organization,
+        role: (nextAuthSession as any).role || (isSiteAdmin ? "admin" : "member"),
+        permissions: (nextAuthSession as any).permissions || (isSiteAdmin ? ["admin:all", "admin:full_control", "org:operations_hub:manage"] : []),
+        isSuperAdmin: isSiteAdmin,
+      };
+    }
+
+    // Fallback for legacy custom sessions during migration
     const cookieStore = await cookies();
     const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 

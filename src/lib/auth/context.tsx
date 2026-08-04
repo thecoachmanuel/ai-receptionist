@@ -205,6 +205,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isStaffUser = role === "member" || role === "operator";
 
     try {
+      const { signOut: nextAuthSignOut } = await import("next-auth/react");
+      await nextAuthSignOut({ redirect: false });
+    } catch {}
+    try {
       await fetch("/api/auth/sign-out", { method: "POST" });
     } catch {}
     clearAllCache();

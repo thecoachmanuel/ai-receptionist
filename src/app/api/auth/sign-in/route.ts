@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Standard User Authentication
-    if (!user) {
+    if (!user || !user.passwordHash) {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
 

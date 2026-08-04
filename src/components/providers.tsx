@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/lib/auth/context";
 import { Toaster } from "@/components/ui/sonner";
@@ -8,13 +9,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-      <AuthProvider>
-        <TooltipProvider delayDuration={250}>
-          {children}
-          <Toaster richColors position="bottom-right" />
-        </TooltipProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <SessionProvider>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <AuthProvider>
+          <TooltipProvider delayDuration={250}>
+            {children}
+            <Toaster richColors position="bottom-right" />
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </SessionProvider>
   );
 }

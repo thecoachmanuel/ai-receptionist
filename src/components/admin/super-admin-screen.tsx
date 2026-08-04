@@ -304,6 +304,7 @@ export function SuperAdminScreen() {
   const [contactEmail, setContactEmail] = useState("oneboardng@gmail.com");
   const [clientPageUrl, setClientPageUrl] = useState("");
   const [isWaitlistActive, setIsWaitlistActive] = useState(false);
+  const [googleAuthEnabled, setGoogleAuthEnabled] = useState(true);
   const [savingContact, setSavingContact] = useState(false);
 
   // Messages state
@@ -364,6 +365,12 @@ export function SuperAdminScreen() {
           setContactEmail(data.settings.contactEmail || "oneboardng@gmail.com");
           setClientPageUrl(data.settings.clientPageUrl || "");
           setIsWaitlistActive(data.settings.isWaitlistActive || false);
+          if (typeof data.settings.googleAuthEnabled === "boolean") {
+            setGoogleAuthEnabled(data.settings.googleAuthEnabled);
+          }
+        }
+        if (typeof data.googleAuthEnabled === "boolean") {
+          setGoogleAuthEnabled(data.googleAuthEnabled);
         }
         const aiSettings = data.vapi || data.elevenlabs;
         if (aiSettings) {
@@ -434,7 +441,8 @@ export function SuperAdminScreen() {
           contactPhone, 
           contactEmail, 
           clientPageUrl,
-          isWaitlistActive 
+          isWaitlistActive,
+          googleAuthEnabled,
         }),
       });
       if (!res.ok) throw new Error("Failed to update contact info.");
@@ -1262,6 +1270,19 @@ export function SuperAdminScreen() {
                       <Switch
                         checked={isWaitlistActive}
                         onCheckedChange={setIsWaitlistActive}
+                      />
+                    </div>
+                    <Separator />
+                    <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-semibold">Enable Google OAuth Sign-In</Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          Allows users to sign in or sign up using their Google accounts. Super-admin can toggle this off to restrict authentication to email/password only.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={googleAuthEnabled}
+                        onCheckedChange={setGoogleAuthEnabled}
                       />
                     </div>
                     <Separator />
