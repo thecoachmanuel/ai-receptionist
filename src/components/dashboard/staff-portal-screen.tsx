@@ -10,6 +10,7 @@ import {
   Clock,
   Eye,
   FileText,
+  LogOut,
   Mail,
   MapPin,
   Phone,
@@ -36,8 +37,9 @@ import { useAuth } from "@/lib/auth/context";
 import { useWorkspace } from "@/components/dashboard/workspace-context";
 
 export function StaffPortalScreen() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { organization, terminology, userRole, teamMemberId } = useWorkspace();
+  const [signingOut, setSigningOut] = useState(false);
   const bookings = useQuery<any[]>(
     dashboardApi.bookings.listForCurrentOrg,
     organization ? { limit: 200 } : "skip",
@@ -135,6 +137,25 @@ export function StaffPortalScreen() {
     }
   };
 
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    toast.success("Signing out of Staff Portal...");
+    try {
+      await signOut();
+    } catch {
+      toast.error("Failed to sign out.");
+      setSigningOut(false);
+    }
+  };
+
+  const initials = staffName
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+
   return (
     <>
       <ScreenHeader
@@ -142,11 +163,60 @@ export function StaffPortalScreen() {
         title={`Welcome back, ${staffName}`}
         description={`Manage your daily appointment schedule, mark client visits, and view branch locations for ${organization?.name || "your business"}.`}
         action={
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 gap-1.5 py-1 px-3">
-            <ShieldCheck className="size-3.5" /> Staff Dashboard
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 gap-1.5 py-1 px-3 hidden sm:inline-flex">
+              <ShieldCheck className="size-3.5" /> Staff Dashboard
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSignOut}
+              disabled={signingOut}
+              className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive text-xs h-9"
+            >
+              <LogOut className="size-3.5" />
+              {signingOut ? "Signing out..." : "Sign Out"}
+            </Button>
+          </div>
         }
       />
+
+      {/* Staff Identity Card & Account Status Banner */}
+      <Card className="p-4 bg-gradient-to-r from-card via-card to-primary/5 border-black/10 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground font-heading font-bold text-base shadow-sm">
+              {initials || <User className="size-5" />}
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-heading text-base font-semibold text-foreground">{staffName}</h3>
+                <Badge variant="secondary" className="text-[10px] uppercase font-mono tracking-wider bg-primary/10 text-primary border-primary/20">
+                  {userRole === "admin" ? "Business Admin" : userRole === "operator" ? "Staff Operator" : "Staff Member"}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">{staffEmail}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 text-xs text-muted-foreground border-t sm:border-t-0 pt-3 sm:pt-0 border-black/10">
+            <div className="space-y-0.5">
+              <p className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground/70">Assigned Business</p>
+              <p className="font-medium text-foreground truncate max-w-[180px]">{organization?.name || "Business Workspace"}</p>
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleSignOut}
+              disabled={signingOut}
+              className="gap-1.5 text-xs h-8 shrink-0 border border-black/10"
+            >
+              <LogOut className="size-3.5 text-destructive" />
+              <span>{signingOut ? "Signing out..." : "Sign Out"}</span>
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       {/* Staff Overview Stat Cards */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
