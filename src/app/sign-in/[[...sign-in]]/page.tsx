@@ -47,16 +47,11 @@ function SignInForm() {
         throw new Error(data.error || "Sign in failed");
       }
 
-      // Completely wipe any stale memory/storage cache from previous account before entering workspace
+      // Completely wipe any stale memory/storage cache from previous account before entering workspace.
+      // Do NOT write to sessionStorage here — it is unreliable across navigations on mobile browsers
+      // (Safari/Android kill sessionStorage when the tab is backgrounded or navigated away).
+      // The AuthProvider's fetchSession() rehydrates client state from the HTTP-only cookie via /api/auth/me.
       clearAllCache();
-
-      if (typeof window !== "undefined" && data.user && data.organization) {
-        sessionStorage.setItem("oneboard_auth_user", JSON.stringify(data.user));
-        sessionStorage.setItem("oneboard_auth_org", JSON.stringify(data.organization));
-        if (data.permissions) sessionStorage.setItem("oneboard_auth_permissions", JSON.stringify(data.permissions));
-        if (data.role) sessionStorage.setItem("oneboard_auth_role", JSON.stringify(data.role));
-        if (data.isSuperAdmin !== undefined) sessionStorage.setItem("oneboard_auth_is_super_admin", JSON.stringify(Boolean(data.isSuperAdmin)));
-      }
 
       setSuccess("Welcome back! Signed in successfully. Redirecting to workspace...");
       toast.success("Welcome back! Signed in successfully.");
