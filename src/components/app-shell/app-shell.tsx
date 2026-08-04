@@ -61,7 +61,7 @@ type NavItem = {
 
 function navigationFor(
   terminology: Terminology,
-  userRole: "admin" | "operator" | "member" = "admin",
+  userRole: "admin" | "operator" | "member" | "viewer" = "admin",
 ): Array<{ label: string; items: NavItem[] }> {
   const isAdmin = userRole === "admin";
 
