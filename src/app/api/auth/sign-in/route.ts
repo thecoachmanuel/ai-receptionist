@@ -320,6 +320,21 @@ export async function POST(request: NextRequest) {
       ? ["admin:all", "admin:full_control", "org:operations_hub:manage"]
       : ["org:operations_hub:manage"];
 
+    if (!tenantSlug) {
+      const isOwner = targetOrg && (targetOrg as any).createdBy === userIdStr;
+      const isAdmin = userRole === "admin" || isOwner || isSuperAdminEmail;
+
+      if (!isAdmin) {
+        return NextResponse.json(
+          {
+            error:
+              "Access restricted. Only Business Admins can sign in to the Business Admin Dashboard. Staff members must sign in through their business staff portal.",
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     return applySessionCookie(NextResponse.json({
       success: true,
       userId: userIdStr,

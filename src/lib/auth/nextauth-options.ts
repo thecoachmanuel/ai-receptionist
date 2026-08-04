@@ -29,6 +29,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        tenantSlug: { label: "Tenant Slug", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -241,6 +242,19 @@ export const authOptions: NextAuthOptions = {
           permissions = membership.permissions || [];
         }
 
+        // If logging in from the main sign-in page (tenantSlug is NOT provided), restrict to Business Admins
+        const credTenantSlug = (credentials as any)?.tenantSlug;
+        if (!credTenantSlug) {
+          const isOwner = org && (org as any).createdBy === user._id!.toString();
+          const isAdmin = role === "admin" || isOwner || isSuperAdminUser;
+
+          if (!isAdmin) {
+            throw new Error(
+              "Access restricted. Only Business Admins can sign in to the Business Admin Dashboard. Staff members must sign in through their business staff portal."
+            );
+          }
+        }
+
         return {
           id: user._id!.toString(),
           email: user.email,
@@ -299,14 +313,40 @@ export const authOptions: NextAuthOptions = {
           (user as any).isSuperAdmin = false;
         } else {
           user.id = dbUser._id!.toString();
+          const userIdStr = dbUser._id!.toString();
+
+          const adminEmail = (cleanEnv(process.env.ADMIN_EMAIL) || "admin@admin.com").toLowerCase();
+          const isSuperAdmin = email === adminEmail;
+
+          // Restrict Google Sign-In: If user is registered as a non-admin staff member, reject sign-in to admin dashboard
+          if (!isSuperAdmin) {
+            const isOrgOwner = await db.collection("organizations").findOne({ createdBy: userIdStr });
+            if (!isOrgOwner) {
+              const staffMembership = await db.collection("orgMembers").findOne({
+                $or: [{ userId: userIdStr }, { userId: dbUser._id as any }],
+                role: { $in: ["member", "operator"] },
+              }) || await db.collection("organization_members").findOne({
+                userId: userIdStr,
+                role: { $in: ["member", "operator"] },
+              });
+
+              if (staffMembership) {
+                throw new Error(
+                  "Access restricted. Staff accounts cannot sign in via Google to the Business Admin Dashboard. Please sign in with your staff email and password on your business staff portal."
+                );
+              }
+            }
+          }
+
           let activeOrgId = dbUser.activeOrgId;
 
           if (!activeOrgId) {
-            const firstMember = await db.collection("organization_members").findOne({ userId: dbUser._id!.toString() });
+            const firstMember = await db.collection("organization_members").findOne({ userId: userIdStr }) ||
+                                await db.collection("orgMembers").findOne({ userId: userIdStr });
             if (firstMember) {
               activeOrgId = firstMember.organizationId;
             } else {
-              const org = await createOrganizationForUser(dbUser._id!.toString(), `${dbUser.name || "My"} Organization`);
+              const org = await createOrganizationForUser(userIdStr, `${dbUser.name || "My"} Organization`);
               activeOrgId = org._id.toString();
             }
             await db.collection<DbUser>("users").updateOne(
@@ -324,9 +364,6 @@ export const authOptions: NextAuthOptions = {
             ],
           });
           if (org) orgSlug = (org as any).slug;
-
-          const adminEmail = (cleanEnv(process.env.ADMIN_EMAIL) || "admin@admin.com").toLowerCase();
-          const isSuperAdmin = email === adminEmail;
 
           (user as any).activeOrgId = activeOrgId;
           (user as any).orgSlug = orgSlug;
