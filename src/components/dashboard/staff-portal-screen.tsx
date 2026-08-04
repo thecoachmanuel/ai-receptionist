@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { dashboardApi, normalizeBooking, type Booking } from "@/components/dashboard/data";
+import { dashboardApi, normalizeBooking, type Booking, type BookingStatus } from "@/components/dashboard/data";
 import { LoadingPanel, ScreenHeader, StatusBadge } from "@/components/dashboard/screen-kit";
 import { useAuth } from "@/lib/auth/context";
 import { useWorkspace } from "@/components/dashboard/workspace-context";
@@ -118,7 +118,7 @@ export function StaffPortalScreen() {
     });
   }, [myBookings, filter, locations, selectedLocationId]);
 
-  const handleUpdateStatus = async (bookingId: string, newStatus: string) => {
+  const handleUpdateStatus = async (bookingId: string, newStatus: BookingStatus) => {
     try {
       await updateStatus({ bookingId, status: newStatus });
       toast.success(
@@ -137,7 +137,7 @@ export function StaffPortalScreen() {
       <ScreenHeader
         eyebrow="Staff Portal"
         title={`Welcome back, ${staffName}`}
-        description={`Manage your daily appointment schedule, mark client visits, and view branch locations for ${organization.name}.`}
+        description={`Manage your daily appointment schedule, mark client visits, and view branch locations for ${organization?.name || "your business"}.`}
         action={
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 gap-1.5 py-1 px-3">
             <ShieldCheck className="size-3.5" /> Staff Dashboard
@@ -190,7 +190,7 @@ export function StaffPortalScreen() {
             <Building2 className="size-4 text-primary" />
           </div>
           <p className="font-heading text-base font-semibold mt-2 truncate">
-            {organization.name}
+            {organization?.name || "Organization"}
           </p>
           <p className="text-[11px] text-muted-foreground mt-0.5">
             Role: <span className="font-semibold text-foreground capitalize">{userRole}</span>
