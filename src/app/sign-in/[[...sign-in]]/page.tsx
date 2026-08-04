@@ -55,6 +55,7 @@ function SignInForm() {
         sessionStorage.setItem("oneboard_auth_org", JSON.stringify(data.organization));
         if (data.permissions) sessionStorage.setItem("oneboard_auth_permissions", JSON.stringify(data.permissions));
         if (data.role) sessionStorage.setItem("oneboard_auth_role", JSON.stringify(data.role));
+        if (data.isSuperAdmin !== undefined) sessionStorage.setItem("oneboard_auth_is_super_admin", JSON.stringify(Boolean(data.isSuperAdmin)));
       }
 
       setSuccess("Welcome back! Signed in successfully. Redirecting to workspace...");

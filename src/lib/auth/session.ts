@@ -28,6 +28,7 @@ export type ActiveAuthContext = {
   } | null;
   role?: "admin" | "operator" | "member";
   permissions: string[];
+  isSuperAdmin: boolean;
 };
 
 export async function createSession(userId: string, activeOrgId?: string): Promise<string> {
@@ -195,6 +196,7 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
         : null,
       role,
       permissions,
+      isSuperAdmin: isSiteAdmin,
     };
   } catch (error) {
     console.error("Error getting auth session", error);

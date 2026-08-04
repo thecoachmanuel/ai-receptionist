@@ -18,5 +18,6 @@ export async function GET() {
     userOrganizations,
     role: session.role,
     permissions: session.permissions,
+    isSuperAdmin: session.isSuperAdmin,
   });
 }

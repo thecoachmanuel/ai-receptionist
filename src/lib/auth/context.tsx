@@ -43,6 +43,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   role?: string;
   permissions: string[];
+  isSuperAdmin: boolean;
   switchOrganization: (orgIdOrSlug: string) => Promise<void>;
   createOrganization: (name: string) => Promise<{ slug: string }>;
   updatePlan: (plan: "free_org" | "engage" | "voice") => Promise<void>;
@@ -91,6 +92,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return [];
     }
   });
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const stored = sessionStorage.getItem("oneboard_auth_is_super_admin");
+      return stored ? JSON.parse(stored) : false;
+    } catch {
+      return false;
+    }
+  });
   const [isLoaded, setIsLoaded] = useState(() => Boolean(user && organization));
 
   const fetchSession = async () => {
@@ -100,17 +110,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await res.json();
         const freshUser = data.user || null;
         const freshOrg = data.organization || null;
+        const freshIsSuperAdmin = Boolean(data.isSuperAdmin);
+
         setUser(freshUser);
         setOrganization(freshOrg);
         setUserOrganizations(data.userOrganizations || []);
         setRole(data.role);
         setPermissions(data.permissions || []);
+        setIsSuperAdmin(freshIsSuperAdmin);
 
         if (typeof window !== "undefined") {
           if (freshUser) sessionStorage.setItem("oneboard_auth_user", JSON.stringify(freshUser));
           if (freshOrg) sessionStorage.setItem("oneboard_auth_org", JSON.stringify(freshOrg));
           if (data.permissions) sessionStorage.setItem("oneboard_auth_permissions", JSON.stringify(data.permissions));
           if (data.role) sessionStorage.setItem("oneboard_auth_role", JSON.stringify(data.role));
+          sessionStorage.setItem("oneboard_auth_is_super_admin", JSON.stringify(freshIsSuperAdmin));
         }
       } else {
         if (typeof window !== "undefined") {
@@ -118,12 +132,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           sessionStorage.removeItem("oneboard_auth_org");
           sessionStorage.removeItem("oneboard_auth_permissions");
           sessionStorage.removeItem("oneboard_auth_role");
+          sessionStorage.removeItem("oneboard_auth_is_super_admin");
         }
         setUser(null);
         setOrganization(null);
         setUserOrganizations([]);
         setRole(undefined);
         setPermissions([]);
+        setIsSuperAdmin(false);
       }
     } catch (err) {
       console.error("Failed to load auth session", err);
@@ -185,11 +201,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await fetch("/api/auth/sign-out", { method: "POST" });
     } catch {}
     clearAllCache();
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("oneboard_auth_user");
+      sessionStorage.removeItem("oneboard_auth_org");
+      sessionStorage.removeItem("oneboard_auth_permissions");
+      sessionStorage.removeItem("oneboard_auth_role");
+      sessionStorage.removeItem("oneboard_auth_is_super_admin");
+    }
     setUser(null);
     setOrganization(null);
     setUserOrganizations([]);
     setRole(undefined);
     setPermissions([]);
+    setIsSuperAdmin(false);
     setIsLoaded(true);
     router.push("/sign-in");
   };
@@ -239,6 +263,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: Boolean(user),
         role,
         permissions,
+        isSuperAdmin,
         switchOrganization,
         createOrganization,
         updatePlan,

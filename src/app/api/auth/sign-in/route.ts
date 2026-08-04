@@ -272,6 +272,7 @@ export async function POST(request: NextRequest) {
       orgSlug,
       role: userRole,
       permissions,
+      isSuperAdmin: isSuperAdminEmail,
       user: {
         id: userIdStr,
         email: user.email,
