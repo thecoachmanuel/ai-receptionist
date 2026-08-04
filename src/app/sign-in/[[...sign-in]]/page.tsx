@@ -61,10 +61,8 @@ function SignInForm() {
         : data.orgSlug ? `/app/${data.orgSlug}` : "/app";
       const targetUrl = redirectUrl || defaultTarget;
 
-      // Hard-navigate so the browser sends the newly set session cookie with
-      // the very first request to the protected route (goes through middleware).
-      // window.location.replace() is the most reliable approach across all mobile
-      // browsers since router.push() + router.refresh() was causing exceptions.
+      // Small delay to allow mobile WebKit network process to finish flushing Set-Cookie to disk
+      await new Promise((resolve) => setTimeout(resolve, 100));
       window.location.replace(targetUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");

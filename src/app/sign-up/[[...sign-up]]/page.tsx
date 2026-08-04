@@ -43,8 +43,9 @@ export default function SignUpPage() {
         throw new Error(data.error || "Sign up failed");
       }
 
-      router.push(`/app/${data.orgSlug}`);
-      router.refresh();
+      if (typeof window !== "undefined") {
+        window.location.replace(`/app/${data.orgSlug}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign up failed");
     } finally {

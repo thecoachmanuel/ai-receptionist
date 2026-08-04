@@ -79,18 +79,11 @@ export function TenantStaffSignInScreen({
       }
 
       clearAllCache();
-
-      if (typeof window !== "undefined" && data.user && data.organization) {
-        sessionStorage.setItem("oneboard_auth_user", JSON.stringify(data.user));
-        sessionStorage.setItem("oneboard_auth_org", JSON.stringify(data.organization));
-        if (data.permissions) sessionStorage.setItem("oneboard_auth_permissions", JSON.stringify(data.permissions));
-        if (data.role) sessionStorage.setItem("oneboard_auth_role", JSON.stringify(data.role));
-        if (data.isSuperAdmin !== undefined) sessionStorage.setItem("oneboard_auth_is_super_admin", JSON.stringify(Boolean(data.isSuperAdmin)));
-      }
-
       toast.success(`Welcome back to ${businessName} Staff Portal!`);
+
       if (typeof window !== "undefined") {
-        window.location.href = `/${siteSlug}/staff-portal`;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        window.location.replace(`/${siteSlug}/staff-portal`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed.");

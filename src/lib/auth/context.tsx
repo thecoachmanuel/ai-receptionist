@@ -120,19 +120,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsSuperAdmin(freshIsSuperAdmin);
 
         if (typeof window !== "undefined") {
-          if (freshUser) sessionStorage.setItem("oneboard_auth_user", JSON.stringify(freshUser));
-          if (freshOrg) sessionStorage.setItem("oneboard_auth_org", JSON.stringify(freshOrg));
-          if (data.permissions) sessionStorage.setItem("oneboard_auth_permissions", JSON.stringify(data.permissions));
-          if (data.role) sessionStorage.setItem("oneboard_auth_role", JSON.stringify(data.role));
-          sessionStorage.setItem("oneboard_auth_is_super_admin", JSON.stringify(freshIsSuperAdmin));
+          try {
+            if (freshUser) sessionStorage.setItem("oneboard_auth_user", JSON.stringify(freshUser));
+            if (freshOrg) sessionStorage.setItem("oneboard_auth_org", JSON.stringify(freshOrg));
+            if (data.permissions) sessionStorage.setItem("oneboard_auth_permissions", JSON.stringify(data.permissions));
+            if (data.role) sessionStorage.setItem("oneboard_auth_role", JSON.stringify(data.role));
+            sessionStorage.setItem("oneboard_auth_is_super_admin", JSON.stringify(freshIsSuperAdmin));
+          } catch {}
         }
       } else {
         if (typeof window !== "undefined") {
-          sessionStorage.removeItem("oneboard_auth_user");
-          sessionStorage.removeItem("oneboard_auth_org");
-          sessionStorage.removeItem("oneboard_auth_permissions");
-          sessionStorage.removeItem("oneboard_auth_role");
-          sessionStorage.removeItem("oneboard_auth_is_super_admin");
+          try {
+            sessionStorage.removeItem("oneboard_auth_user");
+            sessionStorage.removeItem("oneboard_auth_org");
+            sessionStorage.removeItem("oneboard_auth_permissions");
+            sessionStorage.removeItem("oneboard_auth_role");
+            sessionStorage.removeItem("oneboard_auth_is_super_admin");
+          } catch {}
         }
         setUser(null);
         setOrganization(null);

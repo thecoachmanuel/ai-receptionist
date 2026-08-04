@@ -70,23 +70,36 @@ export async function createSession(userId: string, activeOrgId?: string): Promi
     createdAt: Date.now(),
   });
 
-  // NOTE: Do NOT call cookies().set() here. Cookie must be set on the
-  // NextResponse in the route handler via applySessionCookie() to guarantee
-  // the Set-Cookie header appears in the HTTP response on all mobile browsers.
+  try {
+    const cookieStore = await cookies();
+    cookieStore.set(SESSION_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      expires: new Date(expiresAt),
+    });
+  } catch {
+    // Ignore if cookies() is read-only in current context
+  }
+
   return token;
 }
 
 export async function clearSession(): Promise<void> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-  if (token) {
-    const db = await getDb();
-    await db.collection<DbSession>("sessions").deleteOne({ token });
+    if (token) {
+      const db = await getDb();
+      await db.collection<DbSession>("sessions").deleteOne({ token });
+    }
+
+    cookieStore.delete(SESSION_COOKIE_NAME);
+  } catch {
+    // Ignore if cookies() is read-only in current context
   }
-
-  // NOTE: Cookie deletion must be applied to the NextResponse in the route
-  // handler via clearSessionCookie() — not here — for reliable cross-browser behaviour.
 }
 
 export async function updateActiveOrganization(userId: string, orgId: string): Promise<void> {
