@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
 import {
+  Building2,
   CalendarDays,
   CalendarPlus,
   Eye,
@@ -318,10 +319,10 @@ function BookingDetailDialog({
             </div>
           </div>
 
-          {/* Schedule & Staff */}
+          {/* Schedule, Staff & Branch Location */}
           <div className="rounded-xl border bg-muted/30 p-4 space-y-2">
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Schedule & Staff
+              Schedule & Location
             </h4>
             <div className="grid gap-3 sm:grid-cols-2 pt-1">
               <div>
@@ -334,6 +335,20 @@ function BookingDetailDialog({
                 <span className="text-[11px] text-muted-foreground block">Assigned {terminology.teamMember}</span>
                 <span className="font-medium text-foreground">{booking.teamMemberName || "Unassigned"}</span>
               </div>
+              {(booking.locationName || booking.location) && (
+                <div className="sm:col-span-2 pt-2 border-t mt-1">
+                  <span className="text-[11px] text-muted-foreground block">Branch Location</span>
+                  <div className="mt-1 flex items-start gap-2 rounded-lg bg-background p-2.5 border">
+                    <Building2 className="size-4 shrink-0 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-xs text-foreground">{booking.locationName || booking.location?.name}</p>
+                      {booking.location?.address && (
+                        <p className="text-[11px] text-muted-foreground">{booking.location.address}, {booking.location.city}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -387,8 +402,13 @@ export function BookingsScreen() {
     dashboardApi.bookings.listForCurrentOrg,
     organization ? { limit: 200 } : "skip",
   );
+  const locations = useQuery<any[]>(
+    dashboardApi.locations.list,
+    organization ? { includeInactive: false } : "skip",
+  );
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
   const [displayMode, setDisplayMode] = useState<"calendar" | "table">("calendar");
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
@@ -399,9 +419,14 @@ export function BookingsScreen() {
 
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
+    const selectedLocationName = locations?.find((l: any) => l._id === locationFilter)?.name;
+
     return normalizedBookings.filter((booking: any) => {
       const statusMatches =
         statusFilter === "all" || booking.status === statusFilter;
+      const locationMatches =
+        locationFilter === "all" ||
+        (selectedLocationName && booking.locationName === selectedLocationName);
       const queryMatches =
         !normalizedQuery ||
         [
@@ -412,9 +437,9 @@ export function BookingsScreen() {
           booking.teamMemberName,
           booking.locationName,
         ].some((value) => value?.toLowerCase().includes(normalizedQuery));
-      return statusMatches && queryMatches;
+      return statusMatches && locationMatches && queryMatches;
     });
-  }, [normalizedBookings, query, statusFilter]);
+  }, [locations, locationFilter, normalizedBookings, query, statusFilter]);
 
   return (
     <>
@@ -440,6 +465,21 @@ export function BookingsScreen() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <SlidersHorizontal className="size-4 text-muted-foreground" />
+              {locations && locations.length > 0 && (
+                <Select value={locationFilter} onValueChange={setLocationFilter}>
+                  <SelectTrigger className="w-full min-w-36 sm:w-auto">
+                    <SelectValue placeholder="All Branches" />
+                  </SelectTrigger>
+                  <SelectContent align="end">
+                    <SelectItem value="all">All Branches</SelectItem>
+                    {locations.map((loc: any) => (
+                      <SelectItem key={loc._id} value={loc._id}>
+                        {loc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full min-w-36 sm:w-auto">
                   <SelectValue />

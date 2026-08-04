@@ -949,6 +949,15 @@ export function BookingFlow({
                         )}
                       </dd>
                     </div>
+                    {selectedLocation ? (
+                      <div className="sm:col-span-2 pt-2 border-t mt-1">
+                        <dt className="text-xs text-muted-foreground">Branch Location</dt>
+                        <dd className="mt-1 font-semibold text-foreground flex items-center gap-1.5">
+                          <MapPin className="size-4 text-primary shrink-0" />
+                          {selectedLocation.name} ({selectedLocation.address}, {selectedLocation.city})
+                        </dd>
+                      </div>
+                    ) : null}
                   </dl>
                 </div>
 

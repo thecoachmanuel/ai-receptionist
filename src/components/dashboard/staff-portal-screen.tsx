@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { format, isSameDay } from "date-fns";
-import { CalendarCheck2, Clock, CheckCircle2, AlertCircle, User, ShieldAlert } from "lucide-react";
+import { CalendarCheck2, Clock, CheckCircle2, AlertCircle, User, ShieldAlert, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
 import { Badge } from "@/components/ui/badge";
@@ -20,9 +20,14 @@ export function StaffPortalScreen() {
     dashboardApi.bookings.listForCurrentOrg,
     organization ? { limit: 200 } : "skip",
   );
+  const locations = useQuery<any[]>(
+    dashboardApi.locations.list,
+    organization ? { includeInactive: false } : "skip",
+  );
   const updateStatus = useMutation("bookings/updateStatus");
 
   const [filter, setFilter] = useState<"today" | "upcoming" | "all">("today");
+  const [selectedLocationId, setSelectedLocationId] = useState("all");
 
   const myBookings = useMemo(() => {
     if (!bookings) return [];
@@ -49,14 +54,23 @@ export function StaffPortalScreen() {
 
   const filteredBookings = useMemo(() => {
     const now = new Date();
-    if (filter === "today") {
-      return myBookings.filter((b) => isSameDay(new Date(b.startAt), now));
-    }
-    if (filter === "upcoming") {
-      return myBookings.filter((b) => b.startAt >= Date.now());
-    }
-    return myBookings;
-  }, [myBookings, filter]);
+    const selectedLocationName = locations?.find((l: any) => l._id === selectedLocationId)?.name;
+
+    return myBookings.filter((b) => {
+      const dateMatches =
+        filter === "today"
+          ? isSameDay(new Date(b.startAt), now)
+          : filter === "upcoming"
+          ? b.startAt >= Date.now()
+          : true;
+
+      const locationMatches =
+        selectedLocationId === "all" ||
+        (selectedLocationName && b.locationName === selectedLocationName);
+
+      return dateMatches && locationMatches;
+    });
+  }, [myBookings, filter, locations, selectedLocationId]);
 
   const handleUpdateStatus = async (bookingId: string, newStatus: string) => {
     try {
@@ -80,20 +94,40 @@ export function StaffPortalScreen() {
         }
       />
 
-      <div className="flex items-center gap-2 border-b pb-3 text-xs font-medium">
-        {(["today", "upcoming", "all"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setFilter(tab)}
-            className={`rounded-full px-3 py-1 capitalize transition ${
-              filter === tab
-                ? "bg-primary text-primary-foreground font-semibold"
-                : "bg-muted text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab === "today" ? "Today's Schedule" : tab}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3 text-xs font-medium">
+        <div className="flex items-center gap-2">
+          {(["today", "upcoming", "all"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setFilter(tab)}
+              className={`rounded-full px-3 py-1 capitalize transition ${
+                filter === tab
+                  ? "bg-primary text-primary-foreground font-semibold"
+                  : "bg-muted text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab === "today" ? "Today's Schedule" : tab}
+            </button>
+          ))}
+        </div>
+
+        {locations && locations.length > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border bg-background px-2.5 py-1 text-xs">
+            <Building2 className="size-3.5 text-primary" />
+            <select
+              value={selectedLocationId}
+              onChange={(e) => setSelectedLocationId(e.target.value)}
+              className="bg-transparent font-medium outline-none cursor-pointer text-foreground text-xs"
+            >
+              <option value="all">All Branch Locations</option>
+              {locations.map((loc: any) => (
+                <option key={loc._id} value={loc._id}>
+                  {loc.name} ({loc.city})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {!bookings ? (
@@ -130,6 +164,15 @@ export function StaffPortalScreen() {
                     <span>Code:</span>
                     <span className="font-semibold text-primary">{b.confirmationCode}</span>
                   </div>
+                  {b.locationName && (
+                    <div className="flex items-center justify-between text-muted-foreground pt-1.5 border-t border-black/5">
+                      <span>Branch:</span>
+                      <span className="font-semibold text-primary flex items-center gap-1">
+                        <Building2 className="size-3" />
+                        {b.locationName}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {b.contactPhone && (

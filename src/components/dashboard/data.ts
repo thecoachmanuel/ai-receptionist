@@ -76,6 +76,7 @@ export type Booking = {
   contactEmail?: string;
   contactPhone?: string;
   locationName?: string;
+  location?: { name: string; address: string; city: string };
   offeringName: string;
   teamMemberName?: string;
   priceCents?: number;
@@ -333,6 +334,7 @@ export function normalizeBooking(booking: RawBooking): Booking {
     contactEmail: booking.customer.email,
     contactPhone: booking.customer.phone,
     locationName: booking.location?.name,
+    location: booking.location,
     offeringName: booking.offering.name,
     teamMemberName: booking.teamMember.name,
     priceCents: booking.offering.priceMinor,
