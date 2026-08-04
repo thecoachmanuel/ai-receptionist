@@ -111,6 +111,12 @@ export async function POST(
         return NextResponse.json(orgs);
       }
       case "organizations/create": {
+        if (session.role === "member" || session.role === "operator") {
+          return NextResponse.json(
+            { error: "Forbidden: Staff members are not permitted to create organizations." },
+            { status: 403 },
+          );
+        }
         const created = await organizationsService.createOrganization(
           session.user.id,
           body.name,

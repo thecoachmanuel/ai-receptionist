@@ -34,7 +34,8 @@ export function OrganizationSwitcher({
   afterSelectOrganizationUrl?: string;
   appearance?: any;
 }) {
-  const { organization, userOrganizations, switchOrganization, createOrganization } = useAuth();
+  const { organization, userOrganizations, switchOrganization, createOrganization, role } = useAuth();
+  const isStaff = role === "member" || role === "operator";
   const [createOpen, setCreateOpen] = useState(false);
   const [newOrgName, setNewOrgName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -46,6 +47,7 @@ export function OrganizationSwitcher({
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isStaff) return;
     if (!newOrgName.trim()) return;
     setIsCreating(true);
     try {
@@ -100,11 +102,15 @@ export function OrganizationSwitcher({
               </DropdownMenuItem>
             );
           })}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setCreateOpen(true)} className="cursor-pointer text-primary">
-            <Plus className="mr-2 size-4" />
-            <span className="text-xs font-medium">Create organization</span>
-          </DropdownMenuItem>
+          {!isStaff && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setCreateOpen(true)} className="cursor-pointer text-primary">
+                <Plus className="mr-2 size-4" />
+                <span className="text-xs font-medium">Create organization</span>
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -150,12 +156,14 @@ export function OrganizationList({
   afterSelectOrganizationUrl,
   appearance,
 }: any) {
-  const { userOrganizations, switchOrganization, createOrganization } = useAuth();
+  const { userOrganizations, switchOrganization, createOrganization, role } = useAuth();
+  const isStaff = role === "member" || role === "operator";
   const [newOrgName, setNewOrgName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isStaff) return;
     if (!newOrgName.trim()) return;
     setIsCreating(true);
     try {
@@ -195,22 +203,24 @@ export function OrganizationList({
         </div>
       )}
 
-      <form onSubmit={handleCreate} className="space-y-4 rounded-xl border bg-white p-5">
-        <p className="font-heading text-lg font-semibold">Create a new organization</p>
-        <div className="space-y-2">
-          <Label htmlFor="list-org-name">Organization name</Label>
-          <Input
-            id="list-org-name"
-            placeholder="e.g. Oneboard Barbershop"
-            value={newOrgName}
-            onChange={(e) => setNewOrgName(e.target.value)}
-            required
-          />
-        </div>
-        <Button type="submit" className="w-full" disabled={isCreating}>
-          {isCreating ? "Creating workspace..." : "Create organization"}
-        </Button>
-      </form>
+      {!isStaff && (
+        <form onSubmit={handleCreate} className="space-y-4 rounded-xl border bg-white p-5">
+          <p className="font-heading text-lg font-semibold">Create a new organization</p>
+          <div className="space-y-2">
+            <Label htmlFor="list-org-name">Organization name</Label>
+            <Input
+              id="list-org-name"
+              placeholder="e.g. Oneboard Barbershop"
+              value={newOrgName}
+              onChange={(e) => setNewOrgName(e.target.value)}
+              required
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={isCreating}>
+            {isCreating ? "Creating workspace..." : "Create organization"}
+          </Button>
+        </form>
+      )}
     </div>
   );
 }
