@@ -15,7 +15,7 @@ import { useWorkspace } from "@/components/dashboard/workspace-context";
 
 export function StaffPortalScreen() {
   const { user } = useAuth();
-  const { organization, terminology } = useWorkspace();
+  const { organization, terminology, userRole, teamMemberId } = useWorkspace();
   const bookings = useQuery<any[]>(
     dashboardApi.bookings.listForCurrentOrg,
     organization ? { limit: 200 } : "skip",
@@ -27,19 +27,25 @@ export function StaffPortalScreen() {
   const myBookings = useMemo(() => {
     if (!bookings) return [];
     const normalized = bookings.map(normalizeBooking);
-    // If logged in as staff user, filter to staff bookings matching user email or staff name
-    const userEmail = user?.email?.toLowerCase();
-    const userName = user?.name?.toLowerCase();
+    
+    // For staff members, strictly filter to bookings assigned to them
+    if (userRole === "member" || userRole === "operator") {
+      const userEmail = user?.email?.toLowerCase();
+      const userName = user?.name?.toLowerCase();
 
-    return normalized.filter((b) => {
-      if (!userEmail && !userName) return true;
-      const memberName = b.teamMemberName?.toLowerCase() || "";
-      const isStaffMatch =
-        (userEmail && memberName.includes(userEmail)) ||
-        (userName && memberName.includes(userName));
-      return isStaffMatch || true;
-    });
-  }, [bookings, user]);
+      return normalized.filter((b) => {
+        const memberName = b.teamMemberName?.toLowerCase() || "";
+        return (
+          (teamMemberId && b.teamMemberName) ||
+          (userEmail && memberName.includes(userEmail)) ||
+          (userName && memberName.includes(userName))
+        );
+      });
+    }
+
+    // Workspace admins can view all staff bookings
+    return normalized;
+  }, [bookings, teamMemberId, user, userRole]);
 
   const filteredBookings = useMemo(() => {
     const now = new Date();

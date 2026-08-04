@@ -29,7 +29,8 @@ export type Organization = {
   locale: string;
   currency: string;
   terminology: BackendTerminology;
-  role?: string;
+  role?: "admin" | "operator" | "member";
+  teamMemberId?: string;
   createdAt?: number;
   updatedAt?: number;
 };

@@ -61,50 +61,58 @@ type NavItem = {
 
 function navigationFor(
   terminology: Terminology,
+  userRole: "admin" | "operator" | "member" = "admin",
 ): Array<{ label: string; items: NavItem[] }> {
-  return [
+  const isAdmin = userRole === "admin";
+
+  const operateItems: NavItem[] = [
+    { label: "Overview", segment: "", icon: LayoutDashboard },
     {
-      label: "Operate",
-      items: [
-        { label: "Overview", segment: "", icon: LayoutDashboard },
-        {
-          label: terminology.bookingPlural,
-          segment: "bookings",
-          icon: CalendarDays,
-        },
-        {
-          label: "Staff Portal",
-          segment: "staff-portal",
-          icon: UsersRound,
-        },
-        {
-          label: terminology.offeringPlural,
-          segment: "offerings",
-          icon: CircleDollarSign,
-        },
-        {
-          label: terminology.teamMemberPlural,
-          segment: "team",
-          icon: UsersRound,
-        },
-        { label: "Branches", segment: "locations", icon: Building2 },
-        { label: "Availability", segment: "availability", icon: Clock3 },
-      ],
+      label: "Staff Portal",
+      segment: "staff-portal",
+      icon: UsersRound,
     },
     {
-      label: "Experience",
-      items: [
-        { label: "AI Agent", segment: "voice-agent", icon: Bot },
-        { label: "Public Site", segment: "public-site", icon: PanelsTopLeft },
-      ],
+      label: terminology.bookingPlural,
+      segment: "bookings",
+      icon: CalendarDays,
     },
     {
-      label: "Workspace",
-      items: [
+      label: terminology.offeringPlural,
+      segment: "offerings",
+      icon: CircleDollarSign,
+    },
+    ...(isAdmin
+      ? [
+          {
+            label: terminology.teamMemberPlural,
+            segment: "team",
+            icon: UsersRound,
+          },
+        ]
+      : []),
+    { label: "Branches", segment: "locations", icon: Building2 },
+    { label: "Availability", segment: "availability", icon: Clock3 },
+  ];
+
+  const experienceItems: NavItem[] = [
+    { label: "AI Agent", segment: "voice-agent", icon: Bot },
+    { label: "Public Site", segment: "public-site", icon: PanelsTopLeft },
+  ];
+
+  const workspaceItems: NavItem[] = isAdmin
+    ? [
         { label: "Billing", segment: "billing", icon: CreditCard },
         { label: "Settings", segment: "settings", icon: Settings2 },
-      ],
-    },
+      ]
+    : [];
+
+  return [
+    { label: "Operate", items: operateItems },
+    { label: "Experience", items: experienceItems },
+    ...(workspaceItems.length > 0
+      ? [{ label: "Workspace", items: workspaceItems }]
+      : []),
   ];
 }
 
@@ -200,12 +208,12 @@ function ShellChrome({
   orgSlug: string;
 }) {
   const pathname = usePathname();
-  const { organization, isBootstrapping, terminology } = useWorkspace();
+  const { organization, isBootstrapping, terminology, userRole } = useWorkspace();
   const publicSite = useQuery<any>(
     dashboardApi.publicSite.getCurrentDraft,
     organization ? {} : "skip",
   );
-  const navigation = useMemo(() => navigationFor(terminology), [terminology]);
+  const navigation = useMemo(() => navigationFor(terminology, userRole), [terminology, userRole]);
   const routeLabels = Object.fromEntries(
     navigation.flatMap((section) =>
       section.items.map((item) => [item.segment, item.label]),

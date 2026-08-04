@@ -23,6 +23,8 @@ type WorkspaceContextValue = {
   orgSlug: string;
   organization: Organization | null;
   terminology: Terminology;
+  userRole: "admin" | "operator" | "member";
+  teamMemberId?: string;
   isBootstrapping: boolean;
 };
 
@@ -87,14 +89,19 @@ export function WorkspaceProvider({
     return lastKnownTerminology.current;
   }, [organization?.terminology, activeOrg?.terminology]);
 
+  const userRole = (organization?.role || (activeOrg as any)?.role || "admin") as "admin" | "operator" | "member";
+  const teamMemberId = organization?.teamMemberId || (activeOrg as any)?.teamMemberId;
+
   const value = useMemo<WorkspaceContextValue>(
     () => ({
       orgSlug,
       organization,
       terminology,
+      userRole,
+      teamMemberId,
       isBootstrapping: (!isLoaded && organization === null) || isCreating,
     }),
-    [isCreating, isLoaded, organization, orgSlug, terminology],
+    [isCreating, isLoaded, organization, orgSlug, teamMemberId, terminology, userRole],
   );
 
   return (
