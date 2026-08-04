@@ -203,6 +203,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     const currentOrgSlug = organization?.slug;
     const isStaffUser = role === "member" || role === "operator";
+    const isStaffPath = typeof window !== "undefined" && (
+      window.location.pathname.includes("/staff-portal") ||
+      window.location.pathname.includes("/staff")
+    );
 
     try {
       const { signOut: nextAuthSignOut } = await import("next-auth/react");
@@ -213,11 +217,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {}
     clearAllCache();
     if (typeof window !== "undefined") {
-      sessionStorage.removeItem("oneboard_auth_user");
-      sessionStorage.removeItem("oneboard_auth_org");
-      sessionStorage.removeItem("oneboard_auth_permissions");
-      sessionStorage.removeItem("oneboard_auth_role");
-      sessionStorage.removeItem("oneboard_auth_is_super_admin");
+      try {
+        sessionStorage.removeItem("oneboard_auth_user");
+        sessionStorage.removeItem("oneboard_auth_org");
+        sessionStorage.removeItem("oneboard_auth_permissions");
+        sessionStorage.removeItem("oneboard_auth_role");
+        sessionStorage.removeItem("oneboard_auth_is_super_admin");
+      } catch {}
     }
     setUser(null);
     setOrganization(null);
@@ -227,10 +233,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSuperAdmin(false);
     setIsLoaded(true);
 
-    if (isStaffUser && currentOrgSlug) {
-      router.push(`/${currentOrgSlug}/staff-portal`);
+    const targetUrl = (isStaffUser || isStaffPath) && currentOrgSlug
+      ? `/${currentOrgSlug}/staff-portal`
+      : "/sign-in";
+
+    if (typeof window !== "undefined") {
+      window.location.replace(targetUrl);
     } else {
-      router.push("/sign-in");
+      router.push(targetUrl);
     }
   };
 
