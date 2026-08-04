@@ -292,9 +292,10 @@ export const authOptions: NextAuthOptions = {
             email,
             name: profile?.name || user.name || "Google User",
             avatarUrl: user.image || (profile as any)?.picture || "",
+            isOnboarded: false,
             createdAt: now,
             updatedAt: now,
-          });
+          } as any);
 
           const userId = insertResult.insertedId.toString();
           const org = await createOrganizationForUser(userId, `${profile?.name || "My"} Organization`);
@@ -371,6 +372,8 @@ export const authOptions: NextAuthOptions = {
           (user as any).role = isSuperAdmin ? "admin" : "admin";
           (user as any).permissions = isSuperAdmin ? ["admin:all"] : [];
           (user as any).isSuperAdmin = isSuperAdmin;
+          // If user hasn't completed onboarding, flag as new Google user so they complete onboarding
+          (user as any).isNewGoogleUser = (dbUser as any).isOnboarded === false;
         }
       }
 
@@ -387,9 +390,7 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role;
         token.permissions = (user as any).permissions;
         token.isSuperAdmin = (user as any).isSuperAdmin;
-        if ((user as any).isNewGoogleUser) {
-          token.isNewGoogleUser = true;
-        }
+        token.isNewGoogleUser = (user as any).isNewGoogleUser ?? false;
       }
 
       if (trigger === "update" && session) {

@@ -85,6 +85,20 @@ export async function POST(request: NextRequest) {
       }
     );
 
+    // Mark user as onboarded in DB
+    const userIdStr = (session.user as any)?.id;
+    if (userIdStr) {
+      await db.collection("users").updateOne(
+        {
+          $or: [
+            { _id: userIdStr as any },
+            ...(ObjectId.isValid(userIdStr) ? [{ _id: new ObjectId(userIdStr) }] : []),
+          ],
+        },
+        { $set: { isOnboarded: true, updatedAt: Date.now() } }
+      );
+    }
+
     return NextResponse.json({ success: true, slug: finalSlug, businessName: businessName.trim() });
   } catch (err) {
     console.error("[onboarding/complete]", err);
