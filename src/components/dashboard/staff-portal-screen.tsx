@@ -41,6 +41,7 @@ export function StaffPortalScreen() {
   const bookings = useQuery<any[]>(
     dashboardApi.bookings.listForCurrentOrg,
     organization ? { limit: 200 } : "skip",
+    { interval: 5000 },
   );
   const locations = useQuery<any[]>(
     dashboardApi.locations.list,
@@ -66,10 +67,12 @@ export function StaffPortalScreen() {
 
       return normalized.filter((b) => {
         const memberName = b.teamMemberName?.toLowerCase() || "";
+        const bMemberId = (b as any).teamMemberId || (b as any).teamMember?._id || (b as any).teamMember?.id;
         return (
-          (teamMemberId && b.teamMemberName) ||
+          (teamMemberId && bMemberId === teamMemberId) ||
           (userEmailLower && memberName.includes(userEmailLower)) ||
-          (userNameLower && memberName.includes(userNameLower))
+          (userNameLower && memberName.includes(userNameLower)) ||
+          !b.teamMemberName // Include unassigned bookings so staff can see pending organization requests
         );
       });
     }

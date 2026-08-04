@@ -94,7 +94,7 @@ export async function POST(
       );
       if (!isAuthorized) {
         return NextResponse.json(
-          { error: "Forbidden: You are authorized to access and modify only organizations you created." },
+          { error: "Forbidden: You are not a member of this organization." },
           { status: 403 },
         );
       }

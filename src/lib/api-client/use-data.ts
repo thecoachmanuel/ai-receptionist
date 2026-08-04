@@ -69,7 +69,7 @@ export function clearAllCache() {
 export function useQuery<T>(
   endpoint: string,
   args: Record<string, unknown> | "skip" = {},
-  options?: { initialData?: T },
+  options?: { initialData?: T; interval?: number },
 ) {
   const cacheKey = getCacheKey(endpoint, args);
   
@@ -117,6 +117,15 @@ export function useQuery<T>(
       setError(err instanceof Error ? err : new Error(String(err)));
     }
   }, [endpoint, cacheKey, args]);
+
+  // Optional interval auto-polling
+  useEffect(() => {
+    if (!options?.interval || args === "skip" || !cacheKey) return;
+    const timer = setInterval(() => {
+      void fetcher(true);
+    }, options.interval);
+    return () => clearInterval(timer);
+  }, [args, cacheKey, fetcher, options?.interval]);
 
   useEffect(() => {
     void fetcher(false);

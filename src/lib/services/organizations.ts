@@ -351,7 +351,7 @@ export async function isUserAuthorizedForOrg(userId: string, orgId: string): Pro
     $or: [{ userId: userIdStr }, { userId: userId }, { userId: userObjectId as any }],
   });
 
-  return Boolean(member && (member.role === "admin" || member.role === "operator"));
+  return Boolean(member && (member.role === "admin" || member.role === "operator" || member.role === "member"));
 }
 
 export { getUserOrganizations as listUserOrganizations };

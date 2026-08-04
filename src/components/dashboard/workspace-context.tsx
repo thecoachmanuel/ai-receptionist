@@ -89,7 +89,8 @@ export function WorkspaceProvider({
     return lastKnownTerminology.current;
   }, [organization?.terminology, activeOrg?.terminology]);
 
-  const userRole = (organization?.role || (activeOrg as any)?.role || "admin") as "admin" | "operator" | "member" | "viewer";
+  const { role: authRole } = useAuth();
+  const userRole = (organization?.role || (activeOrg as any)?.role || authRole || "member") as "admin" | "operator" | "member" | "viewer";
   const teamMemberId = organization?.teamMemberId || (activeOrg as any)?.teamMemberId;
 
   const value = useMemo<WorkspaceContextValue>(
