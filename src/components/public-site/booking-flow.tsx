@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Clock3,
   Mail,
+  MapPin,
   Phone,
   RefreshCcw,
   Sparkles,
