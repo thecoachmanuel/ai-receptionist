@@ -95,6 +95,7 @@ export type Offering = {
   priceMinor: number;
   currency: string;
   capacity: number;
+  locationIds?: string[];
   active: boolean;
   bookableOnline: boolean;
   createdAt: number;
@@ -110,6 +111,7 @@ export type TeamMember = {
   bio: string;
   imageUrl?: string;
   offeringIds: string[];
+  locationIds?: string[];
   active: boolean;
   acceptingBookings: boolean;
   sortOrder: number;
