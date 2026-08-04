@@ -4,11 +4,22 @@ import type { DbOffering } from "@/lib/db/types";
 import { slugify } from "@/lib/defaults";
 import { boundedInteger, optionalTrimmed, requiredTrimmed } from "@/lib/validation";
 
-export async function listOfferings(orgId: string, includeInactive = false) {
+export async function listOfferings(
+  orgId: string,
+  includeInactive = false,
+  locationId?: string,
+) {
   const db = await getDb();
   const filter: Record<string, unknown> = { organizationId: orgId };
   if (!includeInactive) {
     filter.active = true;
+  }
+  if (locationId) {
+    filter.$or = [
+      { locationIds: locationId },
+      { locationIds: { $exists: false } },
+      { locationIds: { $size: 0 } },
+    ];
   }
 
   const offerings = await db
@@ -29,6 +40,7 @@ export async function listOfferings(orgId: string, includeInactive = false) {
     priceMinor: o.priceMinor,
     currency: o.currency,
     capacity: o.capacity,
+    locationIds: o.locationIds || [],
     active: o.active,
     bookableOnline: o.bookableOnline,
     createdAt: o.createdAt,
@@ -48,6 +60,7 @@ export async function createOffering(
     bufferAfterMinutes?: number;
     priceMinor: number;
     capacity?: number;
+    locationIds?: string[];
     active?: boolean;
     bookableOnline?: boolean;
   },
@@ -75,6 +88,7 @@ export async function createOffering(
     priceMinor: boundedInteger(args.priceMinor, "priceMinor", 0, 100_000_000),
     currency,
     capacity: boundedInteger(args.capacity ?? 1, "capacity", 1, 500),
+    locationIds: args.locationIds || [],
     active: args.active ?? true,
     bookableOnline: args.bookableOnline ?? true,
     createdAt: now,
@@ -100,6 +114,7 @@ export async function updateOffering(
     bufferAfterMinutes?: number;
     priceMinor?: number;
     capacity?: number;
+    locationIds?: string[];
     active?: boolean;
     bookableOnline?: boolean;
   },
@@ -121,6 +136,7 @@ export async function updateOffering(
   if (args.bufferAfterMinutes !== undefined) updates.bufferAfterMinutes = boundedInteger(args.bufferAfterMinutes, "bufferAfterMinutes", 0, 240);
   if (args.priceMinor !== undefined) updates.priceMinor = boundedInteger(args.priceMinor, "priceMinor", 0, 100_000_000);
   if (args.capacity !== undefined) updates.capacity = boundedInteger(args.capacity, "capacity", 1, 500);
+  if (args.locationIds !== undefined) updates.locationIds = args.locationIds;
   if (args.active !== undefined) updates.active = args.active;
   if (args.bookableOnline !== undefined) updates.bookableOnline = args.bookableOnline;
 

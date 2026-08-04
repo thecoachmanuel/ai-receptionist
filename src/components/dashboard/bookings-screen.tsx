@@ -68,9 +68,13 @@ const statuses: BookingStatus[] = [
 ];
 
 function CreateBookingDialog() {
-  const { terminology } = useWorkspace();
+  const { organization, terminology } = useWorkspace();
   const offerings = useQuery<any>(dashboardApi.catalog.listOfferings, {});
   const members = useQuery<any>(dashboardApi.team.listMembers, {});
+  const locations = useQuery<any[]>(
+    dashboardApi.locations.list,
+    organization ? { includeInactive: false } : "skip",
+  );
   const createBooking = useMutation(
     dashboardApi.bookings.createForCurrentOrg,
   );
@@ -78,6 +82,7 @@ function CreateBookingDialog() {
   const [pending, setPending] = useState(false);
   const [offeringId, setOfferingId] = useState("");
   const [memberId, setMemberId] = useState("unassigned");
+  const [locationId, setLocationId] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -90,6 +95,7 @@ function CreateBookingDialog() {
       await createBooking({
         offeringId,
         teamMemberId: memberId === "unassigned" ? undefined : memberId,
+        locationId: locationId || undefined,
         startAt: new Date(startValue).getTime(),
         customer: {
           name: String(form.get("contactName") ?? "").trim(),
@@ -102,6 +108,7 @@ function CreateBookingDialog() {
       setOpen(false);
       setOfferingId("");
       setMemberId("unassigned");
+      setLocationId("");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : `Could not create ${terminology.booking.toLowerCase()}`,
@@ -130,6 +137,23 @@ function CreateBookingDialog() {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
+            {locations && locations.length > 0 && (
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label>Branch Location</Label>
+                <Select value={locationId} onValueChange={setLocationId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Branch Location (Optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((loc: any) => (
+                      <SelectItem key={loc._id} value={loc._id}>
+                        {loc.name} ({loc.city})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="contactName">{terminology.customer} name</Label>
               <Input id="contactName" name="contactName" required autoFocus />
@@ -386,6 +410,7 @@ export function BookingsScreen() {
           booking.contactPhone,
           booking.offeringName,
           booking.teamMemberName,
+          booking.locationName,
         ].some((value) => value?.toLowerCase().includes(normalizedQuery));
       return statusMatches && queryMatches;
     });

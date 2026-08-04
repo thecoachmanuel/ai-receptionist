@@ -47,16 +47,23 @@ function initials(name: string) {
 }
 
 function MemberDialog({ member }: { member?: TeamMember }) {
-  const { terminology } = useWorkspace();
+  const { organization, terminology } = useWorkspace();
   const createMember = useMutation(dashboardApi.team.createMember);
   const updateMember = useMutation(dashboardApi.team.updateMember);
   const offerings = useQuery<any>(dashboardApi.catalog.listOfferings, {});
+  const locations = useQuery<any[]>(
+    dashboardApi.locations.list,
+    organization ? { includeInactive: false } : "skip",
+  );
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [active, setActive] = useState(member?.active ?? true);
   const [bookable, setBookable] = useState(member?.acceptingBookings ?? true);
   const [offeringIds, setOfferingIds] = useState<string[]>(
     member?.offeringIds ?? [],
+  );
+  const [locationIds, setLocationIds] = useState<string[]>(
+    member?.locationIds ?? [],
   );
   const [imageUrl, setImageUrl] = useState(member?.imageUrl || "");
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -113,6 +120,7 @@ function MemberDialog({ member }: { member?: TeamMember }) {
       active,
       acceptingBookings: bookable,
       offeringIds,
+      locationIds,
     };
 
     setPending(true);
@@ -223,6 +231,38 @@ function MemberDialog({ member }: { member?: TeamMember }) {
                 placeholder="Expertise, languages, or the kinds of requests they handle."
               />
             </div>
+
+            {locations && locations.length > 0 && (
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Assigned Branch Locations</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select which branch locations this team member works at. Uncheck all for <strong>All Branches</strong>.
+                </p>
+                <div className="grid max-h-36 gap-2 overflow-y-auto rounded-lg border border-black/10 bg-muted/20 p-3 sm:grid-cols-2">
+                  {locations.map((loc: any) => (
+                    <label
+                      key={loc._id}
+                      className="flex cursor-pointer items-center gap-2 rounded-md bg-white p-2 text-xs ring-1 ring-black/8"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={locationIds.includes(loc._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setLocationIds([...locationIds, loc._id]);
+                          } else {
+                            setLocationIds(locationIds.filter((id) => id !== loc._id));
+                          }
+                        }}
+                        className="size-4 rounded border-gray-300 text-primary"
+                      />
+                      <span className="truncate font-medium">{loc.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2 sm:col-span-2">
               <Label>{terminology.offeringPlural}</Label>
               <div className="grid max-h-40 gap-2 overflow-y-auto rounded-lg border border-black/10 bg-muted/20 p-3 sm:grid-cols-2">

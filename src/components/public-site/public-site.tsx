@@ -515,6 +515,7 @@ export function PublicSite({
           <BookingFlow
             siteSlug={siteSlug}
             businessName={config.businessName}
+            locations={data.locations}
             offerings={offerings}
             teamMembers={teamMembers}
             terminology={terminology}

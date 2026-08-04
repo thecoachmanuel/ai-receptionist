@@ -3,11 +3,22 @@ import { getDb } from "@/lib/db/mongodb";
 import type { DbTeamMember } from "@/lib/db/types";
 import { boundedInteger, normalizedEmail, normalizedPhone, optionalTrimmed, requiredTrimmed } from "@/lib/validation";
 
-export async function listMembers(orgId: string, includeInactive = false) {
+export async function listMembers(
+  orgId: string,
+  includeInactive = false,
+  locationId?: string,
+) {
   const db = await getDb();
   const filter: Record<string, unknown> = { organizationId: orgId };
   if (!includeInactive) {
     filter.active = true;
+  }
+  if (locationId) {
+    filter.$or = [
+      { locationIds: locationId },
+      { locationIds: { $exists: false } },
+      { locationIds: { $size: 0 } },
+    ];
   }
 
   const members = await db
@@ -25,6 +36,7 @@ export async function listMembers(orgId: string, includeInactive = false) {
     bio: m.bio,
     imageUrl: m.imageUrl,
     offeringIds: m.offeringIds || [],
+    locationIds: m.locationIds || [],
     active: m.active,
     acceptingBookings: m.acceptingBookings,
     sortOrder: m.sortOrder,
@@ -43,6 +55,7 @@ export async function createMember(
     phone?: string;
     imageUrl?: string;
     offeringIds: string[];
+    locationIds?: string[];
     active?: boolean;
     acceptingBookings?: boolean;
     sortOrder?: number;
@@ -61,6 +74,7 @@ export async function createMember(
     phone: normalizedPhone(args.phone),
     imageUrl: optionalTrimmed(args.imageUrl, "imageUrl", 2_000),
     offeringIds: args.offeringIds || [],
+    locationIds: args.locationIds || [],
     active: args.active ?? true,
     acceptingBookings: args.acceptingBookings ?? true,
     sortOrder: boundedInteger(args.sortOrder ?? 0, "sortOrder", 0, 10_000),
@@ -86,6 +100,7 @@ export async function updateMember(
     phone?: string;
     imageUrl?: string;
     offeringIds?: string[];
+    locationIds?: string[];
     active?: boolean;
     acceptingBookings?: boolean;
     sortOrder?: number;
@@ -107,6 +122,7 @@ export async function updateMember(
   if (args.phone !== undefined) updates.phone = normalizedPhone(args.phone);
   if (args.imageUrl !== undefined) updates.imageUrl = optionalTrimmed(args.imageUrl, "imageUrl", 2_000);
   if (args.offeringIds !== undefined) updates.offeringIds = args.offeringIds;
+  if (args.locationIds !== undefined) updates.locationIds = args.locationIds;
   if (args.active !== undefined) updates.active = args.active;
   if (args.acceptingBookings !== undefined) updates.acceptingBookings = args.acceptingBookings;
   if (args.sortOrder !== undefined) updates.sortOrder = boundedInteger(args.sortOrder, "sortOrder", 0, 10_000);

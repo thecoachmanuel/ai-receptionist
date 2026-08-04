@@ -9,6 +9,16 @@ export type PublicTerminology = {
   bookingPlural: string;
 };
 
+export type PublicLocation = {
+  _id: string;
+  name: string;
+  address: string;
+  city: string;
+  phone?: string;
+  email?: string;
+  isPrimary?: boolean;
+};
+
 export type PublicOffering = {
   _id: string;
   name: string;
@@ -17,6 +27,7 @@ export type PublicOffering = {
   priceMinor: number;
   currency: string;
   category?: string;
+  locationIds?: string[];
   bookableOnline?: boolean;
   active?: boolean;
 };
@@ -28,6 +39,7 @@ export type PublicTeamMember = {
   bio?: string;
   imageUrl?: string;
   offeringIds: string[];
+  locationIds?: string[];
   active?: boolean;
   acceptingBookings?: boolean;
 };
@@ -62,8 +74,9 @@ export type PublishedSite = {
     locale: string;
     terminology: any;
   };
-  offerings: any[];
-  teamMembers: any[];
+  locations?: PublicLocation[];
+  offerings: PublicOffering[];
+  teamMembers: PublicTeamMember[];
   knowledgeItems: any[];
   agentEmbed?: {
     agentId: string;

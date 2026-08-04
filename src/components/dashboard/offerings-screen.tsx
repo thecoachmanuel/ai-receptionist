@@ -42,10 +42,15 @@ function OfferingDialog({ offering }: { offering?: Offering }) {
   const { organization, terminology } = useWorkspace();
   const createOffering = useMutation(dashboardApi.catalog.createOffering);
   const updateOffering = useMutation(dashboardApi.catalog.updateOffering);
+  const locations = useQuery<any[]>(
+    dashboardApi.locations.list,
+    organization ? { includeInactive: false } : "skip",
+  );
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [category, setCategory] = useState(offering?.category ?? "General");
   const [active, setActive] = useState(offering?.active ?? true);
+  const [locationIds, setLocationIds] = useState<string[]>(offering?.locationIds ?? []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,6 +63,7 @@ function OfferingDialog({ offering }: { offering?: Offering }) {
       category,
       durationMinutes: duration ? Number(duration) : 30,
       priceMinor: price ? Math.round(Number(price) * 100) : 0,
+      locationIds,
       active,
       bookableOnline: offering?.bookableOnline ?? true,
     };
@@ -155,7 +161,7 @@ function OfferingDialog({ offering }: { offering?: Offering }) {
                 defaultValue={offering ? getOfferingDuration(offering) || "" : 30}
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor={`price-${offering?._id ?? "new"}`}>
                 Price ({organization?.currency ?? "USD"})
               </Label>
@@ -173,6 +179,38 @@ function OfferingDialog({ offering }: { offering?: Offering }) {
                 placeholder="Optional"
               />
             </div>
+
+            {locations && locations.length > 0 && (
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Branch Locations</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select specific branch locations for this service. Uncheck all to make it available at <strong>All Branches</strong>.
+                </p>
+                <div className="grid max-h-36 gap-2 overflow-y-auto rounded-lg border border-black/10 bg-muted/20 p-3 sm:grid-cols-2">
+                  {locations.map((loc: any) => (
+                    <label
+                      key={loc._id}
+                      className="flex cursor-pointer items-center gap-2 rounded-md bg-white p-2 text-xs ring-1 ring-black/8"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={locationIds.includes(loc._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setLocationIds([...locationIds, loc._id]);
+                          } else {
+                            setLocationIds(locationIds.filter((id) => id !== loc._id));
+                          }
+                        }}
+                        className="size-4 rounded border-gray-300 text-primary"
+                      />
+                      <span className="truncate font-medium">{loc.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between rounded-lg border border-black/10 bg-muted/35 p-3 sm:col-span-2">
               <div>
                 <Label htmlFor={`active-${offering?._id ?? "new"}`}>Available</Label>

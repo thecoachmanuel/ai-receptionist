@@ -49,6 +49,8 @@ export type RawBooking = {
   startTimeISO: string;
   endTimeISO: string;
   confirmationCode: string;
+  locationId?: string;
+  location?: { name: string; address: string; city: string };
   offering: {
     name: string;
     durationMinutes: number;
@@ -72,6 +74,7 @@ export type Booking = {
   contactName: string;
   contactEmail?: string;
   contactPhone?: string;
+  locationName?: string;
   offeringName: string;
   teamMemberName?: string;
   priceCents?: number;
@@ -326,6 +329,7 @@ export function normalizeBooking(booking: RawBooking): Booking {
     contactName: booking.customer.name,
     contactEmail: booking.customer.email,
     contactPhone: booking.customer.phone,
+    locationName: booking.location?.name,
     offeringName: booking.offering.name,
     teamMemberName: booking.teamMember.name,
     priceCents: booking.offering.priceMinor,

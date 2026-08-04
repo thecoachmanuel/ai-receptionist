@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/db/mongodb";
-import type { BookingStatus, DbAvailabilityRule, DbBooking, DbContact, DbOffering, DbOrganization, DbPublicSite, DbTeamMember } from "@/lib/db/types";
+import type { BookingStatus, DbAvailabilityRule, DbBooking, DbContact, DbLocation, DbOffering, DbOrganization, DbPublicSite, DbTeamMember } from "@/lib/db/types";
 import { dayOfWeek, localPartsAt, zonedDateTimeToUtc } from "@/lib/time";
 import { normalizedEmail, normalizedPhone, optionalTrimmed, requiredTrimmed } from "@/lib/validation";
 import { upsertContact } from "./contacts";
@@ -17,13 +17,16 @@ function generateConfirmationCode(): string {
 
 export async function listBookings(
   orgId: string,
-  args?: { from?: number; to?: number; status?: BookingStatus; limit?: number },
+  args?: { from?: number; to?: number; status?: BookingStatus; limit?: number; locationId?: string },
 ) {
   const db = await getDb();
   const filter: Record<string, unknown> = { organizationId: orgId };
 
   if (args?.status) {
     filter.status = args.status;
+  }
+  if (args?.locationId) {
+    filter.locationId = args.locationId;
   }
   if (args?.from || args?.to) {
     const startFilter: Record<string, number> = {};
@@ -48,6 +51,8 @@ export async function listBookings(
     startTimeISO: new Date(b.startAt).toISOString(),
     endTimeISO: new Date(b.endAt).toISOString(),
     confirmationCode: b.confirmationCode,
+    locationId: b.locationId,
+    location: b.locationSnapshot,
     offering: b.offeringSnapshot,
     teamMember: b.teamMemberSnapshot,
     customer: b.customerSnapshot,
@@ -63,6 +68,7 @@ export async function createBooking(
   args: {
     offeringId: string;
     teamMemberId?: string;
+    locationId?: string;
     startAt: number;
     customer: { name: string; email?: string; phone?: string };
     notes?: string;
@@ -89,6 +95,8 @@ export async function createBooking(
         startTimeISO: new Date(existing.startAt).toISOString(),
         endTimeISO: new Date(existing.endAt).toISOString(),
         confirmationCode: existing.confirmationCode,
+        locationId: existing.locationId,
+        location: existing.locationSnapshot,
         offering: existing.offeringSnapshot,
         teamMember: existing.teamMemberSnapshot,
         customer: existing.customerSnapshot,
@@ -107,6 +115,29 @@ export async function createBooking(
   });
   if (!offering || !offering.active) {
     throw new Error("Invalid or inactive offering selected.");
+  }
+
+  let locationSnapshot: { name: string; address: string; city: string } | undefined;
+  let resolvedLocationId = args.locationId;
+  if (resolvedLocationId) {
+    const loc = await db.collection<DbLocation>("locations").findOne({
+      _id: new ObjectId(resolvedLocationId),
+      organizationId: orgId,
+    });
+    if (loc) {
+      locationSnapshot = { name: loc.name, address: loc.address, city: loc.city };
+    }
+  } else {
+    // If org has primary location, auto attach primary location snapshot
+    const loc = await db.collection<DbLocation>("locations").findOne({
+      organizationId: orgId,
+      isPrimary: true,
+      active: true,
+    });
+    if (loc) {
+      resolvedLocationId = loc._id!.toString();
+      locationSnapshot = { name: loc.name, address: loc.address, city: loc.city };
+    }
   }
 
   let teamMember: DbTeamMember | null = null;
@@ -143,6 +174,7 @@ export async function createBooking(
   const newBooking: DbBooking = {
     organizationId: orgId,
     publicSiteId: args.publicSiteId,
+    locationId: resolvedLocationId,
     offeringId: offering._id!.toString(),
     teamMemberId: teamMember!._id!.toString(),
     confirmationCode: code,
@@ -154,6 +186,7 @@ export async function createBooking(
     reservedEndAt,
     notes: optionalTrimmed(args.notes, "notes", 1000),
     idempotencyKey: args.idempotencyKey,
+    locationSnapshot,
     offeringSnapshot: {
       name: offering.name,
       durationMinutes: offering.durationMinutes,

@@ -152,6 +152,7 @@ export type DbOffering = {
   priceMinor: number;
   currency: string;
   capacity: number;
+  locationIds?: string[];
   active: boolean;
   bookableOnline: boolean;
   createdAt: number;
@@ -169,6 +170,7 @@ export type DbTeamMember = {
   phone?: string;
   imageUrl?: string;
   offeringIds: string[];
+  locationIds?: string[];
   active: boolean;
   acceptingBookings: boolean;
   sortOrder: number;
@@ -215,6 +217,7 @@ export type DbBooking = {
   organizationId: string;
   publicSiteId?: string;
   contactId?: string;
+  locationId?: string;
   offeringId: string;
   teamMemberId: string;
   startAt: number;
@@ -227,6 +230,11 @@ export type DbBooking = {
   confirmationCode: string;
   idempotencyKey?: string;
   idempotencyFingerprint?: string;
+  locationSnapshot?: {
+    name: string;
+    address: string;
+    city: string;
+  };
   offeringSnapshot: {
     name: string;
     durationMinutes: number;

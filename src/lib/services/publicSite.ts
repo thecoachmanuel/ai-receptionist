@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/db/mongodb";
-import type { DbAgentIntegration, DbKnowledgeItem, DbOffering, DbOrganization, DbPublicSite, DbTeamMember, SiteConfig } from "@/lib/db/types";
+import type { DbAgentIntegration, DbKnowledgeItem, DbLocation, DbOffering, DbOrganization, DbPublicSite, DbTeamMember, SiteConfig } from "@/lib/db/types";
 import { DEFAULT_TERMINOLOGY, defaultSiteConfig, slugify } from "@/lib/defaults";
 import { sanitizeSiteConfig } from "@/lib/siteConfig";
 import { requiredTrimmed } from "@/lib/validation";
@@ -61,7 +61,12 @@ export async function getPublishedBySlug(siteSlug: string) {
     site.publishedAt = now;
   }
 
-  const [offerings, teamMembers, knowledgeItems] = await Promise.all([
+  const [locations, offerings, teamMembers, knowledgeItems] = await Promise.all([
+    db
+      .collection<DbLocation>("locations")
+      .find({ organizationId: effectiveOrgId, active: true })
+      .sort({ isPrimary: -1, name: 1 })
+      .toArray(),
     db
       .collection<DbOffering>("offerings")
       .find({ organizationId: effectiveOrgId, active: true })
@@ -113,6 +118,15 @@ export async function getPublishedBySlug(siteSlug: string) {
         ...(organization.terminology || {}),
       },
     },
+    locations: (locations || []).map((l: any) => ({
+      _id: l._id ? l._id.toString() : "",
+      name: l.name,
+      address: l.address,
+      city: l.city,
+      phone: l.phone,
+      email: l.email,
+      isPrimary: l.isPrimary,
+    })),
     offerings: (offerings || [])
       .filter((o: any) => o.bookableOnline)
       .map((o: any) => ({
@@ -124,6 +138,7 @@ export async function getPublishedBySlug(siteSlug: string) {
         durationMinutes: o.durationMinutes,
         priceMinor: o.priceMinor,
         currency: o.currency,
+        locationIds: o.locationIds || [],
         active: o.active,
       })),
     teamMembers: (teamMembers || [])
@@ -135,6 +150,7 @@ export async function getPublishedBySlug(siteSlug: string) {
         bio: m.bio,
         imageUrl: m.imageUrl,
         offeringIds: m.offeringIds || [],
+        locationIds: m.locationIds || [],
         active: m.active,
       })),
     knowledgeItems: (knowledgeItems || []).map((k: any) => ({

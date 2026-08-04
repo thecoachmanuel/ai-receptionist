@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import type {
   AvailabilitySlot,
   BookingConfirmation,
+  PublicLocation,
   PublicOffering,
   PublicTeamMember,
   PublicTerminology,
@@ -233,6 +234,7 @@ function StepHeading({
 export function BookingFlow({
   siteSlug,
   businessName,
+  locations,
   offerings,
   teamMembers,
   terminology,
@@ -243,6 +245,7 @@ export function BookingFlow({
 }: {
   siteSlug: string;
   businessName: string;
+  locations?: PublicLocation[];
   offerings: PublicOffering[];
   teamMembers: PublicTeamMember[];
   terminology: PublicTerminology;
@@ -252,6 +255,7 @@ export function BookingFlow({
   maximumAdvanceDays: number;
 }) {
   const [step, setStep] = useState<BookingStep>("offering");
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [offeringId, setOfferingId] = useState<PublicOffering["_id"] | null>(
     null,
   );
@@ -268,17 +272,34 @@ export function BookingFlow({
   const idempotencyKeyRef = useRef<string | null>(null);
   const bookingToday = useMemo(() => todayInTimezone(timezone), [timezone]);
 
+  const selectedLocation = useMemo(
+    () => locations?.find((l) => l._id === selectedLocationId),
+    [locations, selectedLocationId],
+  );
+
+  const visibleOfferings = useMemo(() => {
+    if (!selectedLocationId) return offerings;
+    return offerings.filter(
+      (o) => !o.locationIds?.length || o.locationIds.includes(selectedLocationId),
+    );
+  }, [offerings, selectedLocationId]);
+
   const createBooking = useMutation<any, any>("publicBooking/create");
   const selectedOffering = offerings.find((item: any) => item._id === offeringId);
-  const eligibleTeamMembers = useMemo(
-    () =>
-      offeringId
-        ? teamMembers.filter((member: any) =>
-            member.offeringIds.some((id: any) => id === offeringId),
-          )
-        : teamMembers,
-    [offeringId, teamMembers],
-  );
+  
+  const eligibleTeamMembers = useMemo(() => {
+    let list = teamMembers;
+    if (selectedLocationId) {
+      list = list.filter(
+        (m) => !m.locationIds?.length || m.locationIds.includes(selectedLocationId),
+      );
+    }
+    if (offeringId) {
+      list = list.filter((m) => m.offeringIds.some((id: any) => id === offeringId));
+    }
+    return list;
+  }, [offeringId, teamMembers, selectedLocationId]);
+
   const selectedTeamMember = teamMembers.find(
     (member: any) => member._id === teamMemberId,
   );
@@ -400,6 +421,7 @@ export function BookingFlow({
       const result = await createBooking({
         siteSlug,
         offeringId,
+        ...(selectedLocationId ? { locationId: selectedLocationId } : {}),
         ...(teamMemberId ? { teamMemberId } : {}),
         startAt: selectedSlot.startAt,
         customer: {
@@ -517,6 +539,9 @@ export function BookingFlow({
                   {selectedOffering.durationMinutes ? (
                     <p>{selectedOffering.durationMinutes} min</p>
                   ) : null}
+                  {selectedLocation ? (
+                    <p className="font-medium text-foreground">Location: {selectedLocation.name} ({selectedLocation.city})</p>
+                  ) : null}
                   {selectedTeamMember ? <p>With {selectedTeamMember.name}</p> : null}
                   {selectedDate ? (
                     <p>
@@ -547,8 +572,46 @@ export function BookingFlow({
                   title={`What can ${businessName} help you with?`}
                   description={`Select one ${terminology.offeringSingular.toLowerCase()} to see the right people and available times.`}
                 />
+
+                {locations && locations.length > 1 && (
+                  <div className="space-y-2 rounded-xl border bg-muted/20 p-3.5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Select Branch Location
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedLocationId(null)}
+                        className={cn(
+                          "rounded-lg px-3 py-1.5 text-xs font-medium border transition",
+                          !selectedLocationId
+                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            : "bg-background hover:bg-muted text-foreground border-black/10",
+                        )}
+                      >
+                        All Branches
+                      </button>
+                      {locations.map((loc) => (
+                        <button
+                          key={loc._id}
+                          type="button"
+                          onClick={() => setSelectedLocationId(loc._id)}
+                          className={cn(
+                            "rounded-lg px-3 py-1.5 text-xs font-medium border transition",
+                            selectedLocationId === loc._id
+                              ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                              : "bg-background hover:bg-muted text-foreground border-black/10",
+                          )}
+                        >
+                          {loc.name} ({loc.city})
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {offerings.map((offering: any) => (
+                  {visibleOfferings.map((offering: any) => (
                     <StepOption
                       key={offering._id}
                       selected={offering._id === offeringId}
