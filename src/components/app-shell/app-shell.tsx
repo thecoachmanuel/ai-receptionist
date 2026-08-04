@@ -96,11 +96,6 @@ function navigationFor(
   const operateItems: NavItem[] = [
     { label: "Overview", segment: "", icon: LayoutDashboard },
     {
-      label: "Staff Portal",
-      segment: "staff-portal",
-      icon: UsersRound,
-    },
-    {
       label: terminology.bookingPlural,
       segment: "bookings",
       icon: CalendarDays,
