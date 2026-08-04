@@ -353,6 +353,7 @@ export async function deleteOrganizationData(orgId: string) {
   await Promise.all([
     db.collection("organizations").deleteOne({ _id: org._id as any }),
     db.collection("orgMembers").deleteMany({ organizationId: orgIdStr }),
+    db.collection("organization_members").deleteMany({ organizationId: orgIdStr }),
     db.collection("offerings").deleteMany({ organizationId: orgIdStr }),
     db.collection("teamMembers").deleteMany({ organizationId: orgIdStr }),
     db.collection("knowledgeItems").deleteMany({ organizationId: orgIdStr }),
@@ -360,7 +361,12 @@ export async function deleteOrganizationData(orgId: string) {
     db.collection("bookings").deleteMany({ organizationId: orgIdStr }),
     db.collection("conversations").deleteMany({ organizationId: orgIdStr }),
     db.collection("publicSites").deleteMany({ organizationId: orgIdStr }),
+    db.collection("public_sites").deleteMany({ organizationId: orgIdStr }),
     db.collection("agentIntegrations").deleteMany({ organizationId: orgIdStr }),
+    db.collection("users").updateMany(
+      { activeOrgId: { $in: [orgIdStr, org.clerkOrgId, org.slug] } },
+      { $unset: { activeOrgId: "" }, $set: { updatedAt: Date.now() } }
+    ),
   ]);
 
   return true;

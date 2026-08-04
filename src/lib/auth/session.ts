@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/mongodb";
 import type { DbOrgMember, DbOrganization, DbSession, DbUser } from "@/lib/db/types";
 import { PLAN_FEATURES } from "@/lib/billing";
-import { createOrganizationForUser } from "@/lib/services/organizations";
+import { createOrganizationForUser, isUserAuthorizedForOrg } from "@/lib/services/organizations";
 
 export const SESSION_COOKIE_NAME = "oneboard_session";
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -132,12 +132,25 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
       const adminEmail = (process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.replace(/^["']|["']$/g, "").trim() : "admin@admin.com").toLowerCase();
       const isSiteAdmin = Boolean(u.isSuperAdmin) || (u.email && u.email.trim().toLowerCase() === adminEmail);
 
+      const db = await getDb();
+      const userIdStr = u.id || u.userId;
+      const userDoc = await db.collection("users").findOne({
+        $or: [
+          { email: u.email },
+          { _id: userIdStr as any },
+          ...(ObjectId.isValid(userIdStr) ? [{ _id: new ObjectId(userIdStr) }] : []),
+        ],
+      });
+
+      // If user account was deleted from DB, invalidate session automatically
+      if (!userDoc) return null;
+
+      const effectiveUserId = userDoc._id.toString();
       let organization = null;
-      const orgId = (nextAuthSession as any).activeOrgId;
+      const orgId = (nextAuthSession as any).activeOrgId || userDoc.activeOrgId;
       const orgSlug = (nextAuthSession as any).orgSlug;
 
       if (orgId || orgSlug) {
-        const db = await getDb();
         const orgFilters: any[] = [];
         if (orgSlug) orgFilters.push({ slug: orgSlug });
         if (orgId) {
@@ -159,14 +172,27 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
             };
           }
         }
+
+        // If organization was deleted, or staff member was deleted/removed from business:
+        if (!isSiteAdmin) {
+          if (!organization) {
+            // Business deleted -> auto sign out
+            return null;
+          }
+          const isAuth = await isUserAuthorizedForOrg(effectiveUserId, organization.id);
+          if (!isAuth) {
+            // Staff removed from business -> auto sign out
+            return null;
+          }
+        }
       }
 
       return {
         user: {
-          id: u.id || u.userId,
-          email: u.email,
-          name: u.name,
-          avatarUrl: u.image || u.avatarUrl,
+          id: effectiveUserId,
+          email: userDoc.email || u.email,
+          name: userDoc.name || u.name,
+          avatarUrl: userDoc.avatarUrl || u.image,
         },
         organization,
         role: (nextAuthSession as any).role || (isSiteAdmin ? "admin" : "member"),

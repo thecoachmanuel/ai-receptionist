@@ -403,10 +403,61 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token.userId) {
+        const db = await getDb();
+        const userIdStr = token.userId as string;
+        const userDoc = await db.collection("users").findOne({
+          $or: [
+            { _id: userIdStr as any },
+            ...(ObjectId.isValid(userIdStr) ? [{ _id: new ObjectId(userIdStr) }] : []),
+          ],
+        });
+
+        // User account deleted from DB -> invalidate session
+        if (!userDoc) {
+          return { expires: "1970-01-01T00:00:00.000Z" } as any;
+        }
+
+        const adminEmail = (cleanEnv(process.env.ADMIN_EMAIL) || "admin@admin.com").toLowerCase();
+        const isSuperAdmin = token.email?.toLowerCase() === adminEmail || Boolean(token.isSuperAdmin);
+
+        if (!isSuperAdmin && token.activeOrgId) {
+          const orgIdStr = token.activeOrgId as string;
+          const org = await db.collection("organizations").findOne({
+            $or: [
+              { clerkOrgId: orgIdStr },
+              { slug: orgIdStr },
+              ...(ObjectId.isValid(orgIdStr) ? [{ _id: new ObjectId(orgIdStr) }] : []),
+            ],
+          });
+
+          // Organization deleted from DB -> invalidate session
+          if (!org) {
+            return { expires: "1970-01-01T00:00:00.000Z" } as any;
+          }
+
+          // Staff member removed/deleted from organization -> invalidate session
+          const isOwner = org.createdBy === userIdStr;
+          if (!isOwner) {
+            const isMember =
+              (await db.collection("orgMembers").findOne({
+                organizationId: org._id.toString(),
+                userId: userIdStr,
+              })) ||
+              (await db.collection("organization_members").findOne({
+                organizationId: org._id.toString(),
+                userId: userIdStr,
+              }));
+
+            if (!isMember) {
+              return { expires: "1970-01-01T00:00:00.000Z" } as any;
+            }
+          }
+        }
+
         (session.user as any).id = token.userId;
-        (session.user as any).email = token.email;
-        (session.user as any).name = token.name;
+        (session.user as any).email = userDoc.email || token.email;
+        (session.user as any).name = userDoc.name || token.name;
         (session as any).activeOrgId = token.activeOrgId;
         (session as any).orgSlug = token.orgSlug;
         (session as any).role = token.role;

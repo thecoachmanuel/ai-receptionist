@@ -248,3 +248,36 @@ export async function updateMember(
     _id: updated!._id!.toString(),
   };
 }
+
+export async function deleteMember(orgId: string, teamMemberId: string) {
+  const db = await getDb();
+  const filter = ObjectId.isValid(teamMemberId)
+    ? { organizationId: orgId, _id: new ObjectId(teamMemberId) }
+    : { organizationId: orgId, _id: teamMemberId as any };
+
+  const member = await db.collection<DbTeamMember>("teamMembers").findOne(filter);
+  if (!member) return false;
+
+  const userId = member.userId;
+
+  // Delete team member record
+  await db.collection("teamMembers").deleteOne(filter);
+
+  // If staff member has a linked user account, delete memberships and clear activeOrgId
+  if (userId) {
+    const userObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
+    await Promise.all([
+      db.collection("orgMembers").deleteMany({ organizationId: orgId, userId: { $in: [userId, userObjectId as any] } }),
+      db.collection("organization_members").deleteMany({ organizationId: orgId, userId: { $in: [userId, userObjectId as any] } }),
+      db.collection("users").updateMany(
+        {
+          $or: [{ _id: userId as any }, { _id: userObjectId as any }],
+          activeOrgId: orgId,
+        },
+        { $unset: { activeOrgId: "" }, $set: { updatedAt: Date.now() } }
+      ),
+    ]);
+  }
+
+  return true;
+}

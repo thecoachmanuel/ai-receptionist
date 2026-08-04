@@ -182,6 +182,11 @@ export async function POST(
         const data = await teamService.updateMember(orgId, body.teamMemberId, body as any);
         return NextResponse.json(data);
       }
+      case "team/deleteMember":
+      case "team/delete": {
+        const data = await teamService.deleteMember(orgId, body.teamMemberId);
+        return NextResponse.json({ success: Boolean(data) });
+      }
       case "availability/listRules": {
         const data = await availabilityService.listRules(orgId, body.teamMemberId);
         return NextResponse.json(data);
