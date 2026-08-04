@@ -201,12 +201,6 @@ function SignInForm() {
           </Link>
         </p>
       </form>
-      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
-        <p className="font-semibold">Staff Members</p>
-        <p className="mt-0.5 text-amber-700">
-          This page is for Business Admins only. If you are a staff member, sign in at your business&apos;s dedicated staff portal instead (e.g. <span className="font-mono">/your-business/staff-portal</span>).
-        </p>
-      </div>
     </div>
   );
 }
