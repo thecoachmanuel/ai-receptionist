@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
+import { hashPassword } from "@/lib/auth/password";
 import { getDb } from "@/lib/db/mongodb";
-import type { DbTeamMember } from "@/lib/db/types";
+import type { DbOrgMember, DbTeamMember, DbUser } from "@/lib/db/types";
 import { boundedInteger, normalizedEmail, normalizedPhone, optionalTrimmed, requiredTrimmed } from "@/lib/validation";
 
 export async function listMembers(
@@ -53,6 +54,7 @@ export async function createMember(
     bio?: string;
     email?: string;
     phone?: string;
+    password?: string;
     imageUrl?: string;
     offeringIds: string[];
     locationIds?: string[];
@@ -64,13 +66,49 @@ export async function createMember(
   const db = await getDb();
   const now = Date.now();
   const name = requiredTrimmed(args.name, "name", 120);
+  const email = normalizedEmail(args.email);
+
+  let userId: string | undefined = undefined;
+
+  // Handle staff login password & user account creation
+  if (args.password && email) {
+    const pass = args.password.trim();
+    if (pass.length < 6) {
+      throw new Error("Staff login password must be at least 6 characters.");
+    }
+    const passwordHash = await hashPassword(pass);
+    const escapedEmail = email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    
+    let existingUser = await db.collection<DbUser>("users").findOne({
+      email: { $regex: `^${escapedEmail}$`, $options: "i" },
+    });
+
+    if (existingUser) {
+      userId = existingUser._id!.toString();
+      await db.collection<DbUser>("users").updateOne(
+        { _id: existingUser._id },
+        { $set: { passwordHash, activeOrgId: orgId, updatedAt: now } },
+      );
+    } else {
+      const newUserResult = await db.collection<DbUser>("users").insertOne({
+        email,
+        passwordHash,
+        name,
+        activeOrgId: orgId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      userId = newUserResult.insertedId.toString();
+    }
+  }
 
   const newMember: DbTeamMember = {
     organizationId: orgId,
+    userId,
     name,
     title: optionalTrimmed(args.title, "title", 100) ?? "Team Member",
     bio: optionalTrimmed(args.bio, "bio", 2_000) ?? "",
-    email: normalizedEmail(args.email),
+    email,
     phone: normalizedPhone(args.phone),
     imageUrl: optionalTrimmed(args.imageUrl, "imageUrl", 2_000),
     offeringIds: args.offeringIds || [],
@@ -83,9 +121,28 @@ export async function createMember(
   };
 
   const result = await db.collection<DbTeamMember>("teamMembers").insertOne(newMember);
+  const teamMemberId = result.insertedId.toString();
+
+  if (userId) {
+    await db.collection<DbOrgMember>("orgMembers").updateOne(
+      { organizationId: orgId, userId },
+      {
+        $set: {
+          organizationId: orgId,
+          userId,
+          role: "member",
+          teamMemberId,
+          updatedAt: now,
+        },
+        $setOnInsert: { createdAt: now },
+      },
+      { upsert: true },
+    );
+  }
+
   return {
     ...newMember,
-    _id: result.insertedId.toString(),
+    _id: teamMemberId,
   };
 }
 
@@ -98,6 +155,7 @@ export async function updateMember(
     bio?: string;
     email?: string;
     phone?: string;
+    password?: string;
     imageUrl?: string;
     offeringIds?: string[];
     locationIds?: string[];
@@ -114,7 +172,9 @@ export async function updateMember(
   const member = await db.collection<DbTeamMember>("teamMembers").findOne(filter);
   if (!member) throw new Error("Team member not found.");
 
-  const updates: Partial<DbTeamMember> = { updatedAt: Date.now() };
+  const now = Date.now();
+  const updates: Partial<DbTeamMember> = { updatedAt: now };
+
   if (args.name !== undefined) updates.name = requiredTrimmed(args.name, "name", 120);
   if (args.title !== undefined) updates.title = optionalTrimmed(args.title, "title", 100) ?? "Team Member";
   if (args.bio !== undefined) updates.bio = optionalTrimmed(args.bio, "bio", 2_000) ?? "";
@@ -126,6 +186,59 @@ export async function updateMember(
   if (args.active !== undefined) updates.active = args.active;
   if (args.acceptingBookings !== undefined) updates.acceptingBookings = args.acceptingBookings;
   if (args.sortOrder !== undefined) updates.sortOrder = boundedInteger(args.sortOrder, "sortOrder", 0, 10_000);
+
+  const targetEmail = updates.email || member.email;
+
+  // Handle password update if passed
+  if (args.password && targetEmail) {
+    const pass = args.password.trim();
+    if (pass.length < 6) {
+      throw new Error("Staff login password must be at least 6 characters.");
+    }
+    const passwordHash = await hashPassword(pass);
+    const escapedEmail = targetEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    let existingUser = await db.collection<DbUser>("users").findOne({
+      email: { $regex: `^${escapedEmail}$`, $options: "i" },
+    });
+
+    let userId = member.userId || existingUser?._id?.toString();
+
+    if (existingUser) {
+      userId = existingUser._id!.toString();
+      await db.collection<DbUser>("users").updateOne(
+        { _id: existingUser._id },
+        { $set: { passwordHash, activeOrgId: orgId, updatedAt: now } },
+      );
+    } else {
+      const newUserResult = await db.collection<DbUser>("users").insertOne({
+        email: targetEmail,
+        passwordHash,
+        name: updates.name || member.name,
+        activeOrgId: orgId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      userId = newUserResult.insertedId.toString();
+    }
+
+    updates.userId = userId;
+
+    await db.collection<DbOrgMember>("orgMembers").updateOne(
+      { organizationId: orgId, userId },
+      {
+        $set: {
+          organizationId: orgId,
+          userId,
+          role: "member",
+          teamMemberId,
+          updatedAt: now,
+        },
+        $setOnInsert: { createdAt: now },
+      },
+      { upsert: true },
+    );
+  }
 
   await db.collection<DbTeamMember>("teamMembers").updateOne(filter, { $set: updates });
 

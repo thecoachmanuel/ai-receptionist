@@ -111,10 +111,12 @@ function MemberDialog({ member }: { member?: TeamMember }) {
       return;
     }
     const form = new FormData(event.currentTarget);
+    const passwordRaw = String(form.get("password") ?? "").trim();
     const payload = {
       name: String(form.get("name") ?? "").trim(),
       title: String(form.get("title") ?? "").trim(),
       email: String(form.get("email") ?? "").trim() || undefined,
+      password: passwordRaw || undefined,
       bio: String(form.get("bio") ?? "").trim() || undefined,
       imageUrl: imageUrl || undefined,
       active,
@@ -212,13 +214,25 @@ function MemberDialog({ member }: { member?: TeamMember }) {
                 required
               />
             </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor={`member-email-${member?._id ?? "new"}`}>Email</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor={`member-email-${member?._id ?? "new"}`}>Email Address</Label>
               <Input
                 id={`member-email-${member?._id ?? "new"}`}
                 name="email"
                 type="email"
                 defaultValue={member?.email}
+                placeholder="staff@company.com"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`member-password-${member?._id ?? "new"}`}>
+                Staff Login Password {member ? "(Optional update)" : "(Optional)"}
+              </Label>
+              <Input
+                id={`member-password-${member?._id ?? "new"}`}
+                name="password"
+                type="password"
+                placeholder={member ? "Leave empty to keep existing password" : "Set password for staff portal..."}
               />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
