@@ -100,11 +100,30 @@ export async function updateSystemSettings(
     updatedBy: userId || current.updatedBy,
   };
 
-  await db.collection("system_settings").updateOne(
-    { _id: SETTINGS_DOC_ID as any },
-    { $set: { ...merged, _id: SETTINGS_DOC_ID as any } },
-    { upsert: true }
-  );
+  await Promise.all([
+    db.collection("system_settings").updateOne(
+      { _id: SETTINGS_DOC_ID as any },
+      { $set: { ...merged, _id: SETTINGS_DOC_ID as any } },
+      { upsert: true }
+    ),
+    db.collection("platformSettings").updateOne(
+      { key: "platform" },
+      {
+        $set: {
+          key: "platform",
+          baseCurrency: merged.baseCurrency,
+          planPrices: merged.planPrices,
+          usdToNgnRate: merged.usdToNgnRate,
+          contactPhone: merged.contactPhone,
+          contactEmail: merged.contactEmail,
+          clientPageUrl: merged.clientPageUrl,
+          isWaitlistActive: merged.isWaitlistActive,
+          updatedAt: now,
+        },
+      },
+      { upsert: true }
+    ),
+  ]);
 
   return merged;
 }

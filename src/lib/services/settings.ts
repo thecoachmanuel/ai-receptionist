@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db/mongodb";
+import { getSystemSettings, updateSystemSettings } from "@/lib/services/system-settings";
 
 export type PlanPrices = {
   core: number;   // USD (defaults to 0)
@@ -41,35 +42,23 @@ const DEFAULTS: PlatformSettings = {
 };
 
 /**
- * Fetches the platform-wide settings document.
- * Auto-creates it with safe defaults if it doesn't exist yet.
+ * Fetches live platform-wide settings saved by super admin.
  */
 export async function getPlatformSettings(): Promise<PlatformSettings> {
-  const db = await getDb();
-  const doc = await db
-    .collection<{ key: string } & PlatformSettings>("platformSettings")
-    .findOne({ key: "platform" });
-
-  if (!doc) {
-    const now = Date.now();
-    const initial = { key: "platform", ...DEFAULTS, updatedAt: now };
-    await db.collection("platformSettings").insertOne(initial);
-    return { ...DEFAULTS, updatedAt: now };
-  }
-
+  const sys = await getSystemSettings();
   return {
-    baseCurrency: doc.baseCurrency ?? DEFAULTS.baseCurrency,
+    baseCurrency: sys.baseCurrency ?? DEFAULTS.baseCurrency,
     planPrices: {
-      core: doc.planPrices?.core ?? DEFAULTS.planPrices.core,
-      engage: doc.planPrices?.engage ?? DEFAULTS.planPrices.engage,
-      voice: doc.planPrices?.voice ?? DEFAULTS.planPrices.voice,
+      core: sys.planPrices?.core ?? DEFAULTS.planPrices.core,
+      engage: sys.planPrices?.engage ?? DEFAULTS.planPrices.engage,
+      voice: sys.planPrices?.voice ?? DEFAULTS.planPrices.voice,
     },
-    usdToNgnRate: doc.usdToNgnRate ?? DEFAULTS.usdToNgnRate,
-    contactPhone: doc.contactPhone ?? DEFAULTS.contactPhone,
-    contactEmail: doc.contactEmail ?? DEFAULTS.contactEmail,
-    clientPageUrl: (doc as any).clientPageUrl ?? DEFAULTS.clientPageUrl,
-    isWaitlistActive: doc.isWaitlistActive ?? DEFAULTS.isWaitlistActive,
-    updatedAt: doc.updatedAt ?? 0,
+    usdToNgnRate: sys.usdToNgnRate ?? DEFAULTS.usdToNgnRate,
+    contactPhone: sys.contactPhone ?? DEFAULTS.contactPhone,
+    contactEmail: sys.contactEmail ?? DEFAULTS.contactEmail,
+    clientPageUrl: sys.clientPageUrl ?? DEFAULTS.clientPageUrl,
+    isWaitlistActive: sys.isWaitlistActive ?? DEFAULTS.isWaitlistActive,
+    updatedAt: sys.updatedAt ?? 0,
   };
 }
 
@@ -83,17 +72,13 @@ export async function updatePlanPrice(
   if (!Number.isFinite(usdPrice) || usdPrice < 0) {
     throw new Error("Price must be a non-negative number.");
   }
-  const db = await getDb();
-  await db.collection("platformSettings").updateOne(
-    { key: "platform" },
-    {
-      $set: {
-        [`planPrices.${plan}`]: Math.round(usdPrice * 100) / 100,
-        updatedAt: Date.now(),
-      },
+  const current = await getSystemSettings();
+  await updateSystemSettings({
+    planPrices: {
+      ...current.planPrices,
+      [plan]: Math.round(usdPrice * 100) / 100,
     },
-    { upsert: true },
-  );
+  });
 }
 
 /**
@@ -103,77 +88,44 @@ export async function updateExchangeRate(rate: number): Promise<void> {
   if (!Number.isFinite(rate) || rate <= 0) {
     throw new Error("Exchange rate must be a positive number.");
   }
-  const db = await getDb();
-  await db.collection("platformSettings").updateOne(
-    { key: "platform" },
-    { $set: { usdToNgnRate: Math.round(rate), updatedAt: Date.now() } },
-    { upsert: true },
-  );
+  await updateSystemSettings({ usdToNgnRate: Math.round(rate) });
 }
 
 /**
  * Updates the platform base currency convention.
  */
 export async function updateBaseCurrency(currency: "USD" | "NGN"): Promise<void> {
-  const db = await getDb();
-  await db.collection("platformSettings").updateOne(
-    { key: "platform" },
-    { $set: { baseCurrency: currency, updatedAt: Date.now() } },
-    { upsert: true },
-  );
+  await updateSystemSettings({ baseCurrency: currency });
 }
 
 /**
  * Updates the waitlist status (enable/disable waitlist landing page).
  */
 export async function updateWaitlistStatus(isActive: boolean): Promise<void> {
-  const db = await getDb();
-  await db.collection("platformSettings").updateOne(
-    { key: "platform" },
-    { $set: { isWaitlistActive: isActive, updatedAt: Date.now() } },
-    { upsert: true },
-  );
+  await updateSystemSettings({ isWaitlistActive: isActive });
 }
 
 /**
  * Updates platform contact phone, email, and client page URL. Super Admin only.
  */
 export async function updatePlatformContact(phone?: string, email?: string, clientPageUrl?: string): Promise<void> {
-  const db = await getDb();
-  const $set: Record<string, any> = { updatedAt: Date.now() };
-
-  if (phone !== undefined) {
-    $set.contactPhone = phone.trim() || DEFAULTS.contactPhone;
+  const updates: Record<string, any> = {};
+  if (phone !== undefined) updates.contactPhone = phone.trim() || DEFAULTS.contactPhone;
+  if (email !== undefined) updates.contactEmail = email.trim() || DEFAULTS.contactEmail;
+  if (clientPageUrl !== undefined) updates.clientPageUrl = clientPageUrl.trim();
+  if (Object.keys(updates).length > 0) {
+    await updateSystemSettings(updates);
   }
-  if (email !== undefined) {
-    $set.contactEmail = email.trim() || DEFAULTS.contactEmail;
-  }
-  if (clientPageUrl !== undefined) {
-    $set.clientPageUrl = clientPageUrl.trim();
-  }
-
-  await db.collection("platformSettings").updateOne(
-    { key: "platform" },
-    { $set },
-    { upsert: true },
-  );
 }
 
 export async function getVapiSettings(): Promise<VapiSettings> {
-  const db = await getDb();
-  const doc = await db.collection("platformSettings").findOne({ key: "vapi" }) ||
-              await db.collection("platformSettings").findOne({ key: "elevenlabs" });
-
-  const envVapiPublicKey = process.env.VAPI_PUBLIC_KEY?.trim() || "";
-  const envVapiPrivateKey = process.env.VAPI_PRIVATE_KEY?.trim() || "";
-  const envVapiAssistantId = process.env.VAPI_ASSISTANT_ID?.trim() || "";
-
+  const sys = await getSystemSettings();
   return {
     activeProvider: "vapi",
-    vapiPublicKey: doc?.vapiPublicKey || envVapiPublicKey,
-    vapiPrivateKey: doc?.vapiPrivateKey || envVapiPrivateKey,
-    vapiAssistantId: doc?.vapiAssistantId || envVapiAssistantId,
-    updatedAt: doc?.updatedAt || 0,
+    vapiPublicKey: sys.vapi.vapiPublicKey,
+    vapiPrivateKey: sys.vapi.vapiPrivateKey,
+    vapiAssistantId: sys.vapi.vapiAssistantId,
+    updatedAt: sys.updatedAt || 0,
   };
 }
 
@@ -185,16 +137,15 @@ export async function updateVapiSettings(data: {
   vapiAssistantId?: string;
   [key: string]: any;
 }): Promise<void> {
-  const db = await getDb();
-  const $set: Record<string, any> = { activeProvider: "vapi", updatedAt: Date.now() };
-
-  if (data.vapiPublicKey !== undefined) $set.vapiPublicKey = data.vapiPublicKey.trim();
-  if (data.vapiPrivateKey !== undefined) $set.vapiPrivateKey = data.vapiPrivateKey.trim();
-  if (data.vapiAssistantId !== undefined) $set.vapiAssistantId = data.vapiAssistantId.trim();
-
-  await db
-    .collection("platformSettings")
-    .updateOne({ key: "vapi" }, { $set }, { upsert: true });
+  const current = await getSystemSettings();
+  await updateSystemSettings({
+    vapi: {
+      ...current.vapi,
+      ...(data.vapiPublicKey !== undefined ? { vapiPublicKey: data.vapiPublicKey.trim() } : {}),
+      ...(data.vapiPrivateKey !== undefined ? { vapiPrivateKey: data.vapiPrivateKey.trim() } : {}),
+      ...(data.vapiAssistantId !== undefined ? { vapiAssistantId: data.vapiAssistantId.trim() } : {}),
+    },
+  });
 }
 
 export const updateElevenLabsSettings = updateVapiSettings;
