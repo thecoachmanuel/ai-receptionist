@@ -83,7 +83,7 @@ export function StaffPortalScreen() {
     const todayBookings = myBookings.filter((b) => isSameDay(new Date(b.startAt), now));
     const completedToday = todayBookings.filter((b) => b.status === "completed").length;
     const upcomingToday = todayBookings.filter(
-      (b) => b.status === "confirmed" || b.status === "in_progress",
+      (b) => b.status === "confirmed" || b.status === "pending",
     ).length;
 
     const nextAppointment = myBookings
@@ -339,14 +339,14 @@ export function StaffPortalScreen() {
                     </Button>
 
                     <div className="flex items-center gap-1">
-                      {b.status === "confirmed" && (
+                      {b.status === "pending" && (
                         <Button
                           variant="outline"
                           size="xs"
-                          onClick={() => handleUpdateStatus(b._id, "in_progress")}
+                          onClick={() => handleUpdateStatus(b._id, "confirmed")}
                           className="h-7 text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 border-blue-200 gap-1"
                         >
-                          <Play className="size-3" /> Start
+                          <CheckCircle2 className="size-3" /> Confirm
                         </Button>
                       )}
                       {b.status !== "completed" && (
