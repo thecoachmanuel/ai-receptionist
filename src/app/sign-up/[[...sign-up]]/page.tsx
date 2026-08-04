@@ -31,7 +31,7 @@ export default function SignUpPage() {
     setError("");
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData(e.target as HTMLFormElement);
     const formName = ((formData.get("name") as string) || name || "").trim();
     const formEmail = ((formData.get("email") as string) || email || "").trim();
     const formPassword = ((formData.get("password") as string) || password || "").trim();

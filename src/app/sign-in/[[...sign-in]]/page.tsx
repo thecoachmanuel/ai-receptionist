@@ -35,7 +35,7 @@ function SignInForm() {
     setSuccess("");
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData(e.target as HTMLFormElement);
     const formEmail = ((formData.get("email") as string) || email || "").trim();
     const formPassword = ((formData.get("password") as string) || password || "").trim();
 
