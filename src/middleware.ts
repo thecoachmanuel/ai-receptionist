@@ -28,6 +28,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(redirectUrl, request.url));
   }
 
+  // Redirect new Google users to onboarding to capture business name
+  if (pathname.startsWith("/app") && token && (token as any).isNewGoogleUser) {
+    if (!pathname.startsWith("/onboarding")) {
+      return NextResponse.redirect(new URL("/onboarding", request.url));
+    }
+  }
+
+  // Allow /onboarding only for authenticated users
+  if (pathname.startsWith("/onboarding") && !hasSession) {
+    return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
+
   return NextResponse.next();
 }
 

@@ -311,6 +311,7 @@ export const authOptions: NextAuthOptions = {
           (user as any).role = "admin";
           (user as any).permissions = ["admin:all"];
           (user as any).isSuperAdmin = false;
+          (user as any).isNewGoogleUser = true;
         } else {
           user.id = dbUser._id!.toString();
           const userIdStr = dbUser._id!.toString();
@@ -386,11 +387,15 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role;
         token.permissions = (user as any).permissions;
         token.isSuperAdmin = (user as any).isSuperAdmin;
+        if ((user as any).isNewGoogleUser) {
+          token.isNewGoogleUser = true;
+        }
       }
 
       if (trigger === "update" && session) {
         if (session.activeOrgId) token.activeOrgId = session.activeOrgId;
         if (session.orgSlug) token.orgSlug = session.orgSlug;
+        if (session.isNewGoogleUser === false) token.isNewGoogleUser = false;
       }
 
       return token;
@@ -406,6 +411,7 @@ export const authOptions: NextAuthOptions = {
         (session as any).role = token.role;
         (session as any).permissions = token.permissions;
         (session as any).isSuperAdmin = token.isSuperAdmin;
+        (session as any).isNewGoogleUser = token.isNewGoogleUser ?? false;
       }
       return session;
     },
