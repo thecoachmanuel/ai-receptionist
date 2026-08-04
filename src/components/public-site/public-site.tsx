@@ -225,7 +225,7 @@ export function PublicSite({
   voiceAgentEnabled: boolean;
   voiceGender?: "female" | "male";
 }) {
-  const { organization, site, offerings, teamMembers, knowledgeItems } =
+  const { organization, site, locations, offerings, teamMembers, knowledgeItems } =
     publishedSite;
   const { config } = site;
   const { terminology } = organization;
@@ -515,7 +515,7 @@ export function PublicSite({
           <BookingFlow
             siteSlug={siteSlug}
             businessName={config.businessName}
-            locations={data.locations}
+            locations={locations}
             offerings={offerings}
             teamMembers={teamMembers}
             terminology={terminology}
