@@ -237,7 +237,8 @@ function OfferingDialog({ offering }: { offering?: Offering }) {
 }
 
 export function OfferingsScreen() {
-  const { organization, terminology } = useWorkspace();
+  const { organization, terminology, userRole } = useWorkspace();
+  const canEdit = userRole === "admin";
   const offerings = useQuery<any>(
     dashboardApi.catalog.listOfferings,
     organization ? { includeInactive: true } : "skip",
@@ -249,7 +250,7 @@ export function OfferingsScreen() {
         eyebrow="What you deliver"
         title={terminology.offeringPlural}
         description={`Define the bookable or requestable work your organization provides. ${terminology.offeringPlural} can carry time, price, or simply act as a service category.`}
-        action={<OfferingDialog />}
+        action={canEdit ? <OfferingDialog /> : undefined}
       />
 
       {!offerings ? (
@@ -278,7 +279,7 @@ export function OfferingsScreen() {
                       </p>
                     </div>
                   </div>
-                  <OfferingDialog offering={offering} />
+                  {canEdit && <OfferingDialog offering={offering} />}
                 </div>
 
                 <p className="mt-5 line-clamp-3 min-h-15 text-xs leading-5 text-muted-foreground">
@@ -307,9 +308,9 @@ export function OfferingsScreen() {
       ) : (
         <EmptyState
           icon={Layers3}
-          title={`Create your first ${terminology.offering.toLowerCase()}`}
-          description={`Use ${terminology.offeringPlural.toLowerCase()} for anything people can book or request—from a service appointment to a technical support session.`}
-          action={<OfferingDialog />}
+          title={`No ${terminology.offeringPlural.toLowerCase()} listed`}
+          description={`Offerings will appear here once created by workspace administrators.`}
+          action={canEdit ? <OfferingDialog /> : undefined}
         />
       )}
     </>

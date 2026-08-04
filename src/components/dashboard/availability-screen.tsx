@@ -213,7 +213,8 @@ function WeeklyEditor({
 }
 
 export function AvailabilityScreen() {
-  const { organization, terminology } = useWorkspace();
+  const { organization, terminology, userRole, teamMemberId } = useWorkspace();
+  const isAdmin = userRole === "admin";
   const members = useQuery<any>(
     dashboardApi.team.listMembers,
     organization ? {} : "skip",
@@ -229,11 +230,21 @@ export function AvailabilityScreen() {
       ),
     [members],
   );
+
   const [selectedMemberId, setSelectedMemberId] = useState("");
+
+  const defaultMemberId = useMemo(() => {
+    if (teamMemberId && bookableMembers.some((m: any) => m._id === teamMemberId)) {
+      return teamMemberId;
+    }
+    return bookableMembers[0]?._id ?? "";
+  }, [bookableMembers, teamMemberId]);
+
   const effectiveMemberId =
-    bookableMembers.find((member: any) => member._id === selectedMemberId)?._id ??
-    bookableMembers[0]?._id ??
-    "";
+    (!isAdmin && teamMemberId)
+      ? teamMemberId
+      : (bookableMembers.find((member: any) => member._id === selectedMemberId)?._id ?? defaultMemberId);
+
   const member = bookableMembers.find((entry: any) => entry._id === effectiveMemberId);
   const memberRules = (rules ?? []).filter(
     (rule: any) => rule.teamMemberId === effectiveMemberId,
@@ -244,9 +255,9 @@ export function AvailabilityScreen() {
       <ScreenHeader
         eyebrow="Capacity rules"
         title="Availability"
-        description={`Set the recurring hours when each ${terminology.teamMember.toLowerCase()} can receive ${terminology.bookingPlural.toLowerCase()}. The public page and AI agent use the same rules.`}
+        description={`Set the recurring hours when ${isAdmin ? `each ${terminology.teamMember.toLowerCase()}` : "you"} can receive ${terminology.bookingPlural.toLowerCase()}. The public page and AI agent use these exact rules.`}
         action={
-          bookableMembers.length ? (
+          isAdmin && bookableMembers.length > 0 ? (
             <Select value={effectiveMemberId} onValueChange={setSelectedMemberId}>
               <SelectTrigger className="w-full min-w-52 bg-white">
                 <UsersRound className="size-4 text-muted-foreground" />

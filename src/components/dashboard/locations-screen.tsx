@@ -23,7 +23,8 @@ import { LoadingPanel, ScreenHeader, SubmitButton } from "@/components/dashboard
 import { useWorkspace } from "@/components/dashboard/workspace-context";
 
 export function LocationsScreen() {
-  const { organization } = useWorkspace();
+  const { organization, userRole } = useWorkspace();
+  const canEdit = userRole === "admin";
   const locations = useQuery<any[]>(
     dashboardApi.locations.list,
     organization ? { includeInactive: true } : "skip",
@@ -86,108 +87,110 @@ export function LocationsScreen() {
       <ScreenHeader
         eyebrow="Multi-branch operations"
         title="Business Locations"
-        description="Manage your physical branches, addresses, contact details, and branch-specific AI Receptionist routing."
+        description="View physical branches, addresses, contact details, and branch-specific locations for your business."
         action={
-          <Dialog
-            open={open}
-            onOpenChange={(v) => {
-              setOpen(v);
-              if (!v) setEditingLocation(null);
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="size-4" />
-                Add Branch Location
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingLocation ? "Edit Branch Location" : "Add Branch Location"}
-                </DialogTitle>
-                <DialogDescription>
-                  Locations appear on your public site and allow the AI Receptionist to route callers to specific branches.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="name">Branch Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    defaultValue={editingLocation?.name ?? ""}
-                    placeholder="e.g. Lekki Flagship Store or Downtown Clinic"
-                    required
-                  />
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <Label htmlFor="address">Street Address</Label>
+          canEdit ? (
+            <Dialog
+              open={open}
+              onOpenChange={(v) => {
+                setOpen(v);
+                if (!v) setEditingLocation(null);
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="size-4" />
+                  Add Branch Location
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingLocation ? "Edit Branch Location" : "Add Branch Location"}
+                  </DialogTitle>
+                  <DialogDescription>
+                    Locations appear on your public site and allow the AI Receptionist to route callers to specific branches.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="name">Branch Name</Label>
                     <Input
-                      id="address"
-                      name="address"
-                      defaultValue={editingLocation?.address ?? ""}
-                      placeholder="e.g. 14 Admiralty Way"
+                      id="name"
+                      name="name"
+                      defaultValue={editingLocation?.name ?? ""}
+                      placeholder="e.g. Lekki Flagship Store or Downtown Clinic"
                       required
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="city">City / Region</Label>
-                    <Input
-                      id="city"
-                      name="city"
-                      defaultValue={editingLocation?.city ?? ""}
-                      placeholder="e.g. Lekki, Lagos"
-                      required
-                    />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <Label htmlFor="address">Street Address</Label>
+                      <Input
+                        id="address"
+                        name="address"
+                        defaultValue={editingLocation?.address ?? ""}
+                        placeholder="e.g. 14 Admiralty Way"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="city">City / Region</Label>
+                      <Input
+                        id="city"
+                        name="city"
+                        defaultValue={editingLocation?.city ?? ""}
+                        placeholder="e.g. Lekki, Lagos"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="phone">Phone (Optional)</Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        defaultValue={editingLocation?.phone ?? ""}
+                        placeholder="+234..."
+                      />
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <Label htmlFor="email">Email (Optional)</Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        defaultValue={editingLocation?.email ?? ""}
+                        placeholder="lekki@business.com"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="phone">Phone (Optional)</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      defaultValue={editingLocation?.phone ?? ""}
-                      placeholder="+234..."
-                    />
-                  </div>
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <Label htmlFor="email">Email (Optional)</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      defaultValue={editingLocation?.email ?? ""}
-                      placeholder="lekki@business.com"
-                    />
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-2 pt-2">
-                  <input
-                    type="checkbox"
-                    id="isPrimary"
-                    name="isPrimary"
-                    defaultChecked={editingLocation?.isPrimary}
-                    className="size-4 rounded border-gray-300 text-primary"
-                  />
-                  <Label htmlFor="isPrimary" className="text-xs cursor-pointer font-normal">
-                    Set as Primary Main Branch
-                  </Label>
-                </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <input
+                      type="checkbox"
+                      id="isPrimary"
+                      name="isPrimary"
+                      defaultChecked={editingLocation?.isPrimary}
+                      className="size-4 rounded border-gray-300 text-primary"
+                    />
+                    <Label htmlFor="isPrimary" className="text-xs cursor-pointer font-normal">
+                      Set as Primary Main Branch
+                    </Label>
+                  </div>
 
-                <DialogFooter className="pt-3">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                    Cancel
-                  </Button>
-                  <SubmitButton pending={saving}>
-                    {editingLocation ? "Save Changes" : "Create Branch"}
-                  </SubmitButton>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <DialogFooter className="pt-3">
+                    <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                      Cancel
+                    </Button>
+                    <SubmitButton pending={saving}>
+                      {editingLocation ? "Save Changes" : "Create Branch"}
+                    </SubmitButton>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          ) : undefined
         }
       />
 
@@ -232,29 +235,31 @@ export function LocationsScreen() {
                   </div>
                 )}
 
-                <div className="border-t pt-3 flex items-center justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    size="xs"
-                    onClick={() => {
-                      setEditingLocation(loc);
-                      setOpen(true);
-                    }}
-                    className="h-7 text-xs gap-1"
-                  >
-                    <Edit className="size-3" /> Edit
-                  </Button>
-                  {!loc.isPrimary && (
+                {canEdit && (
+                  <div className="border-t pt-3 flex items-center justify-end gap-2">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="xs"
-                      onClick={() => handleDelete(loc._id, loc.name)}
-                      className="h-7 text-xs text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        setEditingLocation(loc);
+                        setOpen(true);
+                      }}
+                      className="h-7 text-xs gap-1"
                     >
-                      <Trash2 className="size-3" />
+                      <Edit className="size-3" /> Edit
                     </Button>
-                  )}
-                </div>
+                    {!loc.isPrimary && (
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        onClick={() => handleDelete(loc._id, loc.name)}
+                        className="h-7 text-xs text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="size-3" />
+                      </Button>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
