@@ -41,17 +41,60 @@ export async function POST(request: NextRequest) {
     const userResult = await db.collection<DbUser>("users").insertOne(newUser);
     const userId = userResult.insertedId.toString();
 
-    const orgName = organizationName?.trim() || `${name}'s Organization`;
-    const org = await createOrganizationForUser(userId, orgName);
+    // Check if user was pre-added as a staff team member by their employer
+    const escapedEmail = emailNorm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const matchingTeamMember = await db.collection("teamMembers").findOne({
+      email: { $regex: `^${escapedEmail}$`, $options: "i" },
+    });
+
+    let orgId = "";
+    let orgSlug = "";
+
+    if (matchingTeamMember && matchingTeamMember.organizationId) {
+      const orgIdStr = matchingTeamMember.organizationId;
+      const existingOrg = await db.collection("organizations").findOne({
+        $or: [
+          { clerkOrgId: orgIdStr },
+          { slug: orgIdStr },
+          ...(orgIdStr.length === 24 ? [{ _id: new (await import("mongodb")).ObjectId(orgIdStr) }] : []),
+        ],
+      });
+
+      if (existingOrg) {
+        orgId = (existingOrg as any)._id.toString();
+        orgSlug = (existingOrg as any).slug;
+
+        await db.collection("orgMembers").insertOne({
+          organizationId: orgId,
+          userId,
+          role: "member",
+          teamMemberId: matchingTeamMember._id?.toString(),
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        await db.collection("teamMembers").updateOne(
+          { _id: matchingTeamMember._id },
+          { $set: { userId } },
+        );
+      }
+    }
+
+    if (!orgSlug) {
+      const orgName = organizationName?.trim() || `${name}'s Organization`;
+      const createdOrg = await createOrganizationForUser(userId, orgName);
+      orgId = createdOrg._id.toString();
+      orgSlug = createdOrg.slug;
+    }
 
     await db.collection<DbUser>("users").updateOne(
       { _id: userResult.insertedId },
-      { $set: { activeOrgId: org._id!.toString() } },
+      { $set: { activeOrgId: orgId } },
     );
 
-    await createSession(userId, org._id!.toString());
+    await createSession(userId, orgId);
 
-    return NextResponse.json({ success: true, userId, orgSlug: org.slug });
+    return NextResponse.json({ success: true, userId, orgSlug });
   } catch (error) {
     console.error("Sign up error", error);
     return NextResponse.json(

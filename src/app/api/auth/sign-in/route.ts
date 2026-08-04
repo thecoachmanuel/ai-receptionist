@@ -167,10 +167,50 @@ export async function POST(request: NextRequest) {
 
     if (!orgSlug) {
       const userIdStr = user._id!.toString();
-      const member = await db.collection("orgMembers").findOne({
+      let member = await db.collection("orgMembers").findOne({
         $or: [{ userId: userIdStr }, { userId: user._id as any }],
       });
-      if (member) {
+
+      // If user is not yet an org member, check if they were added as a team member by email
+      if (!member) {
+        const teamMember = await db.collection("teamMembers").findOne({
+          email: { $regex: `^${escapedEmail}$`, $options: "i" },
+        });
+        if (teamMember && teamMember.organizationId) {
+          const orgIdStr = teamMember.organizationId;
+          const org = await db.collection("organizations").findOne({
+            $or: [
+              { clerkOrgId: orgIdStr },
+              { slug: orgIdStr },
+              ...(orgIdStr.length === 24 ? [{ _id: new (await import("mongodb")).ObjectId(orgIdStr) }] : []),
+            ],
+          });
+          if (org) {
+            activeOrgId = (org as any)._id.toString();
+            orgSlug = (org as any).slug;
+
+            await db.collection("orgMembers").updateOne(
+              { organizationId: activeOrgId, userId: userIdStr },
+              {
+                $setOnInsert: {
+                  organizationId: activeOrgId,
+                  userId: userIdStr,
+                  role: "member",
+                  teamMemberId: teamMember._id?.toString(),
+                  createdAt: Date.now(),
+                  updatedAt: Date.now(),
+                },
+              },
+              { upsert: true },
+            );
+
+            await db.collection("teamMembers").updateOne(
+              { _id: teamMember._id },
+              { $set: { userId: userIdStr } },
+            );
+          }
+        }
+      } else {
         const orgIdStr = (member as any).organizationId;
         const org = await db.collection("organizations").findOne({
           $or: [

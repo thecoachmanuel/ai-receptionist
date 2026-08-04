@@ -28,7 +28,8 @@ export default async function OrganizationLayout({
   const canOperate =
     session.permissions.includes("org:operations_hub:manage") ||
     session.role === "admin" ||
-    session.role === "operator";
+    session.role === "operator" ||
+    session.role === "member";
   if (!canOperate) {
     redirect("/app/access-required");
   }

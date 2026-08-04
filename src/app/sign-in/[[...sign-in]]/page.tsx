@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { clearAllCache } from "@/lib/api-client/use-data";
 import { AuthShell } from "@/components/auth-shell";
@@ -10,8 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function SignInPage() {
+function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect") || searchParams.get("redirect_url");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -47,7 +50,7 @@ export default function SignInPage() {
       setSuccess("Welcome back! Signed in successfully. Redirecting to workspace...");
       toast.success("Welcome back! Signed in successfully.");
 
-      const targetUrl = data.orgSlug ? `/app/${data.orgSlug}` : "/app";
+      const targetUrl = redirectUrl || (data.orgSlug ? `/app/${data.orgSlug}` : "/app");
       router.push(targetUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
@@ -56,50 +59,58 @@ export default function SignInPage() {
   };
 
   return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {success && (
+        <div className="rounded-md bg-emerald-50 border border-emerald-200 p-3 text-xs font-medium text-emerald-800 animate-in fade-in duration-200">
+          ✓ {success}
+        </div>
+      )}
+      {error && (
+        <div className="rounded-md bg-red-50 border border-red-200 p-3 text-xs text-red-700 animate-in fade-in duration-200">
+          {error}
+        </div>
+      )}
+      <div className="space-y-2">
+        <Label htmlFor="email">Email address</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="you@company.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? "Signing in..." : "Sign in"}
+      </Button>
+      <p className="text-center text-xs text-muted-foreground">
+        Don&apos;t have an account?{" "}
+        <Link href="/sign-up" className="font-semibold text-primary hover:underline">
+          Sign up
+        </Link>
+      </p>
+    </form>
+  );
+}
+
+export default function SignInPage() {
+  return (
     <AuthShell eyebrow="Welcome back" title="Open your workspace">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {success && (
-          <div className="rounded-md bg-emerald-50 border border-emerald-200 p-3 text-xs font-medium text-emerald-800 animate-in fade-in duration-200">
-            ✓ {success}
-          </div>
-        )}
-        {error && (
-          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-xs text-red-700 animate-in fade-in duration-200">
-            {error}
-          </div>
-        )}
-        <div className="space-y-2">
-          <Label htmlFor="email">Email address</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="you@company.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Signing in..." : "Sign in"}
-        </Button>
-        <p className="text-center text-xs text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link href="/sign-up" className="font-semibold text-primary hover:underline">
-            Sign up
-          </Link>
-        </p>
-      </form>
+      <Suspense fallback={<div className="p-4 text-center text-xs text-muted-foreground">Loading sign in...</div>}>
+        <SignInForm />
+      </Suspense>
     </AuthShell>
   );
 }
