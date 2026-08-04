@@ -10,7 +10,6 @@ import {
   Clock,
   Eye,
   FileText,
-  LogOut,
   Mail,
   MapPin,
   Phone,
@@ -37,13 +36,16 @@ import { useAuth } from "@/lib/auth/context";
 import { useWorkspace } from "@/components/dashboard/workspace-context";
 
 export function StaffPortalScreen() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { organization, terminology, userRole, teamMemberId } = useWorkspace();
-  const [signingOut, setSigningOut] = useState(false);
   const bookings = useQuery<any[]>(
     dashboardApi.bookings.listForCurrentOrg,
     organization ? { limit: 200 } : "skip",
     { interval: 5000 },
+  );
+  const teamMembers = useQuery<any[]>(
+    dashboardApi.team.listMembers,
+    organization ? {} : "skip",
   );
   const locations = useQuery<any[]>(
     dashboardApi.locations.list,
@@ -57,6 +59,35 @@ export function StaffPortalScreen() {
 
   const staffName = user?.name || "Staff Member";
   const staffEmail = user?.email || "";
+
+  // Resolve matching staff profile from business team database
+  const staffMember = useMemo(() => {
+    if (!teamMembers || !user) return null;
+    const uEmail = staffEmail.toLowerCase();
+    const uName = staffName.toLowerCase();
+
+    return teamMembers.find(
+      (m: any) =>
+        (teamMemberId && (m._id === teamMemberId || m.id === teamMemberId)) ||
+        (m.email && m.email.toLowerCase() === uEmail) ||
+        (m.name && m.name.toLowerCase() === uName)
+    );
+  }, [teamMembers, user, teamMemberId, staffEmail, staffName]);
+
+  const staffTitle = staffMember?.title || (userRole === "admin" ? "Business Admin & Owner" : "Staff Operating Specialist");
+  const staffPhone = staffMember?.phone || (user as any)?.phone || "Not provided";
+  const isAcceptingBookings = staffMember?.acceptingBookings !== false;
+
+  const assignedLocationNames = useMemo(() => {
+    if (!locations) return "All Business Branches";
+    if (!staffMember?.locationIds || staffMember.locationIds.length === 0) {
+      return "All Business Branches";
+    }
+    const matched = locations
+      .filter((loc: any) => staffMember.locationIds.includes(loc._id) || staffMember.locationIds.includes(loc.id))
+      .map((loc: any) => loc.name);
+    return matched.length > 0 ? matched.join(", ") : "All Business Branches";
+  }, [locations, staffMember]);
 
   const myBookings = useMemo(() => {
     if (!bookings) return [];
@@ -137,25 +168,6 @@ export function StaffPortalScreen() {
     }
   };
 
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    toast.success("Signing out of Staff Portal...");
-    try {
-      await signOut();
-    } catch {
-      toast.error("Failed to sign out.");
-      setSigningOut(false);
-    }
-  };
-
-  const initials = staffName
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-
   return (
     <>
       <ScreenHeader
@@ -163,57 +175,58 @@ export function StaffPortalScreen() {
         title={`Welcome back, ${staffName}`}
         description={`Manage your daily appointment schedule, mark client visits, and view branch locations for ${organization?.name || "your business"}.`}
         action={
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 gap-1.5 py-1 px-3 hidden sm:inline-flex">
-              <ShieldCheck className="size-3.5" /> Staff Dashboard
-            </Badge>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSignOut}
-              disabled={signingOut}
-              className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive text-xs h-9"
-            >
-              <LogOut className="size-3.5" />
-              {signingOut ? "Signing out..." : "Sign Out"}
-            </Button>
-          </div>
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 gap-1.5 py-1 px-3">
+            <ShieldCheck className="size-3.5" /> Staff Dashboard
+          </Badge>
         }
       />
 
-      {/* Staff Identity Card & Account Status Banner */}
-      <Card className="p-4 bg-gradient-to-r from-card via-card to-primary/5 border-black/10 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground font-heading font-bold text-base shadow-sm">
-              {initials || <User className="size-5" />}
+      {/* Staff Account & Identity Banner Card */}
+      <Card className="border border-black/10 bg-linear-to-r from-card to-accent/20 p-5 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground font-heading text-xl font-bold shadow-sm">
+              {staffName.slice(0, 2).toUpperCase()}
             </div>
-            <div>
+            <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-heading text-base font-semibold text-foreground">{staffName}</h3>
-                <Badge variant="secondary" className="text-[10px] uppercase font-mono tracking-wider bg-primary/10 text-primary border-primary/20">
-                  {userRole === "admin" ? "Business Admin" : userRole === "operator" ? "Staff Operator" : "Staff Member"}
+                <h2 className="font-heading text-xl font-bold tracking-tight text-foreground">{staffName}</h2>
+                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-mono uppercase tracking-wider">
+                  {staffTitle}
                 </Badge>
+                {isAcceptingBookings ? (
+                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">
+                    ● Accepting Bookings
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px]">
+                    ● Offline
+                  </Badge>
+                )}
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">{staffEmail}</p>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Mail className="size-3.5 text-primary" /> {staffEmail}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Phone className="size-3.5 text-primary" /> {staffPhone}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Building2 className="size-3.5 text-primary" /> {organization?.name || "Business"}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-xs text-muted-foreground border-t sm:border-t-0 pt-3 sm:pt-0 border-black/10">
-            <div className="space-y-0.5">
-              <p className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground/70">Assigned Business</p>
-              <p className="font-medium text-foreground truncate max-w-[180px]">{organization?.name || "Business Workspace"}</p>
+          <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-border/60">
+            <div className="rounded-xl border bg-background/80 px-3 py-1.5 text-xs">
+              <span className="text-muted-foreground text-[10px] block font-mono uppercase tracking-wider">Assigned Branch</span>
+              <span className="font-semibold text-foreground">{assignedLocationNames}</span>
             </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleSignOut}
-              disabled={signingOut}
-              className="gap-1.5 text-xs h-8 shrink-0 border border-black/10"
-            >
-              <LogOut className="size-3.5 text-destructive" />
-              <span>{signingOut ? "Signing out..." : "Sign Out"}</span>
-            </Button>
+            <div className="rounded-xl border bg-background/80 px-3 py-1.5 text-xs">
+              <span className="text-muted-foreground text-[10px] block font-mono uppercase tracking-wider">Services / Offerings</span>
+              <span className="font-semibold text-foreground">{staffMember?.offeringIds?.length || "All"} Services</span>
+            </div>
           </div>
         </div>
       </Card>
