@@ -197,6 +197,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    const currentOrgSlug = organization?.slug;
+    const isStaffUser = role === "member" || role === "operator";
+
     try {
       await fetch("/api/auth/sign-out", { method: "POST" });
     } catch {}
@@ -215,7 +218,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPermissions([]);
     setIsSuperAdmin(false);
     setIsLoaded(true);
-    router.push("/sign-in");
+
+    if (isStaffUser && currentOrgSlug) {
+      router.push(`/${currentOrgSlug}/staff-portal`);
+    } else {
+      router.push("/sign-in");
+    }
   };
 
   const has = (check: { permission?: string; role?: string; plan?: string; feature?: string }) => {
