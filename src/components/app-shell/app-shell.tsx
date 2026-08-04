@@ -74,18 +74,6 @@ function navigationFor(
         segment: "staff-portal",
         icon: UsersRound,
       },
-      {
-        label: terminology.bookingPlural,
-        segment: "bookings",
-        icon: CalendarDays,
-      },
-      {
-        label: terminology.offeringPlural,
-        segment: "offerings",
-        icon: CircleDollarSign,
-      },
-      { label: "Branches", segment: "locations", icon: Building2 },
-      { label: "Availability", segment: "availability", icon: Clock3 },
     ];
 
     return [
