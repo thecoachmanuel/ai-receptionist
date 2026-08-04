@@ -65,7 +65,12 @@ function SignInForm() {
         ? `/${data.orgSlug}/staff-portal`
         : data.orgSlug ? `/app/${data.orgSlug}` : "/app";
       const targetUrl = redirectUrl || defaultTarget;
-      router.push(targetUrl);
+
+      if (typeof window !== "undefined") {
+        window.location.href = targetUrl;
+      } else {
+        router.push(targetUrl);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
       setLoading(false);

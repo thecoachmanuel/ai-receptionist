@@ -89,7 +89,9 @@ export function TenantStaffSignInScreen({
       }
 
       toast.success(`Welcome back to ${businessName} Staff Portal!`);
-      router.refresh();
+      if (typeof window !== "undefined") {
+        window.location.href = `/${siteSlug}/staff-portal`;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed.");
       setLoading(false);
