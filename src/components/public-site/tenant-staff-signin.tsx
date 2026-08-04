@@ -3,13 +3,32 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CalendarCheck, MapPin, ShieldCheck, UserCheck } from "lucide-react";
+import { ArrowLeft, CalendarCheck, MapPin, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { clearAllCache } from "@/lib/api-client/use-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { PublishedSite } from "@/components/public-site/types";
+
+function safeHttpUrl(value?: string) {
+  if (!value) return undefined;
+  if (value.startsWith("/") || value.startsWith("data:image/")) return value;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" || url.protocol === "data:"
+      ? url.toString()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
 
 export function TenantStaffSignInScreen({
   publishedSite,
@@ -28,6 +47,14 @@ export function TenantStaffSignInScreen({
     config?.theme?.accentColor ||
     site?.primaryColor ||
     "#2446D8";
+
+  // Resolve exact business logo URL
+  const logoUrl =
+    safeHttpUrl(config?.logoUrl) ||
+    safeHttpUrl(config?.logo) ||
+    safeHttpUrl(config?.brandLogo) ||
+    safeHttpUrl((organization as any)?.logoUrl) ||
+    safeHttpUrl((organization as any)?.logo);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -85,7 +112,7 @@ export function TenantStaffSignInScreen({
         } as React.CSSProperties
       }
     >
-      {/* Left Panel - Tenant Brand Hero styled with business accent color */}
+      {/* Left Panel - Tenant Brand Hero styled with business accent color & exact business logo */}
       <section className="relative hidden min-h-dvh overflow-hidden bg-[#151923] px-12 py-10 text-white lg:flex lg:flex-col">
         <div className="absolute inset-0 hairline-grid opacity-[0.09]" />
         
@@ -99,25 +126,27 @@ export function TenantStaffSignInScreen({
           style={{ borderColor: accentColor }}
         />
 
-        {/* Tenant Logo & Brand Header */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div
-            className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-white border border-white/20 overflow-hidden shrink-0"
-            style={{ borderColor: `${accentColor}55` }}
-          >
-            {config?.logoUrl ? (
+        {/* Exact Business Logo & Brand Header */}
+        <div className="relative z-10 flex items-center gap-3.5">
+          {logoUrl ? (
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-white p-1.5 shadow-lg border border-white/20 overflow-hidden shrink-0">
               <img
-                src={config.logoUrl}
+                src={logoUrl}
                 alt={businessName}
-                className="size-7 rounded-lg object-cover"
+                className="max-h-full max-w-full object-contain rounded-xl"
               />
-            ) : (
-              <ShieldCheck className="size-5" style={{ color: accentColor }} />
-            )}
-          </div>
+            </div>
+          ) : (
+            <div
+              className="flex size-12 items-center justify-center rounded-2xl text-white font-heading font-bold text-lg shadow-lg border border-white/20 shrink-0"
+              style={{ backgroundColor: accentColor }}
+            >
+              {getInitials(businessName)}
+            </div>
+          )}
           <div>
-            <h2 className="font-heading text-lg font-bold tracking-tight text-white">{businessName}</h2>
-            <p className="text-[10px] text-white/50 uppercase tracking-widest font-mono">Staff Operating Portal</p>
+            <h2 className="font-heading text-xl font-bold tracking-tight text-white">{businessName}</h2>
+            <p className="text-[10px] text-white/60 uppercase tracking-widest font-mono">Staff Operating Portal</p>
           </div>
         </div>
 
@@ -155,22 +184,24 @@ export function TenantStaffSignInScreen({
       {/* Right Panel - Sign In Form */}
       <section className="flex min-h-dvh flex-col bg-background">
         <header className="flex items-center justify-between px-6 py-6 sm:px-10">
-          <div className="flex items-center gap-2.5 lg:hidden">
-            <div
-              className="flex size-8 items-center justify-center rounded-lg bg-primary/10 border overflow-hidden shrink-0"
-              style={{ borderColor: `${accentColor}33` }}
-            >
-              {config?.logoUrl ? (
+          <div className="flex items-center gap-3 lg:hidden">
+            {logoUrl ? (
+              <div className="flex size-9 items-center justify-center rounded-xl bg-white p-1 shadow-sm border border-black/10 overflow-hidden shrink-0">
                 <img
-                  src={config.logoUrl}
+                  src={logoUrl}
                   alt={businessName}
-                  className="size-6 rounded-md object-cover"
+                  className="max-h-full max-w-full object-contain rounded-lg"
                 />
-              ) : (
-                <ShieldCheck className="size-4" style={{ color: accentColor }} />
-              )}
-            </div>
-            <span className="font-heading text-sm font-semibold">{businessName}</span>
+              </div>
+            ) : (
+              <div
+                className="flex size-9 items-center justify-center rounded-xl text-white font-heading font-bold text-xs shadow-sm shrink-0"
+                style={{ backgroundColor: accentColor }}
+              >
+                {getInitials(businessName)}
+              </div>
+            )}
+            <span className="font-heading text-base font-semibold">{businessName}</span>
           </div>
 
           <Link
