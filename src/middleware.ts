@@ -15,6 +15,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
+  // Prevent already authenticated users from accessing login and sign-up pages
+  if ((pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up")) && sessionToken) {
+    const redirectUrl = request.nextUrl.searchParams.get("redirect") || "/app";
+    return NextResponse.redirect(new URL(redirectUrl, request.url));
+  }
+
   return NextResponse.next();
 }
 

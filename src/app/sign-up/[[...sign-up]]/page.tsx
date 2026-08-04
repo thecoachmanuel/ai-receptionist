@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/context";
 import { AuthShell } from "@/components/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +11,20 @@ import { Label } from "@/components/ui/label";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoaded } = useAuth();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [organizationName, setOrganizationName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isLoaded && isAuthenticated) {
+      router.replace("/app");
+    }
+  }, [isAuthenticated, isLoaded, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
