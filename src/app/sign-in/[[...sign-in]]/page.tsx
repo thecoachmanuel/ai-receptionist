@@ -61,11 +61,8 @@ function SignInForm() {
         : data.orgSlug ? `/app/${data.orgSlug}` : "/app";
       const targetUrl = redirectUrl || defaultTarget;
 
-      if (typeof window !== "undefined") {
-        window.location.href = targetUrl;
-      } else {
-        router.push(targetUrl);
-      }
+      router.push(targetUrl);
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
       setLoading(false);
