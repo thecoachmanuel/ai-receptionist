@@ -61,16 +61,26 @@ export function TenantStaffSignInScreen({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const formEmail = ((formData.get("email") as string) || email || "").trim();
+    const formPassword = ((formData.get("password") as string) || password || "").trim();
+
+    if (!formEmail || !formPassword) {
+      setError("Email and password are required.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/auth/sign-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: formEmail, password: formPassword }),
       });
       const data = await res.json();
 
@@ -82,7 +92,7 @@ export function TenantStaffSignInScreen({
       toast.success(`Welcome back to ${businessName} Staff Portal!`);
 
       if (typeof window !== "undefined") {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 150));
         window.location.replace(`/${siteSlug}/staff-portal`);
       }
     } catch (err) {
@@ -102,9 +112,8 @@ export function TenantStaffSignInScreen({
       className="grid min-h-dvh bg-card lg:grid-cols-[minmax(0,0.95fr)_minmax(560px,1.05fr)]"
       style={
         {
-          "--primary": accentColor,
-          "--ring": accentColor,
-        } as React.CSSProperties
+          "--accent-color": accentColor,
+        } as CSSProperties
       }
     >
       {/* Left Panel - Tenant Brand Hero styled with business accent color & exact business logo */}
@@ -233,29 +242,36 @@ export function TenantStaffSignInScreen({
                 <Label htmlFor="staff-email" className="text-xs">Staff Email address</Label>
                 <Input
                   id="staff-email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   placeholder="staff@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-10 text-sm"
+                  className="h-11 text-base sm:text-sm"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="staff-password" className="text-xs">Password</Label>
                 <Input
                   id="staff-password"
+                  name="password"
                   type="password"
+                  autoComplete="current-password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-10 text-sm"
+                  className="h-11 text-base sm:text-sm"
                 />
               </div>
               <Button
                 type="submit"
-                className="w-full h-10 text-xs font-semibold shadow-md transition-opacity hover:opacity-90"
+                className="w-full h-11 text-sm font-semibold shadow-md transition-opacity hover:opacity-90"
                 style={{ backgroundColor: accentColor, color: "#ffffff" }}
                 disabled={loading}
               >

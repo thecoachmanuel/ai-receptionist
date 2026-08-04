@@ -29,17 +29,27 @@ function SignInForm() {
     }
   }, [isAuthenticated, isLoaded, redirectUrl, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setSuccess("");
     setLoading(true);
 
+    const formData = new FormData(e.currentTarget);
+    const formEmail = ((formData.get("email") as string) || email || "").trim();
+    const formPassword = ((formData.get("password") as string) || password || "").trim();
+
+    if (!formEmail || !formPassword) {
+      setError("Email and password are required.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/auth/sign-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: formEmail, password: formPassword }),
       });
       const data = await res.json();
 
@@ -48,9 +58,6 @@ function SignInForm() {
       }
 
       // Completely wipe any stale memory/storage cache from previous account before entering workspace.
-      // Do NOT write to sessionStorage here — it is unreliable across navigations on mobile browsers
-      // (Safari/Android kill sessionStorage when the tab is backgrounded or navigated away).
-      // The AuthProvider's fetchSession() rehydrates client state from the HTTP-only cookie via /api/auth/me.
       clearAllCache();
 
       setSuccess("Welcome back! Signed in successfully. Redirecting to workspace...");
@@ -62,7 +69,7 @@ function SignInForm() {
       const targetUrl = redirectUrl || defaultTarget;
 
       // Small delay to allow mobile WebKit network process to finish flushing Set-Cookie to disk
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 150));
       window.location.replace(targetUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
@@ -86,25 +93,34 @@ function SignInForm() {
         <Label htmlFor="email">Email address</Label>
         <Input
           id="email"
+          name="email"
           type="email"
+          autoComplete="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           placeholder="you@company.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          className="h-11 text-base sm:text-sm"
         />
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
         <Input
           id="password"
+          name="password"
           type="password"
+          autoComplete="current-password"
           placeholder="••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          className="h-11 text-base sm:text-sm"
         />
       </div>
-      <Button type="submit" className="w-full" disabled={loading}>
+      <Button type="submit" className="w-full h-11 text-sm font-medium" disabled={loading}>
         {loading ? "Signing in..." : "Sign in"}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
