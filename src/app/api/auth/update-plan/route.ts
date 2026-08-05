@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
-import { updateOrganizationPlan } from "@/lib/services/organizations";
+import { isUserAuthorizedForOrg, updateOrganizationPlan } from "@/lib/services/organizations";
 
 export const runtime = "nodejs";
 
@@ -10,10 +10,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
 
-  if (session.role !== "admin") {
-    return NextResponse.json({ error: "Admin access required." }, { status: 403 });
-  }
-
   const { orgId, plan } = await request.json();
   if (!orgId || !plan) {
     return NextResponse.json({ error: "orgId and plan are required." }, { status: 400 });
@@ -21,6 +17,15 @@ export async function POST(request: NextRequest) {
 
   if (plan !== "free_org" && plan !== "engage" && plan !== "voice") {
     return NextResponse.json({ error: "Invalid plan." }, { status: 400 });
+  }
+
+  // Ensure user is authorized for the target organization and is an admin
+  const isAuthorized = await isUserAuthorizedForOrg(session.user.id, orgId);
+  if (!isAuthorized || (!session.isSuperAdmin && session.organization?.id !== orgId && session.role !== "admin")) {
+    return NextResponse.json(
+      { error: "Forbidden: You are not an administrator of this workspace." },
+      { status: 403 },
+    );
   }
 
   await updateOrganizationPlan(orgId, plan);

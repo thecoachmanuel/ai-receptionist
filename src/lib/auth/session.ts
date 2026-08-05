@@ -257,10 +257,6 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
     const isSiteAdmin = user.email.trim().toLowerCase() === adminEmail;
 
     if (!organization) {
-      organization = await db.collection<DbOrganization>("organizations").findOne({});
-    }
-
-    if (!organization) {
       const newOrg = await createOrganizationForUser(userIdStr, `${user.name || "Default"}'s Workspace`);
       organization = newOrg as any;
     }

@@ -4,7 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { comparePassword, hashPassword } from "@/lib/auth/password";
 import { getDb } from "@/lib/db/mongodb";
 import type { DbUser } from "@/lib/db/types";
-import { createOrganizationForUser } from "@/lib/services/organizations";
+import { createOrganizationForUser, isUserAuthorizedForOrg } from "@/lib/services/organizations";
 import { getSystemSettings } from "@/lib/services/system-settings";
 import { ObjectId } from "mongodb";
 
@@ -394,7 +394,12 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (trigger === "update" && session) {
-        if (session.activeOrgId) token.activeOrgId = session.activeOrgId;
+        if (session.activeOrgId && token.userId) {
+          const isAuth = await isUserAuthorizedForOrg(token.userId as string, session.activeOrgId);
+          if (isAuth) {
+            token.activeOrgId = session.activeOrgId;
+          }
+        }
         if (session.orgSlug) token.orgSlug = session.orgSlug;
         if (session.isNewGoogleUser === false) token.isNewGoogleUser = false;
       }

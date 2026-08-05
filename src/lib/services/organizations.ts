@@ -398,10 +398,14 @@ export async function isUserAuthorizedForOrg(userId: string, orgId: string): Pro
     return true;
   }
 
-  const member = await db.collection<DbOrgMember>("orgMembers").findOne({
-    organizationId: orgIdStr,
+  const memberFilter = {
+    organizationId: { $in: [orgIdStr, org.clerkOrgId, org.slug].filter(Boolean) },
     $or: [{ userId: userIdStr }, { userId: userId }, { userId: userObjectId as any }],
-  });
+  };
+
+  const member =
+    (await db.collection<DbOrgMember>("orgMembers").findOne(memberFilter as any)) ||
+    (await db.collection("organization_members").findOne(memberFilter as any));
 
   return Boolean(member && (member.role === "admin" || member.role === "operator" || member.role === "member"));
 }

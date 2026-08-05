@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, updateActiveOrganization } from "@/lib/auth/session";
-import { getOrganizationByIdOrSlug } from "@/lib/services/organizations";
+import { getOrganizationByIdOrSlug, isUserAuthorizedForOrg } from "@/lib/services/organizations";
 
 export const runtime = "nodejs";
 
@@ -18,6 +18,14 @@ export async function POST(request: NextRequest) {
   const org = await getOrganizationByIdOrSlug(orgIdOrSlug);
   if (!org) {
     return NextResponse.json({ error: "Organization not found." }, { status: 404 });
+  }
+
+  const isAuthorized = await isUserAuthorizedForOrg(session.user.id, org._id!.toString());
+  if (!isAuthorized) {
+    return NextResponse.json(
+      { error: "Forbidden: You do not have access to this workspace." },
+      { status: 403 },
+    );
   }
 
   await updateActiveOrganization(session.user.id, org._id!.toString());
