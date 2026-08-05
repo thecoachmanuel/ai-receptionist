@@ -858,7 +858,7 @@ function AgentLauncherInner({
           </div>
         ) : (
           /* Interactive AI Chat Preview */
-          <div className="space-y-3">
+          <div className="space-y-3 opacity-75 hover:opacity-100 transition-opacity">
             <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/5 via-muted/30 to-background p-4 shadow-xs">
               <div className="flex items-center justify-between mb-3 border-b border-border/40 pb-2.5">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
