@@ -122,9 +122,9 @@ export async function getVapiSettings(): Promise<VapiSettings> {
   const sys = await getSystemSettings();
   return {
     activeProvider: "vapi",
-    vapiPublicKey: sys.vapi.vapiPublicKey,
-    vapiPrivateKey: sys.vapi.vapiPrivateKey,
-    vapiAssistantId: sys.vapi.vapiAssistantId,
+    vapiPublicKey: sys.vapi.vapiPublicKey || process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || process.env.VAPI_PUBLIC_KEY || "",
+    vapiPrivateKey: sys.vapi.vapiPrivateKey || process.env.VAPI_PRIVATE_KEY || process.env.VAPI_API_KEY || "",
+    vapiAssistantId: sys.vapi.vapiAssistantId || process.env.VAPI_ASSISTANT_ID || process.env.VAPI_DEFAULT_ASSISTANT_ID || "",
     updatedAt: sys.updatedAt || 0,
   };
 }

@@ -36,9 +36,9 @@ const DEFAULTS: SystemSettings = {
   clientPageUrl: "",
   isWaitlistActive: false,
   vapi: {
-    vapiPublicKey: "",
-    vapiPrivateKey: "",
-    vapiAssistantId: "",
+    vapiPublicKey: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || process.env.VAPI_PUBLIC_KEY || "",
+    vapiPrivateKey: process.env.VAPI_PRIVATE_KEY || process.env.VAPI_API_KEY || "",
+    vapiAssistantId: process.env.VAPI_ASSISTANT_ID || process.env.VAPI_DEFAULT_ASSISTANT_ID || "",
   },
   updatedAt: Date.now(),
 };
@@ -64,9 +64,9 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       clientPageUrl: doc.clientPageUrl ?? "",
       isWaitlistActive: doc.isWaitlistActive ?? false,
       vapi: {
-        vapiPublicKey: doc.vapi?.vapiPublicKey ?? "",
-        vapiPrivateKey: doc.vapi?.vapiPrivateKey ?? "",
-        vapiAssistantId: doc.vapi?.vapiAssistantId ?? "",
+        vapiPublicKey: doc.vapi?.vapiPublicKey || process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || process.env.VAPI_PUBLIC_KEY || "",
+        vapiPrivateKey: doc.vapi?.vapiPrivateKey || process.env.VAPI_PRIVATE_KEY || process.env.VAPI_API_KEY || "",
+        vapiAssistantId: doc.vapi?.vapiAssistantId || process.env.VAPI_ASSISTANT_ID || process.env.VAPI_DEFAULT_ASSISTANT_ID || "",
       },
       updatedAt: doc.updatedAt || Date.now(),
       updatedBy: doc.updatedBy,

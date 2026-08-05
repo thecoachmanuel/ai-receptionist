@@ -980,9 +980,14 @@ export function SuperAdminScreen() {
                 <form onSubmit={handleSaveAIEngine} className="space-y-6">
                   {/* Vapi AI Config */}
                   <div className="rounded-2xl border bg-white p-5 shadow-sm space-y-5 ring-1 ring-orange-500/15">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-orange-700">
-                      Vapi AI Configuration
-                    </h3>
+                    <div>
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-orange-700">
+                        Vapi AI Configuration
+                      </h3>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        If left blank, values are automatically loaded from environment variables (<code className="text-[10px]">VAPI_PUBLIC_KEY</code>, <code className="text-[10px]">VAPI_PRIVATE_KEY</code>, <code className="text-[10px]">VAPI_ASSISTANT_ID</code>).
+                      </p>
+                    </div>
 
                     <div className="space-y-1.5">
                       <Label htmlFor="vapi-public-key" className="text-xs font-semibold">
