@@ -152,3 +152,55 @@ export function localDateStringAt(utcMs: number, timeZone: string): string {
   const parts = localPartsAt(utcMs, timeZone);
   return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
 }
+
+export function formatTimeInTimeZone(
+  utcMs: number,
+  timeZone: string = "Africa/Lagos",
+  locale: string = "en-US",
+): string {
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      timeZone,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(new Date(utcMs));
+  } catch {
+    return new Date(utcMs).toLocaleTimeString();
+  }
+}
+
+export function formatDateTimeInTimeZone(
+  utcMs: number,
+  timeZone: string = "Africa/Lagos",
+  locale: string = "en-US",
+): string {
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      timeZone,
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(new Date(utcMs));
+  } catch {
+    return new Date(utcMs).toLocaleString();
+  }
+}
+
+export function parseDateTimeInputToUtc(
+  datetimeLocalString: string,
+  timeZone: string = "Africa/Lagos",
+): number {
+  const [datePart, timePart] = datetimeLocalString.split("T");
+  if (!datePart || !timePart) return new Date(datetimeLocalString).getTime();
+
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute] = timePart.split(":").map(Number);
+
+  const utcMs = zonedDateTimeToUtc({ year, month, day, hour, minute }, timeZone);
+  return utcMs ?? new Date(datetimeLocalString).getTime();
+}

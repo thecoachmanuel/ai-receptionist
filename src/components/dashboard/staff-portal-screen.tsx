@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
+import { formatDateTimeInTimeZone, formatTimeInTimeZone } from "@/lib/time";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -265,7 +266,7 @@ export function StaffPortalScreen() {
           </p>
           <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">
             {stats.nextAppointment
-              ? `${format(new Date(stats.nextAppointment.startAt), "h:mm a")} (${stats.nextAppointment.offeringName})`
+              ? `${formatTimeInTimeZone(stats.nextAppointment.startAt)} (${stats.nextAppointment.offeringName})`
               : "Schedule clear"}
           </p>
         </Card>
@@ -489,13 +490,13 @@ export function StaffPortalScreen() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Date:</span>
                     <span className="font-semibold text-foreground">
-                      {format(new Date(selectedBooking.startAt), "EEEE, MMMM d, yyyy")}
+                      {formatDateTimeInTimeZone(selectedBooking.startAt)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Time:</span>
                     <span className="font-semibold text-foreground">
-                      {format(new Date(selectedBooking.startAt), "h:mm a")}
+                      {formatTimeInTimeZone(selectedBooking.startAt)}
                     </span>
                   </div>
                   {selectedBooking.locationName && (

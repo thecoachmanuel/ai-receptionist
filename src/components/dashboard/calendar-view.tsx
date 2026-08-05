@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { formatTimeInTimeZone, localPartsAt } from "@/lib/time";
 import type { Booking } from "./data";
 
 type ViewMode = "month" | "week" | "day";
@@ -177,7 +178,7 @@ export function CalendarView({ bookings, onSelectBooking }: CalendarViewProps) {
                           {b.contactName}
                         </span>
                         <span className="font-mono text-[9px] text-muted-foreground">
-                          {format(new Date(b.startAt), "HH:mm")}
+                          {formatTimeInTimeZone(b.startAt)}
                         </span>
                       </div>
                     </div>
@@ -232,8 +233,8 @@ export function CalendarView({ bookings, onSelectBooking }: CalendarViewProps) {
 
                   {/* Render Bookings as Absolute Time Blocks */}
                   {dayBookings.map((b) => {
-                    const startDate = new Date(b.startAt);
-                    const startHour = startDate.getHours() + startDate.getMinutes() / 60;
+                    const parts = localPartsAt(b.startAt, "Africa/Lagos");
+                    const startHour = parts.hour + parts.minute / 60;
                     const topOffset = (startHour - 8) * 64; // 64px per hour
                     const durationHours = (b.endAt - b.startAt) / 3600000;
                     const height = Math.max(durationHours * 64, 40);
@@ -255,7 +256,7 @@ export function CalendarView({ bookings, onSelectBooking }: CalendarViewProps) {
                           <p className="text-[10px] text-muted-foreground truncate">{b.offeringName}</p>
                         </div>
                         <p className="font-mono text-[9px] text-primary font-medium flex items-center gap-1">
-                          <Clock className="size-2.5 inline" /> {format(startDate, "HH:mm")} - {format(new Date(b.endAt), "HH:mm")}
+                          <Clock className="size-2.5 inline" /> {formatTimeInTimeZone(b.startAt)} - {formatTimeInTimeZone(b.endAt)}
                         </p>
                       </div>
                     );

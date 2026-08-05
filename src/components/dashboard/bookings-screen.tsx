@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { parseDateTimeInputToUtc } from "@/lib/time";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -97,7 +98,7 @@ function CreateBookingDialog() {
         offeringId,
         teamMemberId: memberId === "unassigned" ? undefined : memberId,
         locationId: locationId || undefined,
-        startAt: new Date(startValue).getTime(),
+        startAt: parseDateTimeInputToUtc(startValue, organization?.timezone || "Africa/Lagos"),
         customer: {
           name: String(form.get("contactName") ?? "").trim(),
           email: String(form.get("contactEmail") ?? "").trim() || undefined,

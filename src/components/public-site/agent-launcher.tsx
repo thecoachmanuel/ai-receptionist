@@ -18,6 +18,7 @@ import {
   Send,
   ShieldCheck,
   Square,
+  Sparkles,
   Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -855,7 +856,78 @@ function AgentLauncherInner({
               )
             )}
           </div>
-        ) : null}
+        ) : (
+          /* Interactive AI Chat Preview */
+          <div className="space-y-3">
+            <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/5 via-muted/30 to-background p-4 shadow-xs">
+              <div className="flex items-center justify-between mb-3 border-b border-border/40 pb-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                  <Sparkles className="size-3.5" />
+                  <span>AI Conversation Preview</span>
+                </div>
+                <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-mono bg-background/80 px-2 py-0.5 rounded-full border border-border/50">
+                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live Receptionist
+                </span>
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                {/* AI Sample Message 1 */}
+                <div className="flex gap-2">
+                  <div className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                    AI
+                  </div>
+                  <div className="max-w-[85%] rounded-2xl rounded-tl-xs bg-background border p-2.5 shadow-2xs text-foreground leading-relaxed">
+                    Hello! 👋 Welcome to <strong>{businessName}</strong>. I&apos;m your AI front desk assistant. How can I help you today?
+                  </div>
+                </div>
+
+                {/* Customer Sample Message */}
+                <div className="flex justify-end gap-2">
+                  <div className="max-w-[80%] rounded-2xl rounded-tr-xs bg-primary p-2.5 text-primary-foreground shadow-2xs leading-relaxed">
+                    {offerings.length > 0
+                      ? `What services do you offer and can I book ${offerings[0].name}?`
+                      : `What services do you offer and can I check open appointment slots?`}
+                  </div>
+                </div>
+
+                {/* AI Sample Message 2 */}
+                <div className="flex gap-2">
+                  <div className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                    AI
+                  </div>
+                  <div className="max-w-[85%] rounded-2xl rounded-tl-xs bg-background border p-2.5 shadow-2xs text-foreground leading-relaxed">
+                    {offerings.length > 0
+                      ? `We offer ${offerings.slice(0, 2).map((o) => o.name).join(", ")}${offerings.length > 2 ? " and more" : ""}! I can check open time slots and get you booked in under a minute.`
+                      : `Absolutely! I can check real-time open slots and schedule your visit right away.`}
+                  </div>
+                </div>
+              </div>
+
+              {/* Sample Prompt Pills */}
+              <div className="mt-3 pt-2.5 border-t border-border/40">
+                <p className="text-[10px] font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                  <MessageCircle className="size-3 text-primary" /> Click a topic to try speaking with AI:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => void start("voice")}
+                    className="rounded-full bg-background hover:bg-primary/10 border border-primary/20 px-2.5 py-1 text-[11px] text-foreground font-medium transition-all hover:border-primary/40 cursor-pointer shadow-2xs flex items-center gap-1"
+                  >
+                    ✨ What are your services?
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void start("voice")}
+                    className="rounded-full bg-background hover:bg-primary/10 border border-primary/20 px-2.5 py-1 text-[11px] text-foreground font-medium transition-all hover:border-primary/40 cursor-pointer shadow-2xs flex items-center gap-1"
+                  >
+                    📅 Check open appointment slots
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Action Controls */}
         {isConnected ? (
