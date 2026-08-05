@@ -17,9 +17,10 @@ const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
  * all runtimes and mobile browsers.
  */
 export function applySessionCookie(response: NextResponse, token: string): NextResponse {
+  const isSecure = process.env.NODE_ENV === "production" || Boolean(process.env.NEXTAUTH_URL?.startsWith("https://"));
   response.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isSecure,
     sameSite: "lax",
     path: "/",
     expires: new Date(Date.now() + SESSION_DURATION_MS),
@@ -71,10 +72,11 @@ export async function createSession(userId: string, activeOrgId?: string): Promi
   });
 
   try {
+    const isSecure = process.env.NODE_ENV === "production" || Boolean(process.env.NEXTAUTH_URL?.startsWith("https://"));
     const cookieStore = await cookies();
     cookieStore.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isSecure,
       sameSite: "lax",
       path: "/",
       expires: new Date(expiresAt),

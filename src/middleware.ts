@@ -7,7 +7,16 @@ const secret = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET || "oneboar
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const token = await getToken({ req: request, secret });
+  const isSecure =
+    process.env.NODE_ENV === "production" ||
+    request.headers.get("x-forwarded-proto") === "https" ||
+    request.nextUrl.protocol === "https:";
+
+  const token = await getToken({
+    req: request,
+    secret,
+    secureCookie: isSecure,
+  });
 
   const legacySessionToken =
     request.cookies.get("oneboard_session")?.value ||

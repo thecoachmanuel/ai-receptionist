@@ -88,8 +88,8 @@ function SignInForm() {
 
       const targetUrl = redirectUrl || "/app";
 
-      await new Promise((resolve) => setTimeout(resolve, 150));
-      window.location.replace(targetUrl);
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      window.location.href = targetUrl;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
       setLoading(false);

@@ -103,8 +103,8 @@ export function TenantStaffSignInScreen({
       toast.success(`Welcome back to ${businessName} Staff Portal!`);
 
       if (typeof window !== "undefined") {
-        await new Promise((resolve) => setTimeout(resolve, 150));
-        window.location.replace(`/${siteSlug}/staff-portal`);
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        window.location.href = `/${siteSlug}/staff-portal`;
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed.");
