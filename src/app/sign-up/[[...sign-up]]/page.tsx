@@ -112,7 +112,7 @@ export default function SignUpPage() {
             <Button
               type="button"
               variant="outline"
-              className="w-full h-11 text-sm font-medium gap-2 border-border/80 hover:bg-accent"
+              className="w-full h-11 text-sm font-medium gap-2 border-border/80 hover:bg-accent cursor-pointer"
               onClick={handleGoogleSignUp}
               disabled={googleLoading || loading}
             >
@@ -212,7 +212,7 @@ export default function SignUpPage() {
               className="h-11 text-base sm:text-sm"
             />
           </div>
-          <Button type="submit" className="w-full h-11 text-sm font-medium" disabled={loading || googleLoading}>
+          <Button type="submit" className="w-full h-11 text-sm font-medium cursor-pointer" disabled={loading || googleLoading}>
             {loading ? "Creating account..." : "Start free workspace"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">

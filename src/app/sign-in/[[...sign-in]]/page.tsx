@@ -114,7 +114,7 @@ function SignInForm() {
           <Button
             type="button"
             variant="outline"
-            className="w-full h-11 text-sm font-medium gap-2 border-border/80 hover:bg-accent"
+            className="w-full h-11 text-sm font-medium gap-2 border-border/80 hover:bg-accent cursor-pointer"
             onClick={handleGoogleSignIn}
             disabled={googleLoading || loading}
           >
@@ -191,7 +191,7 @@ function SignInForm() {
             className="h-11 text-base sm:text-sm"
           />
         </div>
-        <Button type="submit" className="w-full h-11 text-sm font-medium" disabled={loading || googleLoading}>
+        <Button type="submit" className="w-full h-11 text-sm font-medium cursor-pointer" disabled={loading || googleLoading}>
           {loading ? "Signing in..." : "Sign in with Email"}
         </Button>
         <p className="text-center text-xs text-muted-foreground">

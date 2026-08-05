@@ -171,7 +171,7 @@ export default function OnboardingPage() {
 
             <Button
               type="submit"
-              className="w-full h-12 text-sm font-semibold gap-2 shadow-sm"
+              className="w-full h-12 text-sm font-semibold gap-2 shadow-sm cursor-pointer"
               disabled={loading || !businessName.trim()}
             >
               {loading ? "Setting up your workspace..." : (
