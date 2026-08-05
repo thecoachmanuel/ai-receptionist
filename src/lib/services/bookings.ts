@@ -169,6 +169,17 @@ export async function createBooking(
   const reservedStartAt = args.startAt - offering.bufferBeforeMinutes * 60_000;
   const reservedEndAt = endAt + offering.bufferAfterMinutes * 60_000;
 
+  const collision = await db.collection<DbBooking>("bookings").findOne({
+    organizationId: orgId,
+    teamMemberId: teamMember!._id!.toString(),
+    status: { $ne: "canceled" },
+    reservedStartAt: { $lt: reservedEndAt },
+    reservedEndAt: { $gt: reservedStartAt },
+  });
+  if (collision) {
+    throw new Error("This time slot is no longer available. Please select another time slot.");
+  }
+
   const code = generateConfirmationCode();
 
   const newBooking: DbBooking = {
@@ -397,7 +408,7 @@ export async function getPublicAvailableSlots(
       const collision = await db.collection<DbBooking>("bookings").findOne({
         organizationId: effectiveOrgId,
         teamMemberId: member._id!.toString(),
-        status: { $nin: ["canceled"] },
+        status: { $ne: "canceled" },
         reservedStartAt: { $lt: reservedEndAt },
         reservedEndAt: { $gt: reservedStartAt },
       });
@@ -512,6 +523,19 @@ export async function rescheduleBooking(
   const endAt = startAt + offering.durationMinutes * 60_000;
   const reservedStartAt = startAt - offering.bufferBeforeMinutes * 60_000;
   const reservedEndAt = endAt + offering.bufferAfterMinutes * 60_000;
+  const targetMemberId = teamMemberId || (lookup.booking as any).teamMemberId;
+
+  const collision = await db.collection<DbBooking>("bookings").findOne({
+    _id: { $ne: new ObjectId(bookingId) },
+    organizationId: effectiveOrgId,
+    ...(targetMemberId ? { teamMemberId: targetMemberId } : {}),
+    status: { $ne: "canceled" },
+    reservedStartAt: { $lt: reservedEndAt },
+    reservedEndAt: { $gt: reservedStartAt },
+  });
+  if (collision) {
+    return { success: false, message: "This time slot is no longer available. Please choose another time." };
+  }
 
   await db.collection<DbBooking>("bookings").updateOne(
     { _id: new ObjectId(bookingId) },
