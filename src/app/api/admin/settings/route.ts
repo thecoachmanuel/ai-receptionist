@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
         googleAuthEnabled: settings.googleAuthEnabled,
       },
       vapi: settings.vapi,
+      whatsappGateway: settings.whatsappGateway,
     });
   } catch (err) {
     return NextResponse.json({ error: "Failed to fetch admin settings" }, { status: 500 });
@@ -70,6 +71,16 @@ export async function PATCH(request: NextRequest) {
     if (typeof body.contactEmail === "string") updates.contactEmail = body.contactEmail;
     if (typeof body.clientPageUrl === "string") updates.clientPageUrl = body.clientPageUrl;
     if (typeof body.isWaitlistActive === "boolean") updates.isWaitlistActive = body.isWaitlistActive;
+
+    // ── Free WhatsApp Gateway Config ────────────────────────
+    if (body.whatsappGateway && typeof body.whatsappGateway === "object") {
+      const current = await getSystemSettings();
+      updates.whatsappGateway = {
+        enabled: typeof body.whatsappGateway.enabled === "boolean" ? body.whatsappGateway.enabled : (current.whatsappGateway?.enabled ?? true),
+        serverUrl: typeof body.whatsappGateway.serverUrl === "string" ? body.whatsappGateway.serverUrl.trim() : (current.whatsappGateway?.serverUrl ?? ""),
+        apiKey: typeof body.whatsappGateway.apiKey === "string" ? body.whatsappGateway.apiKey.trim() : (current.whatsappGateway?.apiKey ?? ""),
+      };
+    }
 
     // ── Vapi AI Config ──────────────────────────────────────
     if (body.activeProvider === "vapi" || body.vapiPublicKey !== undefined || body.vapiPrivateKey !== undefined || body.vapiAssistantId !== undefined) {

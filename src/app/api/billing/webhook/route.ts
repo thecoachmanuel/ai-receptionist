@@ -31,7 +31,21 @@ export async function POST(request: Request) {
           amount,
           currency,
           paidAt: paid_at,
-          customerCode: customer.customer_code,
+          customerCode: customer?.customer_code,
+        });
+      }
+    } else if (event.event === "subscription.disable" || event.event === "invoice.payment_failed") {
+      const orgId = event.data?.metadata?.orgId;
+      if (orgId) {
+        const { getDb } = await import("@/lib/db/mongodb");
+        const { ObjectId } = await import("mongodb");
+        const db = await getDb();
+        const filter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
+        await db.collection("organizations").updateOne(filter, {
+          $set: {
+            planStatus: event.event === "subscription.disable" ? "canceled" : "past_due",
+            updatedAt: Date.now(),
+          },
         });
       }
     }

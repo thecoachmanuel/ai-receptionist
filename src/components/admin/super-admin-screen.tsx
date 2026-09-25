@@ -4,13 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  AlertCircle,
   ArrowUpRight,
+  Banknote,
   Bot,
   Building2,
+  CalendarClock,
   CalendarDays,
   Check,
+  CheckCircle2,
   CircleDollarSign,
   ClipboardList,
+  CreditCard,
   ExternalLink,
   Eye,
   EyeOff,
@@ -23,12 +28,14 @@ import {
   MessageSquare,
   Minus,
   Plus,
+  QrCode,
   RefreshCw,
   Save,
   Search,
   Settings2,
   ShieldAlert,
   ShieldCheck,
+  Smartphone,
   Sparkles,
   Trash2,
   TrendingUp,
@@ -78,7 +85,16 @@ import { Brand } from "@/components/brand";
 /* ─────────────────────────────────────────────
    Types
 ───────────────────────────────────────────── */
-type Tab = "overview" | "tenants" | "pricing" | "ai_engine" | "messages" | "waitlist" | "settings";
+type Tab =
+  | "overview"
+  | "tenants"
+  | "subscriptions"
+  | "pricing"
+  | "ai_engine"
+  | "whatsapp"
+  | "messages"
+  | "waitlist"
+  | "settings";
 type PlatformPrices = { core: number; engage: number; voice: number; usdToNgnRate: number };
 
 type AdminOrgStat = {
@@ -91,6 +107,25 @@ type AdminOrgStat = {
   locale: string;
   plan: "free_org" | "engage" | "voice";
   planStatus: string;
+  subscriptionExpiresAt?: number;
+  trialEndsAt?: number;
+  paystack?: {
+    subscriptionCode?: string;
+    planCode?: string;
+    emailToken?: string;
+    customerCode?: string;
+    channel?: string;
+    amount?: number;
+    lastPaymentAt?: number;
+    manualNotes?: string;
+    updatedBy?: string;
+  };
+  whatsappInstance?: {
+    status: "disconnected" | "connecting" | "connected";
+    phone?: string;
+    instanceName?: string;
+    connectedAt?: number;
+  };
   businessType?: string;
   createdAt: number;
   updatedAt: number;
@@ -122,10 +157,12 @@ type AdminOrgStat = {
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ElementType; badge?: string }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "tenants", label: "Tenants", icon: Building2 },
+  { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
   { id: "pricing", label: "Pricing", icon: CircleDollarSign },
   { id: "ai_engine", label: "AI & Engine", icon: Bot },
-  { id: "messages", label: "Messages", icon: MessageSquare },
-  { id: "waitlist", label: "Waitlist", icon: ClipboardList },
+  { id: "whatsapp", label: "WhatsApp Gateway", icon: MessageSquare },
+  { id: "messages", label: "Messages", icon: ClipboardList },
+  { id: "waitlist", label: "Waitlist", icon: UsersRound },
   { id: "settings", label: "Settings", icon: Settings2 },
 ];
 
@@ -322,6 +359,25 @@ export function SuperAdminScreen() {
   const [googleAuthEnabled, setGoogleAuthEnabled] = useState(true);
   const [savingContact, setSavingContact] = useState(false);
 
+  // Subscriptions state
+  const [managingOrg, setManagingOrg] = useState<AdminOrgStat | null>(null);
+  const [subPlan, setSubPlan] = useState<"free_org" | "engage" | "voice">("free_org");
+  const [subStatus, setSubStatus] = useState<string>("active");
+  const [subDurationMonths, setSubDurationMonths] = useState<number>(1);
+  const [subChannel, setSubChannel] = useState<string>("bank_transfer");
+  const [subAmount, setSubAmount] = useState<number>(5000);
+  const [subNotes, setSubNotes] = useState<string>("");
+  const [savingSub, setSavingSub] = useState<boolean>(false);
+  const [subFilterStatus, setSubFilterStatus] = useState<string>("all");
+  const [subSearch, setSubSearch] = useState<string>("");
+
+  // WhatsApp Gateway state
+  const [waGatewayEnabled, setWaGatewayEnabled] = useState(true);
+  const [waGatewayUrl, setWaGatewayUrl] = useState("http://localhost:3000");
+  const [waGatewayApiKey, setWaGatewayApiKey] = useState("");
+  const [savingWaGateway, setSavingWaGateway] = useState(false);
+  const [testingWaGateway, setTestingWaGateway] = useState(false);
+
   // Messages state
   const [messages, setMessages] = useState<any[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -386,6 +442,11 @@ export function SuperAdminScreen() {
         }
         if (typeof data.googleAuthEnabled === "boolean") {
           setGoogleAuthEnabled(data.googleAuthEnabled);
+        }
+        if (data.whatsappGateway) {
+          setWaGatewayEnabled(data.whatsappGateway.enabled ?? true);
+          setWaGatewayUrl(data.whatsappGateway.serverUrl || "http://localhost:3000");
+          setWaGatewayApiKey(data.whatsappGateway.apiKey || "");
         }
         const aiSettings = data.vapi || data.elevenlabs;
         if (aiSettings) {
@@ -517,6 +578,112 @@ export function SuperAdminScreen() {
     }
   };
 
+  const handleOpenManageSub = (org: AdminOrgStat) => {
+    setManagingOrg(org);
+    setSubPlan(org.plan || "free_org");
+    setSubStatus(org.planStatus || "active");
+    setSubDurationMonths(1);
+    setSubChannel(org.paystack?.channel || "bank_transfer");
+    setSubAmount(
+      org.paystack?.amount ||
+        (org.plan === "voice" ? prices.voice : org.plan === "engage" ? prices.engage : prices.core) ||
+        5000,
+    );
+    setSubNotes(org.paystack?.manualNotes || "");
+  };
+
+  const handleSaveSubscription = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!managingOrg) return;
+    setSavingSub(true);
+    try {
+      const res = await fetch("/api/admin/subscriptions/manage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orgId: managingOrg._id,
+          plan: subPlan,
+          planStatus: subStatus,
+          durationMonths: Number(subDurationMonths),
+          channel: subChannel,
+          amount: Number(subAmount) || 0,
+          manualNotes: subNotes.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update subscription");
+
+      toast.success(`Subscription updated for ${managingOrg.name}`);
+      setOrganizations((prev) =>
+        prev.map((o) =>
+          o._id === managingOrg._id
+            ? {
+                ...o,
+                plan: subPlan,
+                planStatus: subStatus,
+                subscriptionExpiresAt: data.subscriptionExpiresAt ?? o.subscriptionExpiresAt,
+                paystack: {
+                  ...(o.paystack || {}),
+                  channel: subChannel,
+                  amount: Number(subAmount) || 0,
+                  manualNotes: subNotes.trim(),
+                  lastPaymentAt: Date.now(),
+                },
+              }
+            : o,
+        ),
+      );
+      setManagingOrg(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update subscription");
+    } finally {
+      setSavingSub(false);
+    }
+  };
+
+  const handleSaveWaGateway = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingWaGateway(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          whatsappGateway: {
+            enabled: waGatewayEnabled,
+            serverUrl: waGatewayUrl.trim(),
+            apiKey: waGatewayApiKey.trim(),
+          },
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save WhatsApp gateway settings.");
+      toast.success("Free WhatsApp Gateway configuration saved.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save WhatsApp Gateway settings.");
+    } finally {
+      setSavingWaGateway(false);
+    }
+  };
+
+  const handleTestWaGateway = async () => {
+    setTestingWaGateway(true);
+    try {
+      const cleanUrl = waGatewayUrl.trim().replace(/\/$/, "");
+      const res = await fetch(`${cleanUrl}/api/version`, {
+        headers: waGatewayApiKey ? { "X-Api-Key": waGatewayApiKey } : {},
+      });
+      if (res.ok) {
+        toast.success("WhatsApp Gateway (WAHA) is online and reachable!");
+      } else {
+        toast.warning(`Gateway reachable with HTTP status ${res.status}.`);
+      }
+    } catch (err) {
+      toast.error("Could not reach WhatsApp Gateway. Ensure Docker container is running.");
+    } finally {
+      setTestingWaGateway(false);
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreating(true);
@@ -576,6 +743,50 @@ export function SuperAdminScreen() {
   };
 
   /* ── Derived ────────────────────────────── */
+  const now = Date.now();
+  const activeSubs = organizations.filter((o) => {
+    const isExpired = o.subscriptionExpiresAt && o.subscriptionExpiresAt < now;
+    return (o.planStatus === "active" || !o.planStatus) && !isExpired;
+  });
+  const expiringSoonSubs = organizations.filter((o) => {
+    if (!o.subscriptionExpiresAt) return false;
+    const diffDays = (o.subscriptionExpiresAt - now) / (1000 * 60 * 60 * 24);
+    return diffDays > 0 && diffDays <= 7;
+  });
+  const expiredSubs = organizations.filter((o) => {
+    return o.planStatus === "expired" || (o.subscriptionExpiresAt && o.subscriptionExpiresAt < now);
+  });
+  const totalMrr = activeSubs.reduce((sum, o) => {
+    if (o.plan === "voice") return sum + (prices.voice || 75000);
+    if (o.plan === "engage") return sum + (prices.engage || 25000);
+    return sum + (prices.core || 5000);
+  }, 0);
+
+  const filteredSubs = organizations.filter((o) => {
+    const matchesSearch =
+      o.name.toLowerCase().includes(subSearch.toLowerCase()) ||
+      o.slug.toLowerCase().includes(subSearch.toLowerCase()) ||
+      (o.owner?.email || "").toLowerCase().includes(subSearch.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (subFilterStatus === "active") {
+      const isExpired = o.subscriptionExpiresAt && o.subscriptionExpiresAt < now;
+      return (o.planStatus === "active" || !o.planStatus) && !isExpired;
+    }
+    if (subFilterStatus === "expiring_soon") {
+      if (!o.subscriptionExpiresAt) return false;
+      const diffDays = (o.subscriptionExpiresAt - now) / (1000 * 60 * 60 * 24);
+      return diffDays > 0 && diffDays <= 7;
+    }
+    if (subFilterStatus === "expired") {
+      return o.planStatus === "expired" || (o.subscriptionExpiresAt && o.subscriptionExpiresAt < now);
+    }
+    if (subFilterStatus === "trialing") {
+      return o.planStatus === "trialing";
+    }
+    return true;
+  });
+
   const filtered = organizations.filter(
     (o) =>
       o.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -859,6 +1070,234 @@ export function SuperAdminScreen() {
               </div>
             )}
 
+            {/* ───── SUBSCRIPTIONS ───── */}
+            {activeTab === "subscriptions" && (
+              <div className="space-y-6">
+                <SectionHeader
+                  title="SaaS Subscriptions & Billing"
+                  description="Monitor tenant renewals, active subscriptions, automated Paystack billing, and record offline payments."
+                />
+
+                {/* Stat cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <StatCard
+                    label="Estimated MRR"
+                    value={`₦${totalMrr.toLocaleString()}`}
+                    icon={Banknote}
+                    accent="bg-emerald-600"
+                  />
+                  <StatCard
+                    label="Active Subscriptions"
+                    value={activeSubs.length}
+                    icon={CreditCard}
+                    accent="bg-blue-600"
+                  />
+                  <StatCard
+                    label="Expiring (≤ 7 Days)"
+                    value={expiringSoonSubs.length}
+                    icon={CalendarClock}
+                    accent="bg-amber-600"
+                  />
+                  <StatCard
+                    label="Expired / Overdue"
+                    value={expiredSubs.length}
+                    icon={AlertCircle}
+                    accent="bg-rose-600"
+                  />
+                </div>
+
+                {/* Filter and search bar */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="relative w-full sm:w-72">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Search tenant, slug, or owner..."
+                      value={subSearch}
+                      onChange={(e) => setSubSearch(e.target.value)}
+                      className="h-9 pl-9 text-xs bg-white"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Select value={subFilterStatus} onValueChange={setSubFilterStatus}>
+                      <SelectTrigger className="h-9 w-44 text-xs bg-white">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses ({organizations.length})</SelectItem>
+                        <SelectItem value="active">Active Only ({activeSubs.length})</SelectItem>
+                        <SelectItem value="expiring_soon">Expiring in 7 Days ({expiringSoonSubs.length})</SelectItem>
+                        <SelectItem value="expired">Expired ({expiredSubs.length})</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Subscriptions Table */}
+                <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/30 hover:bg-muted/30">
+                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tenant</TableHead>
+                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Plan Tier</TableHead>
+                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Renewal / Expiry</TableHead>
+                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Channel / Last Payment</TableHead>
+                        <TableHead className="text-right text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="h-28 text-center">
+                            <RefreshCw className="mx-auto size-5 animate-spin text-muted-foreground/50" />
+                          </TableCell>
+                        </TableRow>
+                      ) : filteredSubs.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="h-28 text-center text-sm text-muted-foreground">
+                            No subscriptions match the selected criteria.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredSubs.map((org) => {
+                          const isExpired =
+                            (org.subscriptionExpiresAt && org.subscriptionExpiresAt < now) ||
+                            org.planStatus === "expired";
+                          const diffDays = org.subscriptionExpiresAt
+                            ? Math.ceil((org.subscriptionExpiresAt - now) / (1000 * 60 * 60 * 24))
+                            : null;
+
+                          return (
+                            <TableRow key={org._id} className="group">
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/8 text-xs font-bold text-primary">
+                                    {org.name[0]?.toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <div className="text-[13px] font-semibold text-foreground">{org.name}</div>
+                                    <div className="text-[10px] font-mono text-muted-foreground/80 truncate max-w-[180px]">
+                                      {org.owner?.email || "No owner email"}
+                                    </div>
+                                    <span className="font-mono text-[10px] text-muted-foreground">
+                                      /{org.slug}
+                                    </span>
+                                  </div>
+                                </div>
+                              </TableCell>
+
+                              <TableCell>
+                                <div>
+                                  {planBadge(org.plan)}
+                                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                                    {org.plan === "voice"
+                                      ? `₦${(prices.voice || 75000).toLocaleString()}/mo`
+                                      : org.plan === "engage"
+                                      ? `₦${(prices.engage || 25000).toLocaleString()}/mo`
+                                      : `₦${(prices.core || 5000).toLocaleString()}/mo`}
+                                  </div>
+                                </div>
+                              </TableCell>
+
+                              <TableCell>
+                                {isExpired ? (
+                                  <Badge variant="outline" className="border-rose-300 bg-rose-50 text-rose-700 text-[10px] font-semibold gap-1">
+                                    <AlertCircle className="size-2.5" /> Expired
+                                  </Badge>
+                                ) : diffDays !== null && diffDays <= 7 && diffDays > 0 ? (
+                                  <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700 text-[10px] font-semibold gap-1">
+                                    <CalendarClock className="size-2.5" /> Renews in {diffDays}d
+                                  </Badge>
+                                ) : org.planStatus === "trialing" ? (
+                                  <Badge variant="outline" className="border-sky-300 bg-sky-50 text-sky-700 text-[10px] font-semibold">
+                                    Trialing
+                                  </Badge>
+                                ) : org.planStatus === "canceled" ? (
+                                  <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-600 text-[10px] font-semibold">
+                                    Canceled
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-[10px] font-semibold gap-1">
+                                    <CheckCircle2 className="size-2.5" /> Active
+                                  </Badge>
+                                )}
+                              </TableCell>
+
+                              <TableCell>
+                                {org.subscriptionExpiresAt ? (
+                                  <div>
+                                    <div className="text-[12px] font-medium text-foreground">
+                                      {new Date(org.subscriptionExpiresAt).toLocaleDateString(undefined, {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                      })}
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground">
+                                      {diffDays !== null
+                                        ? diffDays > 0
+                                          ? `${diffDays} days remaining`
+                                          : `Expired ${Math.abs(diffDays)} days ago`
+                                        : "—"}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] text-muted-foreground italic">No expiration recorded</span>
+                                )}
+                              </TableCell>
+
+                              <TableCell>
+                                <div className="space-y-0.5">
+                                  <div className="inline-flex items-center gap-1 font-medium text-[11px] text-foreground capitalize">
+                                    {org.paystack?.channel === "paystack" ? (
+                                      <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                                        <Zap className="size-3" /> Paystack Auto-debit
+                                      </span>
+                                    ) : org.paystack?.channel ? (
+                                      <span>{org.paystack.channel.replace("_", " ")}</span>
+                                    ) : (
+                                      <span className="text-muted-foreground">Manual</span>
+                                    )}
+                                  </div>
+                                  {org.paystack?.amount ? (
+                                    <div className="text-[10px] text-muted-foreground">
+                                      ₦{org.paystack.amount.toLocaleString()} recorded
+                                    </div>
+                                  ) : null}
+                                  {org.paystack?.manualNotes ? (
+                                    <div className="text-[10px] text-muted-foreground/80 truncate max-w-[160px]" title={org.paystack.manualNotes}>
+                                      {org.paystack.manualNotes}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </TableCell>
+
+                              <TableCell className="text-right">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleOpenManageSub(org)}
+                                  className="h-7 gap-1 text-[11px] font-medium border-primary/30 text-primary hover:bg-primary/5"
+                                >
+                                  Manage <Settings2 className="size-3" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+                {filteredSubs.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Showing {filteredSubs.length} of {organizations.length} tenant subscriptions
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* ───── PRICING ───── */}
             {activeTab === "pricing" && (
               <div className="space-y-5">
@@ -1061,6 +1500,117 @@ export function SuperAdminScreen() {
                       <><LoaderCircle className="size-4 animate-spin" /> Saving…</>
                     ) : (
                       <><Save className="size-4" /> Save AI Configuration</>
+                    )}
+                  </Button>
+                </form>
+              </div>
+            )}
+
+            {/* ───── WHATSAPP GATEWAY ───── */}
+            {activeTab === "whatsapp" && (
+              <div className="space-y-6">
+                <SectionHeader
+                  title="WhatsApp Automation Gateway"
+                  description="Configure the platform-wide Free WhatsApp Gateway (WAHA) so tenant businesses can link their WhatsApp number via QR code with $0.00 Meta API fees."
+                />
+
+                {/* Architecture Banner */}
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-50/50 p-5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="size-5 text-emerald-700" />
+                    <h3 className="text-sm font-bold text-emerald-950">
+                      100% Free Self-Hosted WhatsApp Architecture
+                    </h3>
+                  </div>
+                  <p className="text-xs leading-5 text-emerald-900/80">
+                    Unlike Meta Cloud API (which charges per conversation) or Twilio, this system connects directly to the WhatsApp Multi-Device Web protocol using open-source <strong>WAHA (WhatsApp HTTP API)</strong>. Each tenant simply scans their QR code in their dashboard settings, and messages are dispatched directly from their phone number.
+                  </p>
+                  <div className="rounded-xl bg-white border border-emerald-200 p-3 space-y-1.5 font-mono text-[11px]">
+                    <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-muted-foreground block">
+                      Quick Docker Setup Command
+                    </span>
+                    <div className="text-foreground select-all bg-muted/40 p-2 rounded">
+                      docker run -d -p 3000:3000/tcp --name waha devlikeapro/waha
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gateway Configuration Form */}
+                <form onSubmit={handleSaveWaGateway} className="space-y-5">
+                  <div className="rounded-2xl border bg-white p-5 shadow-sm space-y-5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                          Gateway Server Status
+                        </h4>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Enable or disable automated background WhatsApp dispatch.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={waGatewayEnabled}
+                        onCheckedChange={setWaGatewayEnabled}
+                      />
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="wa-server-url" className="text-xs font-semibold">
+                        WAHA Gateway Server URL
+                      </Label>
+                      <Input
+                        id="wa-server-url"
+                        placeholder="e.g. http://localhost:3000 or https://waha.yourdomain.com"
+                        value={waGatewayUrl}
+                        onChange={(e) => setWaGatewayUrl(e.target.value)}
+                        className="font-mono text-xs max-w-lg bg-muted/20"
+                      />
+                      <p className="text-[10px] text-muted-foreground">
+                        The HTTP address where your WAHA container or Evolution API server is reachable by this server.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="wa-api-key" className="text-xs font-semibold">
+                        Gateway API Key <span className="font-normal text-muted-foreground">(Optional)</span>
+                      </Label>
+                      <Input
+                        id="wa-api-key"
+                        type="password"
+                        placeholder="Optional secret token / header key"
+                        value={waGatewayApiKey}
+                        onChange={(e) => setWaGatewayApiKey(e.target.value)}
+                        className="font-mono text-xs max-w-lg bg-muted/20"
+                      />
+                      <p className="text-[10px] text-muted-foreground">
+                        Configured as <code className="text-[10px]">WAHA_API_KEY</code> on your Docker container to prevent unauthorized access.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleTestWaGateway}
+                        disabled={testingWaGateway || !waGatewayUrl.trim()}
+                        className="h-8 text-xs gap-1.5"
+                      >
+                        {testingWaGateway ? (
+                          <LoaderCircle className="size-3.5 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="size-3.5 text-emerald-600" />
+                        )}
+                        Test Gateway Connection
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Button type="submit" disabled={savingWaGateway} className="gap-2">
+                    {savingWaGateway ? (
+                      <><LoaderCircle className="size-4 animate-spin" /> Saving…</>
+                    ) : (
+                      <><Save className="size-4" /> Save WhatsApp Gateway Settings</>
                     )}
                   </Button>
                 </form>
@@ -1577,6 +2127,142 @@ export function SuperAdminScreen() {
               </Button>
             )}
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Manage Subscription Modal Dialog ── */}
+      <Dialog open={Boolean(managingOrg)} onOpenChange={() => setManagingOrg(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold">
+              <CreditCard className="size-4 text-primary" />
+              Manage Subscription — {managingOrg?.name}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Extend duration, change plan tier, update status, and record offline payments (Bank Transfer, Cash, POS).
+            </DialogDescription>
+          </DialogHeader>
+
+          {managingOrg && (
+            <form onSubmit={handleSaveSubscription} className="space-y-4 pt-1 text-xs">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Subscription Plan Tier</Label>
+                <Select
+                  value={subPlan}
+                  onValueChange={(val: "free_org" | "engage" | "voice") => {
+                    setSubPlan(val);
+                    if (val === "voice") setSubAmount(prices.voice || 75000);
+                    else if (val === "engage") setSubAmount(prices.engage || 25000);
+                    else setSubAmount(prices.core || 5000);
+                  }}
+                >
+                  <SelectTrigger className="h-8 text-xs bg-muted/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free_org">Core (₦{(prices.core || 5000).toLocaleString()}/mo)</SelectItem>
+                    <SelectItem value="engage">Engage (₦{(prices.engage || 25000).toLocaleString()}/mo)</SelectItem>
+                    <SelectItem value="voice">Voice (₦{(prices.voice || 75000).toLocaleString()}/mo)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Subscription Status</Label>
+                <Select value={subStatus} onValueChange={setSubStatus}>
+                  <SelectTrigger className="h-8 text-xs bg-muted/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active (Full access)</SelectItem>
+                    <SelectItem value="trialing">Trialing (Grace period)</SelectItem>
+                    <SelectItem value="expired">Expired (Requires renewal)</SelectItem>
+                    <SelectItem value="canceled">Canceled</SelectItem>
+                    <SelectItem value="past_due">Past Due</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Extend Access Duration</Label>
+                <Select
+                  value={String(subDurationMonths)}
+                  onValueChange={(val) => setSubDurationMonths(Number(val))}
+                >
+                  <SelectTrigger className="h-8 text-xs bg-muted/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">+1 Month (30 Days)</SelectItem>
+                    <SelectItem value="3">+3 Months (90 Days - Quarter)</SelectItem>
+                    <SelectItem value="6">+6 Months (180 Days - Half Year)</SelectItem>
+                    <SelectItem value="12">+1 Year (365 Days - Annual)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">
+                  Extends from current expiry date (or from today if currently expired).
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Payment Channel</Label>
+                  <Select value={subChannel} onValueChange={setSubChannel}>
+                    <SelectTrigger className="h-8 text-xs bg-muted/20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bank_transfer">Direct Bank Transfer</SelectItem>
+                      <SelectItem value="cash">Cash / In-person</SelectItem>
+                      <SelectItem value="pos">POS Terminal</SelectItem>
+                      <SelectItem value="paystack">Paystack (Auto-debit)</SelectItem>
+                      <SelectItem value="complimentary">Complimentary / Promo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Amount Received (₦)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={subAmount}
+                    onChange={(e) => setSubAmount(Number(e.target.value))}
+                    className="h-8 text-xs font-mono bg-muted/20"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Audit / Payment Notes</Label>
+                <Input
+                  placeholder="e.g. Paid via GTBank transfer - Reference #TRX902348"
+                  value={subNotes}
+                  onChange={(e) => setSubNotes(e.target.value)}
+                  className="h-8 text-xs bg-muted/20"
+                />
+              </div>
+
+              <DialogFooter className="gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setManagingOrg(null)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" size="sm" disabled={savingSub} className="gap-1.5">
+                  {savingSub ? (
+                    <LoaderCircle className="size-3.5 animate-spin" />
+                  ) : (
+                    <Save className="size-3.5" />
+                  )}
+                  Save Subscription
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>

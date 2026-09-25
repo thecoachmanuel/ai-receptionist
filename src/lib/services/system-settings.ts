@@ -20,6 +20,11 @@ export interface SystemSettings {
     vapiPrivateKey: string;
     vapiAssistantId: string;
   };
+  whatsappGateway?: {
+    enabled: boolean;
+    serverUrl: string;
+    apiKey: string;
+  };
   updatedAt: number;
   updatedBy?: string;
 }
@@ -39,6 +44,11 @@ const DEFAULTS: SystemSettings = {
     vapiPublicKey: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || process.env.VAPI_PUBLIC_KEY || "",
     vapiPrivateKey: process.env.VAPI_PRIVATE_KEY || process.env.VAPI_API_KEY || "",
     vapiAssistantId: process.env.VAPI_ASSISTANT_ID || process.env.VAPI_DEFAULT_ASSISTANT_ID || "",
+  },
+  whatsappGateway: {
+    enabled: true,
+    serverUrl: process.env.WHATSAPP_GATEWAY_URL || process.env.WAHA_SERVER_URL || "http://localhost:3000",
+    apiKey: process.env.WHATSAPP_GATEWAY_API_KEY || process.env.WAHA_API_KEY || "",
   },
   updatedAt: Date.now(),
 };
@@ -72,6 +82,11 @@ export async function getSystemSettings(): Promise<SystemSettings> {
         vapiPrivateKey: doc.vapi?.vapiPrivateKey || process.env.VAPI_PRIVATE_KEY || process.env.VAPI_API_KEY || "",
         vapiAssistantId: doc.vapi?.vapiAssistantId || process.env.VAPI_ASSISTANT_ID || process.env.VAPI_DEFAULT_ASSISTANT_ID || "",
       },
+      whatsappGateway: {
+        enabled: doc.whatsappGateway?.enabled ?? DEFAULTS.whatsappGateway!.enabled,
+        serverUrl: doc.whatsappGateway?.serverUrl || DEFAULTS.whatsappGateway!.serverUrl,
+        apiKey: doc.whatsappGateway?.apiKey || DEFAULTS.whatsappGateway!.apiKey,
+      },
       updatedAt: doc.updatedAt || Date.now(),
       updatedBy: doc.updatedBy,
     };
@@ -100,6 +115,10 @@ export async function updateSystemSettings(
     vapi: updates.vapi
       ? { ...current.vapi, ...updates.vapi }
       : current.vapi,
+    // Merge nested whatsappGateway object
+    whatsappGateway: updates.whatsappGateway
+      ? { ...(current.whatsappGateway || {}), ...updates.whatsappGateway } as any
+      : current.whatsappGateway,
     updatedAt: now,
     updatedBy: userId || current.updatedBy,
   };

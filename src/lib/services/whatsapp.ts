@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/db/mongodb";
 import type { DbBooking, DbOrganization, DbPublicSite } from "@/lib/db/types";
 import { generateFreeAIMessage, type MessageType } from "./free-ai";
+import { getSystemSettings } from "./system-settings";
 
 /**
  * Standardize phone number for WhatsApp dispatch (E.164 without plus sign).
@@ -125,14 +126,22 @@ export async function sendAutomatedWhatsAppNotification(
     );
   }
 
-  // 5. Send via Free WhatsApp Gateway if configured (e.g. Evolution API, WAHA, Baileys container)
+  // 5. Send via Free WhatsApp Gateway (prioritizing tenant's connected scanned session)
+  const sysSettings = await getSystemSettings().catch(() => null);
   const gatewayUrl =
-    whatsappAutomation?.gatewayUrl ||
-    process.env.WHATSAPP_GATEWAY_URL ||
-    process.env.EVOLUTION_API_URL;
+    organization.whatsappInstance?.status === "connected" && sysSettings?.whatsappGateway?.serverUrl
+      ? sysSettings.whatsappGateway.serverUrl
+      : whatsappAutomation?.gatewayUrl ||
+        sysSettings?.whatsappGateway?.serverUrl ||
+        process.env.WHATSAPP_GATEWAY_URL ||
+        process.env.WAHA_SERVER_URL ||
+        process.env.EVOLUTION_API_URL;
+
   const gatewayApiKey =
+    sysSettings?.whatsappGateway?.apiKey ||
     whatsappAutomation?.gatewayApiKey ||
     process.env.WHATSAPP_GATEWAY_API_KEY ||
+    process.env.WAHA_API_KEY ||
     process.env.EVOLUTION_API_KEY;
 
   let deliveredVia: "gateway" | "recorded" = "recorded";
@@ -141,17 +150,36 @@ export async function sendAutomatedWhatsAppNotification(
   if (gatewayUrl) {
     try {
       const cleanGateway = gatewayUrl.replace(/\/$/, "");
-      const res = await fetch(`${cleanGateway}/message/sendText`, {
+      const sessionName = organization.whatsappInstance?.instanceName || organization.slug;
+
+      // Try WAHA format first (standard for QR scanned sessions)
+      let res = await fetch(`${cleanGateway}/api/sendText`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(gatewayApiKey ? { apikey: gatewayApiKey } : {}),
+          ...(gatewayApiKey ? { "X-Api-Key": gatewayApiKey, apikey: gatewayApiKey } : {}),
         },
         body: JSON.stringify({
-          number: targetPhone,
+          session: sessionName,
+          chatId: `${targetPhone}@c.us`,
           text: messageContent,
         }),
       });
+
+      // If WAHA endpoint not found (404), fall back to Evolution API format
+      if (!res.ok && res.status === 404) {
+        res = await fetch(`${cleanGateway}/message/sendText/${encodeURIComponent(sessionName)}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(gatewayApiKey ? { apikey: gatewayApiKey } : {}),
+          },
+          body: JSON.stringify({
+            number: targetPhone,
+            text: messageContent,
+          }),
+        });
+      }
 
       if (res.ok) {
         gatewaySuccess = true;

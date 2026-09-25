@@ -52,6 +52,10 @@ export type ActiveAuthContext = {
     currency: string;
     locale: string;
     plan: string;
+    planStatus?: string;
+    subscriptionExpiresAt?: number;
+    paystack?: any;
+    whatsappInstance?: any;
   } | null;
   role?: "admin" | "operator" | "member";
   permissions: string[];
@@ -303,6 +307,9 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
             currency: organization.currency,
             locale: organization.locale,
             plan: organization.plan || "free_org",
+            planStatus: organization.planStatus || "active",
+            subscriptionExpiresAt: organization.subscriptionExpiresAt,
+            whatsappInstance: organization.whatsappInstance,
           }
         : null,
       role,

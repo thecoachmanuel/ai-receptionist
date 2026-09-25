@@ -85,8 +85,30 @@ export type DbOrganization = {
   locale: string;
   terminology: BackendTerminology;
   plan: PlanType;
-  planStatus: "active" | "trialing" | "canceled";
+  planStatus: "active" | "trialing" | "canceled" | "past_due" | "expired";
   trialEndsAt?: number;
+  subscriptionExpiresAt?: number;
+  paystack?: {
+    reference?: string;
+    subscriptionCode?: string;
+    planCode?: string;
+    customerCode?: string;
+    authorizationCode?: string;
+    lastPaymentDate?: number;
+    amount?: number;
+    currency?: string;
+    channel?: "paystack" | "manual" | "bank_transfer" | "cash" | "complimentary";
+    manualNotes?: string;
+    updatedBy?: string;
+  };
+  whatsappInstance?: {
+    instanceName?: string;
+    status?: "disconnected" | "connecting" | "connected";
+    phone?: string;
+    qrCode?: string;
+    connectedAt?: number;
+    updatedAt?: number;
+  };
   createdAt: number;
   updatedAt: number;
 };

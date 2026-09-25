@@ -29,6 +29,24 @@ export type Organization = {
   locale: string;
   currency: string;
   terminology: BackendTerminology;
+  plan?: "free_org" | "engage" | "voice";
+  planStatus?: "active" | "trialing" | "canceled" | "past_due" | "expired";
+  subscriptionExpiresAt?: number;
+  paystack?: {
+    reference?: string;
+    subscriptionCode?: string;
+    planCode?: string;
+    channel?: string;
+    lastPaymentDate?: number;
+    amount?: number;
+    manualNotes?: string;
+  };
+  whatsappInstance?: {
+    status?: "disconnected" | "connecting" | "connected";
+    phone?: string;
+    qrCode?: string;
+    connectedAt?: number;
+  };
   role?: "admin" | "operator" | "member" | "viewer" | string;
   teamMemberId?: string;
   createdAt?: number;

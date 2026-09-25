@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
 import {
   Building2,
+  CheckCircle2,
   Clock3,
   Coins,
   Globe2,
@@ -11,10 +12,15 @@ import {
   Languages,
   LoaderCircle,
   MessageCircle,
+  QrCode,
+  RefreshCw,
   ShieldCheck,
+  Smartphone,
+  Unlink,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 import { useAuth } from "@/lib/auth/context";
 import { Badge } from "@/components/ui/badge";
@@ -369,7 +375,13 @@ function DepositSettingsCard({ publicSite }: { publicSite: any }) {
   );
 }
 
-function WhatsAppSettingsCard({ publicSite }: { publicSite: any }) {
+function WhatsAppSettingsCard({
+  publicSite,
+  organization,
+}: {
+  publicSite: any;
+  organization?: any;
+}) {
   const updateDraft = useMutation(dashboardApi.publicSite.updateDraft);
   const publish = useMutation(dashboardApi.publicSite.publish);
   const currentConfig = publicSite?.site?.draft || publicSite?.site?.config || {};
@@ -380,29 +392,120 @@ function WhatsAppSettingsCard({ publicSite }: { publicSite: any }) {
   const [autoInvoice, setAutoInvoice] = useState(currentAutomation.autoInvoice ?? true);
   const [autoReminder, setAutoReminder] = useState(currentAutomation.autoReminder ?? true);
   const [aiTone, setAiTone] = useState<string>(currentAutomation.aiTone ?? "warm");
-  const [gatewayUrl, setGatewayUrl] = useState(currentAutomation.gatewayUrl ?? "");
-  const [geminiApiKey, setGeminiApiKey] = useState(currentAutomation.geminiApiKey ?? "");
   const [saving, setSaving] = useState(false);
+
+  // QR Session states
+  const [waStatus, setWaStatus] = useState<"disconnected" | "connecting" | "connected">(
+    organization?.whatsappInstance?.status || "disconnected",
+  );
+  const [qrCode, setQrCode] = useState<string | null>(
+    organization?.whatsappInstance?.qrCode || null,
+  );
+  const [connectedPhone, setConnectedPhone] = useState<string | null>(
+    organization?.whatsappInstance?.phone || null,
+  );
+  const [loadingSession, setLoadingSession] = useState(false);
+
+  // Poll for connection status when connecting
+  useEffect(() => {
+    if (waStatus !== "connecting" || !organization?.slug) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/whatsapp/session?orgSlug=${encodeURIComponent(organization.slug)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === "connected") {
+            setWaStatus("connected");
+            setConnectedPhone(data.phone || null);
+            setQrCode(null);
+            toast.success("WhatsApp successfully linked! Automated booking notifications are active.");
+          } else if (data.qrCode) {
+            setQrCode(data.qrCode);
+          }
+        }
+      } catch {
+        // network polling retry
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [waStatus, organization?.slug]);
+
+  // Initial check on mount
+  useEffect(() => {
+    if (!organization?.slug) return;
+    fetch(`/api/whatsapp/session?orgSlug=${encodeURIComponent(organization.slug)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          setWaStatus(data.status);
+          if (data.phone) setConnectedPhone(data.phone);
+          if (data.qrCode) setQrCode(data.qrCode);
+        }
+      })
+      .catch(() => {});
+  }, [organization?.slug]);
+
+  async function handleStartSession() {
+    if (!organization?.slug) return;
+    setLoadingSession(true);
+    try {
+      const res = await fetch("/api/whatsapp/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start", orgSlug: organization.slug }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to start WhatsApp session");
+      setWaStatus("connecting");
+      if (data.qrCode) setQrCode(data.qrCode);
+      toast.info("WhatsApp QR code generated. Scan with WhatsApp on your phone to link.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not initiate WhatsApp session");
+    } finally {
+      setLoadingSession(false);
+    }
+  }
+
+  async function handleDisconnectSession() {
+    if (!organization?.slug) return;
+    setLoadingSession(true);
+    try {
+      const res = await fetch("/api/whatsapp/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "disconnect", orgSlug: organization.slug }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to disconnect WhatsApp");
+      setWaStatus("disconnected");
+      setQrCode(null);
+      setConnectedPhone(null);
+      toast.success("WhatsApp number disconnected.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to disconnect WhatsApp");
+    } finally {
+      setLoadingSession(false);
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!publicSite?.site?.siteSlug) return;
     setSaving(true);
     try {
+      const targetPhone = connectedPhone || whatsapp;
       const updatedConfig = {
         ...currentConfig,
         contact: {
           ...(currentConfig.contact || {}),
-          whatsapp: whatsapp.trim() || undefined,
+          whatsapp: targetPhone.trim() || undefined,
         },
         whatsappAutomation: {
-          enabled: Boolean(whatsapp.trim()),
+          enabled: waStatus === "connected" || Boolean(targetPhone.trim()),
           autoConfirm,
           autoInvoice,
           autoReminder,
           aiTone,
-          gatewayUrl: gatewayUrl.trim() || undefined,
-          geminiApiKey: geminiApiKey.trim() || undefined,
         },
       };
       await updateDraft({ siteSlug: publicSite.site.siteSlug, config: updatedConfig });
@@ -415,6 +518,12 @@ function WhatsAppSettingsCard({ publicSite }: { publicSite: any }) {
     }
   }
 
+  const qrImageUrl = qrCode
+    ? qrCode.startsWith("data:") || qrCode.startsWith("http")
+      ? qrCode
+      : `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrCode)}`
+    : null;
+
   return (
     <Card className="h-fit bg-white">
       <CardHeader className="border-b border-black/8 pb-4">
@@ -425,29 +534,165 @@ function WhatsAppSettingsCard({ publicSite }: { publicSite: any }) {
               Free AI & WhatsApp Automation
             </CardTitle>
           </div>
-          <Badge variant="outline" className="border-emerald-600/30 bg-emerald-50 text-emerald-700 text-[11px] font-medium">
+          <Badge
+            variant="outline"
+            className="border-emerald-600/30 bg-emerald-50 text-emerald-700 text-[11px] font-medium"
+          >
             100% Free · No Meta Fees
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="pt-4">
-        <form onSubmit={handleSave} className="space-y-4">
-          <p className="text-xs leading-5 text-muted-foreground">
-            Configure automated WhatsApp confirmations, invoices, and reminders using Free AI with zero Meta (Facebook) API fees.
-          </p>
+      <CardContent className="space-y-5 pt-4">
+        <p className="text-xs leading-5 text-muted-foreground">
+          Link your business WhatsApp number with a simple QR scan to automatically send client booking confirmations, payment invoices, and appointment reminders at zero cost.
+        </p>
 
+        {/* ── WhatsApp QR Connection Box ── */}
+        <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/40 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Smartphone className="size-4 text-emerald-700" />
+              <span className="text-xs font-semibold text-emerald-950">
+                WhatsApp Device Link
+              </span>
+            </div>
+            {waStatus === "connected" ? (
+              <Badge className="bg-emerald-600 text-white gap-1 text-[10px] hover:bg-emerald-600">
+                <CheckCircle2 className="size-3" /> Connected
+              </Badge>
+            ) : waStatus === "connecting" ? (
+              <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-800 gap-1 text-[10px]">
+                <LoaderCircle className="size-3 animate-spin" /> Waiting for Scan
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="border-slate-300 bg-white text-slate-600 text-[10px]">
+                Disconnected
+              </Badge>
+            )}
+          </div>
+
+          {/* Connected State */}
+          {waStatus === "connected" && (
+            <div className="mt-3 space-y-3">
+              <div className="rounded-lg bg-white/80 border border-emerald-200 p-3 text-xs">
+                <div className="font-medium text-emerald-950">
+                  Linked Phone:{" "}
+                  <span className="font-mono font-bold text-foreground">
+                    {connectedPhone || whatsapp || "Business Phone"}
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Automated booking messages will dispatch directly from this WhatsApp account to your customers.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDisconnectSession}
+                  disabled={loadingSession}
+                  className="h-8 text-xs text-rose-600 border-rose-200 hover:bg-rose-50 gap-1.5"
+                >
+                  <Unlink className="size-3.5" /> Disconnect Number
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Connecting / QR Code Display */}
+          {waStatus === "connecting" && (
+            <div className="mt-3 flex flex-col items-center justify-center rounded-lg bg-white p-4 border border-emerald-200 text-center">
+              <div className="relative flex size-52 items-center justify-center rounded-xl border-2 border-emerald-500/30 bg-muted/10 p-2 shadow-inner">
+                {qrImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={qrImageUrl}
+                    alt="WhatsApp QR Code"
+                    className="size-full object-contain rounded-lg"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-xs text-muted-foreground">
+                    <LoaderCircle className="size-6 animate-spin text-emerald-600" />
+                    <span>Generating pairing code...</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-3 max-w-xs space-y-1 text-left text-[11px] leading-tight text-muted-foreground">
+                <p className="font-semibold text-foreground">How to link your WhatsApp:</p>
+                <ol className="list-decimal list-inside space-y-0.5">
+                  <li>Open <strong>WhatsApp</strong> on your phone</li>
+                  <li>Tap <strong>Settings</strong> or <strong>Menu (⋮)</strong></li>
+                  <li>Select <strong>Linked Devices</strong> &rarr; <strong>Link a Device</strong></li>
+                  <li>Scan the QR code shown above</li>
+                </ol>
+              </div>
+
+              <div className="mt-3 flex gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleStartSession}
+                  disabled={loadingSession}
+                  className="h-7 text-xs gap-1"
+                >
+                  <RefreshCw className={cn("size-3", loadingSession && "animate-spin")} /> Refresh QR
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDisconnectSession}
+                  disabled={loadingSession}
+                  className="h-7 text-xs text-muted-foreground"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Disconnected State */}
+          {waStatus === "disconnected" && (
+            <div className="mt-3 space-y-2">
+              <p className="text-[11px] text-muted-foreground">
+                No Meta developer account, credit card, or paid subscription required. Simply click below and scan the multi-device QR code with your business phone.
+              </p>
+              <Button
+                type="button"
+                onClick={handleStartSession}
+                disabled={loadingSession}
+                className="w-full h-9 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-sm"
+              >
+                {loadingSession ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : (
+                  <QrCode className="size-4" />
+                )}
+                Scan QR Code to Connect WhatsApp (100% Free)
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* ── Automation Config Form ── */}
+        <form onSubmit={handleSave} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">Business WhatsApp Number</label>
+            <label className="text-xs font-semibold text-foreground">
+              Manual Fallback WhatsApp Number
+            </label>
             <Input
               type="tel"
               placeholder="+234 801 234 5678 or 2348012345678"
-              value={whatsapp}
+              value={connectedPhone || whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
               disabled={saving}
               className="h-8 text-xs bg-muted/20"
             />
             <p className="text-[10px] text-muted-foreground">
-              Your business WhatsApp phone number including country code.
+              Displayed on public booking confirmation receipts for direct client communication.
             </p>
           </div>
 
@@ -503,40 +748,6 @@ function WhatsAppSettingsCard({ publicSite }: { publicSite: any }) {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
-              Free Self-Hosted WhatsApp Gateway URL <span className="font-normal text-muted-foreground">(Optional)</span>
-            </label>
-            <Input
-              type="url"
-              placeholder="e.g. http://localhost:8080 or https://evolution.yourdomain.com"
-              value={gatewayUrl}
-              onChange={(e) => setGatewayUrl(e.target.value)}
-              disabled={saving}
-              className="h-8 text-xs font-mono bg-muted/20"
-            />
-            <p className="text-[10px] text-muted-foreground">
-              Connect any free open-source gateway (Evolution API, WAHA, or Baileys container). If left blank, instant 1-click WhatsApp dispatch is used automatically at $0.00 cost.
-            </p>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
-              Google Gemini API Key <span className="font-normal text-muted-foreground">(Optional · Free 1,500 req/day)</span>
-            </label>
-            <Input
-              type="password"
-              placeholder="AIzaSy..."
-              value={geminiApiKey}
-              onChange={(e) => setGeminiApiKey(e.target.value)}
-              disabled={saving}
-              className="h-8 text-xs font-mono bg-muted/20"
-            />
-            <p className="text-[10px] text-muted-foreground">
-              Optional free Gemini key from ai.google.dev for personalized AI message writing. Built-in AI formatting engine works automatically even without a key.
-            </p>
-          </div>
-
           <Button type="submit" size="sm" disabled={saving} className="w-full">
             Save Free WhatsApp & AI Settings
           </Button>
@@ -581,7 +792,7 @@ export function SettingsScreen() {
           {organization && <CurrencySettingsCard organization={organization} />}
           {organization && <TimezoneSettingsCard organization={organization} />}
           {publicSite && <DepositSettingsCard publicSite={publicSite} />}
-          {publicSite && <WhatsAppSettingsCard publicSite={publicSite} />}
+          {publicSite && <WhatsAppSettingsCard publicSite={publicSite} organization={organization} />}
         </div>
 
         {organization ? (

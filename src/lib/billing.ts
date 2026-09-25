@@ -56,6 +56,15 @@ export async function organizationHasFeature(
 
     if (!org) return false;
 
+    const now = Date.now();
+    const isExpired =
+      org.planStatus === "expired" ||
+      (typeof org.subscriptionExpiresAt === "number" && org.subscriptionExpiresAt < now);
+
+    if (isExpired) {
+      return false;
+    }
+
     const plan: PlanType = org.plan || "free_org";
     const features = PLAN_FEATURES[plan] || PLAN_FEATURES.free_org;
     return features.includes(feature);
@@ -68,3 +77,25 @@ export async function organizationHasFeature(
     return false;
   }
 }
+
+export function isSubscriptionActive(org?: {
+  planStatus?: string;
+  subscriptionExpiresAt?: number;
+}): boolean {
+  if (!org) return false;
+  if (
+    org.planStatus === "expired" ||
+    org.planStatus === "past_due" ||
+    org.planStatus === "canceled"
+  ) {
+    return false;
+  }
+  if (
+    typeof org.subscriptionExpiresAt === "number" &&
+    org.subscriptionExpiresAt < Date.now()
+  ) {
+    return false;
+  }
+  return true;
+}
+

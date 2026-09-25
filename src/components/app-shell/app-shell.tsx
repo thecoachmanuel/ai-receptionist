@@ -356,7 +356,32 @@ function ShellChrome({
         </header>
 
         <main className="min-h-[calc(100svh-3.5rem)] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          <div className="mx-auto w-full max-w-[1440px]">{children}</div>
+          <div className="mx-auto w-full max-w-[1440px]">
+            {(organization?.planStatus === "expired" ||
+              (typeof organization?.subscriptionExpiresAt === "number" &&
+                organization.subscriptionExpiresAt < Date.now())) &&
+              !pathname?.endsWith("/billing") && (
+                <div className="mb-6 rounded-xl border border-rose-300/80 bg-rose-50/90 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-rose-950">
+                  <div className="flex items-start sm:items-center gap-3">
+                    <div className="size-9 rounded-lg bg-rose-200/80 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                      <CreditCard className="size-4 text-rose-700" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold tracking-tight">Workspace Subscription Expired</h4>
+                      <p className="text-xs text-rose-700/90 mt-0.5">
+                        Your monthly SaaS plan has expired. Please renew your subscription to continue taking online bookings and sending automated client notifications.
+                      </p>
+                    </div>
+                  </div>
+                  <Button asChild size="sm" className="bg-rose-600 hover:bg-rose-700 text-white shrink-0 gap-1.5 shadow-none self-start sm:self-auto">
+                    <Link href={`/app/${orgSlug}/billing`}>
+                      Renew Subscription <ChevronRight className="size-3.5" />
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            {children}
+          </div>
         </main>
       </SidebarInset>
     </SidebarProvider>
