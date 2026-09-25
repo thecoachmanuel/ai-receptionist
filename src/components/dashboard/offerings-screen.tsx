@@ -163,7 +163,7 @@ function OfferingDialog({ offering }: { offering?: Offering }) {
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor={`price-${offering?._id ?? "new"}`}>
-                Price ({organization?.currency ?? "USD"})
+                Price ({organization?.currency ?? "NGN"})
               </Label>
               <Input
                 id={`price-${offering?._id ?? "new"}`}

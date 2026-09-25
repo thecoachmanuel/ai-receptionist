@@ -19,9 +19,9 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { planId?: unknown };
   const planId = body.planId;
 
-  if (planId !== "engage" && planId !== "voice") {
+  if (planId !== "free_org" && planId !== "engage" && planId !== "voice") {
     return NextResponse.json(
-      { error: "Invalid plan. Choose Engage or Voice to upgrade." },
+      { error: "Invalid plan. Choose Core, Engage, or Voice." },
       { status: 400 },
     );
   }

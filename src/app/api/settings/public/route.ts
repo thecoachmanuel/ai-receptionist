@@ -29,8 +29,9 @@ export async function GET() {
     console.error("Public settings GET error", error);
     return NextResponse.json(
       {
-        planPrices: { core: 0, engage: 49, voice: 149 },
+        planPrices: { core: 5000, engage: 25000, voice: 75000 },
         usdToNgnRate: 1500,
+        baseCurrency: "NGN",
         contactPhone: "+2348168882014",
         contactEmail: "oneboardng@gmail.com",
         clientPageUrl: "",

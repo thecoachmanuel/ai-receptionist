@@ -74,7 +74,7 @@ function MarketingNav({ signedIn }: { signedIn: boolean }) {
               </Button>
               <Button asChild size="sm" className="gap-1.5 shadow-none">
                 <Link href="/sign-up">
-                  Start free <ArrowRight className="size-3.5" />
+                  Get started <ArrowRight className="size-3.5" />
                 </Link>
               </Button>
             </>
@@ -102,20 +102,20 @@ export default async function Home() {
   const plans = [
     {
       name: "Core",
-      price: `${symbol}${settings.planPrices.core}`,
+      price: `${symbol}${settings.planPrices.core.toLocaleString()}`,
       copy: "The operational home for a new organization.",
-      features: ["Bookings and availability", "Offerings and team", "Custom public page"],
+      features: ["Bookings and availability", "Offerings and team", "Custom public page", "WhatsApp notifications"],
     },
     {
       name: "Engage",
-      price: `${symbol}${settings.planPrices.engage}`,
+      price: `${symbol}${settings.planPrices.engage.toLocaleString()}`,
       copy: "Give every visitor an AI assistant on the web.",
       features: ["Everything in Core", "Vapi AI web agent", "Conversation history"],
       featured: true,
     },
     {
       name: "Voice",
-      price: `${symbol}${settings.planPrices.voice}`,
+      price: `${symbol}${settings.planPrices.voice.toLocaleString()}`,
       copy: "Let clients speak with your AI front desk from any browser.",
       features: ["Everything in Engage", "Live browser audio", "Advanced analytics"],
     },
@@ -158,8 +158,8 @@ export default async function Home() {
               </Button>
             </div>
             <div className="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t pt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-              <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> Start free</span>
-              <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> No card required</span>
+              <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> From ₦5,000/mo</span>
+              <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> Instant setup</span>
               <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> Built on Vapi AI</span>
             </div>
           </div>

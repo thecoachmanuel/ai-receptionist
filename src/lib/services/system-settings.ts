@@ -28,9 +28,9 @@ const SETTINGS_DOC_ID = "global_system_settings";
 
 const DEFAULTS: SystemSettings = {
   googleAuthEnabled: true,
-  planPrices: { core: 0, engage: 49, voice: 149 },
+  planPrices: { core: 5000, engage: 25000, voice: 75000 },
   usdToNgnRate: 1500,
-  baseCurrency: "USD",
+  baseCurrency: "NGN",
   contactPhone: "+2348168882014",
   contactEmail: "oneboardng@gmail.com",
   clientPageUrl: "",
@@ -50,15 +50,19 @@ export async function getSystemSettings(): Promise<SystemSettings> {
 
     if (!doc) return { ...DEFAULTS };
 
+    const rawCore = doc.planPrices?.core;
+    const rawEngage = doc.planPrices?.engage;
+    const rawVoice = doc.planPrices?.voice;
+
     return {
       googleAuthEnabled: doc.googleAuthEnabled !== false,
       planPrices: {
-        core: doc.planPrices?.core ?? 0,
-        engage: doc.planPrices?.engage ?? 49,
-        voice: doc.planPrices?.voice ?? 149,
+        core: typeof rawCore === "number" && rawCore > 0 ? rawCore : 5000,
+        engage: typeof rawEngage === "number" && rawEngage > 1000 ? rawEngage : 25000,
+        voice: typeof rawVoice === "number" && rawVoice > 1000 ? rawVoice : 75000,
       },
       usdToNgnRate: doc.usdToNgnRate ?? 1500,
-      baseCurrency: doc.baseCurrency ?? "USD",
+      baseCurrency: doc.baseCurrency ?? "NGN",
       contactPhone: doc.contactPhone ?? "+2348168882014",
       contactEmail: doc.contactEmail ?? "oneboardng@gmail.com",
       clientPageUrl: doc.clientPageUrl ?? "",

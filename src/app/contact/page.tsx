@@ -57,7 +57,7 @@ export default async function ContactPage() {
                 </Button>
                 <Button asChild size="sm" className="gap-1.5 shadow-none">
                   <Link href="/sign-up">
-                    Start free <ArrowRight className="size-3.5" />
+                    Get started <ArrowRight className="size-3.5" />
                   </Link>
                 </Button>
               </>

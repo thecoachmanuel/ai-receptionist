@@ -42,7 +42,7 @@ import { WorkspaceLanguageEditor } from "@/components/dashboard/workspace-langua
 
 function CurrencySettingsCard({ organization }: { organization: any }) {
   const updateCurrent = useMutation(dashboardApi.organizations.updateCurrent);
-  const [currency, setCurrency] = useState(organization?.currency || "USD");
+  const [currency, setCurrency] = useState(organization?.currency || "NGN");
   const [saving, setSaving] = useState(false);
 
   async function handleCurrencyChange(newCurrency: string) {

@@ -118,8 +118,8 @@ export async function getPublishedBySlug(siteSlug: string) {
       name: organization.name || "Business",
       slug: organization.slug || normalizedSlug,
       timezone: organization.timezone || "Africa/Lagos",
-      currency: organization.currency || "USD",
-      locale: organization.locale || "en-US",
+      currency: organization.currency || "NGN",
+      locale: organization.locale || "en-NG",
       terminology: {
         ...DEFAULT_TERMINOLOGY,
         ...(organization.terminology || {}),

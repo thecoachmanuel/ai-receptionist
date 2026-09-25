@@ -24,33 +24,38 @@ export default async function PricingPage() {
   const publicPlans = [
     {
       name: "Core",
-      price: `${sym}${corePrice}`,
+      price: `${sym}${corePrice.toLocaleString()}`,
       ngnNote: null,
       description: "Bookings, operations, and a custom public page.",
       features: [
         "Bookings and availability",
-        "Offerings and team",
-        "Configurable public site",
+        "Offerings and team management",
+        "Configurable public booking site",
+        "Automated WhatsApp notifications",
       ],
     },
     {
       name: "Engage",
-      price: `${sym}${engagePrice}`,
+      price: `${sym}${engagePrice.toLocaleString()}`,
       ngnNote: !isNgn ? `≈ ₦${(engagePrice * rate).toLocaleString()} NGN` : null,
-      description: "Add a Vapi AI agent to every client page.",
-      features: ["Everything in Core", "Web text agent", "Conversation history"],
+      description: "Add an intelligent AI web agent to every client page.",
+      features: [
+        "Everything in Core",
+        "Web text assistant (AI agent)",
+        "Conversation history & summaries",
+      ],
       featured: true,
     },
     {
       name: "Voice",
-      price: `${sym}${voicePrice}`,
+      price: `${sym}${voicePrice.toLocaleString()}`,
       ngnNote: !isNgn ? `≈ ₦${(voicePrice * rate).toLocaleString()} NGN` : null,
       description:
         "Let clients speak with your agent directly in the browser.",
       features: [
         "Everything in Engage",
-        "Live browser audio",
-        "Advanced analytics",
+        "Live browser audio (Voice chat)",
+        "Advanced analytics & outcome reporting",
       ],
     },
   ];
@@ -74,7 +79,7 @@ export default async function PricingPage() {
             Plans that unlock capabilities
           </p>
           <h1 className="mt-5 font-heading text-6xl font-medium leading-[0.92] tracking-[-0.055em] sm:text-7xl">
-            Run the desk for free. Add AI where it matters.
+            Affordable plans for modern businesses. Add AI where it matters.
           </h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground">
             Each plan belongs to an organization, so every workspace can choose

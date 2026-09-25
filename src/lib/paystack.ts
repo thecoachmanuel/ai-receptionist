@@ -6,18 +6,22 @@ import { getPlatformSettings } from "@/lib/services/settings";
 
 export const USD_TO_NGN_RATE = Number(process.env.USD_TO_NGN_RATE || "1500");
 
-/** Compile-time defaults — the live values come from getPlatformSettings() at runtime. */
+/** Compile-time defaults in NGN — the live values come from getPlatformSettings() at runtime. */
 export const PAYSTACK_PLANS: Record<
-  "engage" | "voice",
-  { name: string; usdPrice: number }
+  PlanType,
+  { name: string; ngnPrice: number }
 > = {
+  free_org: {
+    name: "Core Plan",
+    ngnPrice: 5000,
+  },
   engage: {
     name: "Engage Plan",
-    usdPrice: 49,
+    ngnPrice: 25000,
   },
   voice: {
     name: "Voice Plan",
-    usdPrice: 149,
+    ngnPrice: 75000,
   },
 };
 
@@ -47,7 +51,7 @@ export async function initializePaystackTransaction({
   callbackUrl,
 }: {
   email: string;
-  planId: "engage" | "voice";
+  planId: PlanType;
   orgId: string;
   callbackUrl: string;
 }) {
@@ -60,14 +64,13 @@ export async function initializePaystackTransaction({
 
   // Load live admin-configurable prices
   const settings = await getPlatformSettings();
-  const planName = PAYSTACK_PLANS[planId]?.name;
-  if (!planName) {
+  const planInfo = PAYSTACK_PLANS[planId];
+  if (!planInfo) {
     throw new Error("Invalid plan selected for Paystack checkout.");
   }
 
-  const usdPrice = settings.planPrices[planId] ?? PAYSTACK_PLANS[planId].usdPrice;
-  const exchangeRate = settings.usdToNgnRate ?? USD_TO_NGN_RATE;
-  const ngnAmount = usdPrice * exchangeRate;
+  const priceKey = planId === "free_org" ? "core" : planId;
+  const ngnAmount = settings.planPrices[priceKey] ?? planInfo.ngnPrice;
   const amountInKobo = Math.round(ngnAmount * 100);
 
   const response = await fetch("https://api.paystack.co/transaction/initialize", {
@@ -84,14 +87,12 @@ export async function initializePaystackTransaction({
       metadata: {
         orgId,
         planId,
-        usdPrice,
-        exchangeRate,
         ngnAmount,
         custom_fields: [
           {
             display_name: "Plan Name",
             variable_name: "plan_name",
-            value: `${planName} ($${usdPrice} USD / ₦${ngnAmount.toLocaleString()} NGN)`,
+            value: `${planInfo.name} (₦${ngnAmount.toLocaleString()} NGN/mo)`,
           },
           {
             display_name: "Organization ID",

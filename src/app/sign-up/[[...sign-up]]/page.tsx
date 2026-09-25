@@ -213,7 +213,7 @@ export default function SignUpPage() {
             />
           </div>
           <Button type="submit" className="w-full h-11 text-sm font-medium cursor-pointer" disabled={loading || googleLoading}>
-            {loading ? "Creating account..." : "Start free workspace"}
+            {loading ? "Creating account..." : "Create workspace"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
             Already have an account?{" "}

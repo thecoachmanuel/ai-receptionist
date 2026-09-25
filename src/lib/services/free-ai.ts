@@ -1,7 +1,7 @@
 function formatMoney(
   minor: number | undefined,
-  currency = "USD",
-  locale = "en-US",
+  currency = "NGN",
+  locale = "en-NG",
 ): string {
   if (minor === undefined) return "—";
   try {

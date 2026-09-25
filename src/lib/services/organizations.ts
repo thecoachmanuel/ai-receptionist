@@ -112,11 +112,11 @@ export async function createOrganizationForUser(
   const name = requiredTrimmed(rawName, "name", 120);
   const timezone = optionalTrimmed(rawTimezone, "timezone", 100) ?? "Africa/Lagos";
   assertIanaTimezone(timezone);
-  const currency = (rawCurrency ?? "USD").trim().toUpperCase();
+  const currency = (rawCurrency ?? "NGN").trim().toUpperCase();
   if (!/^[A-Z]{3}$/.test(currency)) {
     throw new Error("currency must be a three-letter ISO 4217 code.");
   }
-  const locale = optionalTrimmed(rawLocale, "locale", 35) ?? "en-US";
+  const locale = optionalTrimmed(rawLocale, "locale", 35) ?? "en-NG";
   try {
     new Intl.Locale(locale);
   } catch {

@@ -2,9 +2,9 @@ import { getDb } from "@/lib/db/mongodb";
 import { getSystemSettings, updateSystemSettings } from "@/lib/services/system-settings";
 
 export type PlanPrices = {
-  core: number;   // USD (defaults to 0)
-  engage: number; // USD
-  voice: number;  // USD
+  core: number;   // NGN (defaults to 5000)
+  engage: number; // NGN (defaults to 25000)
+  voice: number;  // NGN (defaults to 75000)
 };
 
 export type PlatformSettings = {
@@ -31,8 +31,8 @@ export type VapiSettings = {
 export type ElevenLabsSettings = VapiSettings;
 
 const DEFAULTS: PlatformSettings = {
-  baseCurrency: "USD",
-  planPrices: { core: 0, engage: 49, voice: 149 },
+  baseCurrency: "NGN",
+  planPrices: { core: 5000, engage: 25000, voice: 75000 },
   usdToNgnRate: 1500,
   contactPhone: "+2348168882014",
   contactEmail: "oneboardng@gmail.com",

@@ -48,12 +48,12 @@ export async function PATCH(request: NextRequest) {
     }
 
     // ── Platform Pricing ────────────────────────────────────
-    // Handles per-plan price: { plan: "core"|"engage"|"voice", usdPrice: number }
-    if (body.plan && typeof body.usdPrice === "number") {
+    // Handles per-plan price: { plan: "core"|"engage"|"voice", price: number }
+    if (body.plan && typeof (body.price ?? body.usdPrice) === "number") {
       const current = await getSystemSettings();
       updates.planPrices = {
         ...current.planPrices,
-        [body.plan]: body.usdPrice,
+        [body.plan]: Number(body.price ?? body.usdPrice),
       };
     }
 

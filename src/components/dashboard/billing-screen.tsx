@@ -12,10 +12,10 @@ import { FeatureEntitlementCard } from "@/components/dashboard/feature-gates";
 import { ScreenHeader } from "@/components/dashboard/screen-kit";
 import { useWorkspace } from "@/components/dashboard/workspace-context";
 
-type PlanPrices = { engage: number; voice: number };
+type PlanPrices = { core: number; engage: number; voice: number };
 type PriceState = { prices: PlanPrices; rate: number; baseCurrency: "USD" | "NGN"; loaded: boolean };
 
-const PRICE_DEFAULTS: PlanPrices = { engage: 49, voice: 149 };
+const PRICE_DEFAULTS: PlanPrices = { core: 5000, engage: 25000, voice: 75000 };
 
 function PriceSkeleton() {
   return (
@@ -32,7 +32,7 @@ export function BillingScreen() {
   const [priceState, setPriceState] = useState<PriceState>({
     prices: PRICE_DEFAULTS,
     rate: 1500,
-    baseCurrency: "USD",
+    baseCurrency: "NGN",
     loaded: false,
   });
 
@@ -44,12 +44,12 @@ export function BillingScreen() {
         setPriceState({
           prices: data.planPrices ?? PRICE_DEFAULTS,
           rate: data.usdToNgnRate ?? 1500,
-          baseCurrency: data.baseCurrency ?? "USD",
+          baseCurrency: data.baseCurrency ?? "NGN",
           loaded: true,
         });
       })
       .catch(() => {
-        // Fall back to defaults silently — never show $0
+        // Fall back to defaults silently
         setPriceState((prev) => ({ ...prev, loaded: true }));
       });
   }, []);
@@ -58,35 +58,34 @@ export function BillingScreen() {
   const isNgn = baseCurrency === "NGN";
   const sym = isNgn ? "₦" : "$";
 
-  // NGN computed totals
-  const engageNgn = prices.engage * rate;
-  const voiceNgn = prices.voice * rate;
+  const corePrice = prices.core ?? 5000;
+  const engagePrice = prices.engage ?? 25000;
+  const voicePrice = prices.voice ?? 75000;
 
   const dashboardPlans = [
     {
       id: "free_org" as const,
       name: "Core",
-      price: `${sym}0`,
+      price: loaded ? `${sym}${corePrice.toLocaleString()}` : null,
       subPrice: null as string | null,
-      description: "The operational home for a new organization.",
+      description: "The operational home for your business with online bookings.",
       features: [
         "Operations hub (Bookings, team, availability)",
         "Custom public page with online booking",
-        "Standard email & phone contacts",
+        "Automated WhatsApp notifications",
+        "Paystack checkout in NGN",
       ],
     },
     {
       id: "engage" as const,
       name: "Engage",
-      price: loaded ? (isNgn ? `₦${engageNgn.toLocaleString()}` : `$${prices.engage}`) : null,
-      subPrice: loaded && !isNgn ? `≈ ₦${engageNgn.toLocaleString()} NGN` : null,
+      price: loaded ? `${sym}${engagePrice.toLocaleString()}` : null,
+      subPrice: null as string | null,
       description: "Add a Vapi AI web assistant to every customer touchpoint.",
       features: [
         "Everything in Core",
         "AI text assistant (Web agent)",
-        isNgn
-          ? `Paystack checkout in NGN`
-          : `Paystack checkout in NGN ($1 = ₦${rate.toLocaleString()})`,
+        "Paystack checkout in NGN",
         "Conversation history & summaries",
       ],
       featured: true,
@@ -94,8 +93,8 @@ export function BillingScreen() {
     {
       id: "voice" as const,
       name: "Voice",
-      price: loaded ? (isNgn ? `₦${voiceNgn.toLocaleString()}` : `$${prices.voice}`) : null,
-      subPrice: loaded && !isNgn ? `≈ ₦${voiceNgn.toLocaleString()} NGN` : null,
+      price: loaded ? `${sym}${voicePrice.toLocaleString()}` : null,
+      subPrice: null as string | null,
       description: "Add live browser audio to the web assistant and measure every outcome.",
       features: [
         "Everything in Engage",
@@ -115,18 +114,6 @@ export function BillingScreen() {
   const handlePlanSelect = async (planId: "free_org" | "engage" | "voice") => {
     if (authOrg?.plan === planId) return;
     setUpdating(planId);
-
-    if (planId === "free_org") {
-      try {
-        await updatePlan("free_org");
-        toast.success("Switched to Core (Free) plan.");
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to switch plan.");
-      } finally {
-        setUpdating(null);
-      }
-      return;
-    }
 
     try {
       const res = await fetch("/api/billing/initialize", {
@@ -246,11 +233,6 @@ export function BillingScreen() {
                   {plan.subPrice && (
                     <p className="mt-1 text-[11px] font-medium text-emerald-700">
                       {plan.subPrice}
-                    </p>
-                  )}
-                  {plan.id !== "free_org" && !loaded && (
-                    <p className="mt-1">
-                      <PriceSkeleton />
                     </p>
                   )}
                   <p className="mt-2 text-xs text-muted-foreground">{plan.description}</p>

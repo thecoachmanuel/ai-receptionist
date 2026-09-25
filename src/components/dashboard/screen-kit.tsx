@@ -168,8 +168,8 @@ export function ActivePill({ active }: { active: boolean }) {
 
 export function formatMoney(
   minor: number | undefined,
-  currency = "USD",
-  locale = "en-US",
+  currency = "NGN",
+  locale = "en-NG",
 ) {
   if (minor === undefined) return "—";
   return new Intl.NumberFormat(locale, {

@@ -297,11 +297,11 @@ export function SuperAdminScreen() {
   // New org form state
   const [name, setName] = useState("");
   const [timezone, setTimezone] = useState("Africa/Lagos");
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState("NGN");
 
   // Pricing state
-  const [prices, setPrices] = useState<PlatformPrices>({ core: 0, engage: 49, voice: 149, usdToNgnRate: 1500 });
-  const [baseCurrency, setBaseCurrency] = useState<"USD" | "NGN">("USD");
+  const [prices, setPrices] = useState<PlatformPrices>({ core: 5000, engage: 25000, voice: 75000, usdToNgnRate: 1500 });
+  const [baseCurrency, setBaseCurrency] = useState<"USD" | "NGN">("NGN");
   const [pricesLoaded, setPricesLoaded] = useState(false);
   const [savingPrices, setSavingPrices] = useState(false);
   const priceFormRef = useRef<HTMLFormElement>(null);
@@ -370,12 +370,12 @@ export function SuperAdminScreen() {
       .then((data) => {
         if (data.settings) {
           setPrices({
-            core: data.settings.planPrices?.core ?? 0,
-            engage: data.settings.planPrices?.engage ?? 49,
-            voice: data.settings.planPrices?.voice ?? 149,
+            core: data.settings.planPrices?.core ?? 5000,
+            engage: data.settings.planPrices?.engage ?? 25000,
+            voice: data.settings.planPrices?.voice ?? 75000,
             usdToNgnRate: data.settings.usdToNgnRate ?? 1500,
           });
-          setBaseCurrency(data.settings.baseCurrency || "USD");
+          setBaseCurrency(data.settings.baseCurrency || "NGN");
           setContactPhone(data.settings.contactPhone || "+2348168882014");
           setContactEmail(data.settings.contactEmail || "oneboardng@gmail.com");
           setClientPageUrl(data.settings.clientPageUrl || "");
@@ -695,7 +695,7 @@ export function SuperAdminScreen() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {(["free_org", "engage", "voice"] as const).map((plan) => {
                       const count = organizations.filter((o) => o.plan === plan).length;
-                      const label = { free_org: "Core (Free)", engage: "Engage", voice: "Voice" }[plan];
+                      const label = { free_org: "Core", engage: "Engage", voice: "Voice" }[plan];
                       const pct = organizations.length ? Math.round((count / organizations.length) * 100) : 0;
                       const colour = { free_org: "bg-slate-500", engage: "bg-emerald-500", voice: "bg-purple-500" }[plan];
                       return (
@@ -801,9 +801,9 @@ export function SuperAdminScreen() {
                                   <SelectValue>{planBadge(org.plan)}</SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="free_org">Core (Free)</SelectItem>
-                                  <SelectItem value="engage">Engage (${prices.engage})</SelectItem>
-                                  <SelectItem value="voice">Voice (${prices.voice})</SelectItem>
+                                  <SelectItem value="free_org">Core (₦{prices.core.toLocaleString()})</SelectItem>
+                                  <SelectItem value="engage">Engage (₦{prices.engage.toLocaleString()})</SelectItem>
+                                  <SelectItem value="voice">Voice (₦{prices.voice.toLocaleString()})</SelectItem>
                                 </SelectContent>
                               </Select>
                             </TableCell>
