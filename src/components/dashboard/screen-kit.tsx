@@ -168,15 +168,17 @@ export function ActivePill({ active }: { active: boolean }) {
 
 export function formatMoney(
   minor: number | undefined,
-  currency = "NGN",
-  locale = "en-NG",
+  _currency = "NGN",
+  _locale = "en-NG",
 ) {
-  if (minor === undefined) return "—";
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency,
-    maximumFractionDigits: minor % 100 === 0 ? 0 : 2,
-  }).format(minor / 100);
+  if (minor === undefined || !Number.isFinite(minor)) return "—";
+  const amount = minor / 100;
+  const fractionDigits = minor % 100 === 0 ? 0 : 2;
+  const formatted = amount.toLocaleString("en-NG", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: 2,
+  });
+  return `₦${formatted}`;
 }
 
 export function formatDateTime(value: number, timezone?: string) {

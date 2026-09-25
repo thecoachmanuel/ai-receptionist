@@ -98,7 +98,7 @@ export default async function Home() {
   const [session, settings] = await Promise.all([getSession(), getPlatformSettings()]);
   const userId = session?.user.id;
 
-  const symbol = settings.baseCurrency === "NGN" ? "₦" : "$";
+  const symbol = "₦";
   const plans = [
     {
       name: "Core",

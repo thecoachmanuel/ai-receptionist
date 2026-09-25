@@ -284,28 +284,11 @@ function numberToWords(num: number): string {
 
 function formatPrice(
   priceMinor: number,
-  currency: string,
-  locale: string,
+  _currency?: string,
+  _locale?: string,
 ) {
-  try {
-    const formatter = new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency,
-    });
-    const fractionDigits =
-      formatter.resolvedOptions().maximumFractionDigits ?? 2;
-    const amount = priceMinor / 10 ** fractionDigits;
-    
-    if (currency.toUpperCase() === "NGN") {
-      return `${numberToWords(amount)} Naira`;
-    }
-    return formatter.format(amount);
-  } catch {
-    if (currency.toUpperCase() === "NGN") {
-      return `${numberToWords(priceMinor / 100)} Naira`;
-    }
-    return `${currency} ${(priceMinor / 100).toFixed(2)}`;
-  }
+  const amount = Number.isFinite(priceMinor) ? priceMinor / 100 : 0;
+  return `${numberToWords(amount)} Naira (₦${amount.toLocaleString("en-NG")})`;
 }
 
 function stableIdempotencyKey(value: string) {

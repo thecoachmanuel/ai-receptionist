@@ -1,18 +1,15 @@
 function formatMoney(
   minor: number | undefined,
-  currency = "NGN",
-  locale = "en-NG",
+  _currency = "NGN",
+  _locale = "en-NG",
 ): string {
-  if (minor === undefined) return "—";
-  try {
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: minor % 100 === 0 ? 0 : 2,
-    }).format(minor / 100);
-  } catch {
-    return `${currency} ${(minor / 100).toFixed(2)}`;
-  }
+  if (minor === undefined || !Number.isFinite(minor)) return "—";
+  const fractionDigits = minor % 100 === 0 ? 0 : 2;
+  const formatted = (minor / 100).toLocaleString("en-NG", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: 2,
+  });
+  return `₦${formatted}`;
 }
 
 function formatDateTime(value: number, timezone?: string): string {
@@ -238,21 +235,14 @@ function generateTemplateMessage(
   return lines.filter((l) => l !== null).join("\n");
 }
 
-function formatPriceMinor(priceMinor: number, currency: string, locale: string): string {
-  try {
-    const fractionDigits = new Intl.NumberFormat(locale || "en-US", {
-      style: "currency",
-      currency: currency || "NGN",
-    }).resolvedOptions().maximumFractionDigits ?? 2;
-    return new Intl.NumberFormat(locale || "en-US", {
-      style: "currency",
-      currency: currency || "NGN",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: fractionDigits,
-    }).format(priceMinor / 10 ** fractionDigits);
-  } catch {
-    return `${currency || "NGN"} ${(priceMinor / 100).toFixed(2)}`;
-  }
+function formatPriceMinor(priceMinor: number, _currency = "NGN", _locale = "en-NG"): string {
+  if (!Number.isFinite(priceMinor)) return "₦0";
+  const fractionDigits = priceMinor % 100 === 0 ? 0 : 2;
+  const formatted = (priceMinor / 100).toLocaleString("en-NG", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: 2,
+  });
+  return `₦${formatted}`;
 }
 
 /**
@@ -281,7 +271,8 @@ Client details:
 - Service: ${payload.offeringName}
 - Booking Code: ${payload.confirmationCode}
 - Date/Time: ${new Date(payload.startAt).toLocaleString("en-US", { timeZone: payload.timezone })}
-- Total Price: ${payload.offeringPriceMinor / 100} ${payload.currency}
+- Total Price: ₦${(payload.offeringPriceMinor / 100).toLocaleString("en-NG")}
+- Important: Format all prices, deposits, and fees strictly in Nigerian Naira with the Naira symbol (₦). Never use a dollar sign ($) or USD.
 ${payload.teamMemberName ? `- Staff Member: ${payload.teamMemberName}` : ""}
 ${payload.locationName ? `- Location: ${payload.locationName}` : ""}
 ${

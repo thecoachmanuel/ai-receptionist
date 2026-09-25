@@ -82,23 +82,16 @@ function initials(name: string) {
 
 function formatPrice(
   priceMinor: number,
-  currency: string,
-  locale: string,
+  _currency?: string,
+  _locale?: string,
 ) {
-  try {
-    const fractionDigits = new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency,
-    }).resolvedOptions().maximumFractionDigits ?? 2;
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: fractionDigits,
-    }).format(priceMinor / 10 ** fractionDigits);
-  } catch {
-    return `${currency} ${(priceMinor / 100).toFixed(2)}`;
-  }
+  if (!Number.isFinite(priceMinor)) return "₦0";
+  const fractionDigits = priceMinor % 100 === 0 ? 0 : 2;
+  const formatted = (priceMinor / 100).toLocaleString("en-NG", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: 2,
+  });
+  return `₦${formatted}`;
 }
 
 function formatDateTime(timestamp: number, locale: string, timezone: string) {

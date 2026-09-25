@@ -12,9 +12,9 @@ import {
   Building2,
   CalendarDays,
   ChevronRight,
-  CircleDollarSign,
   Clock3,
   CreditCard,
+  Layers3,
   LayoutDashboard,
   PanelsTopLeft,
   Settings2,
@@ -79,7 +79,7 @@ function navigationFor(
       {
         label: terminology.offeringPlural || "Treatments",
         segment: "offerings",
-        icon: CircleDollarSign,
+        icon: Layers3,
       },
       {
         label: terminology.teamMemberPlural || "Practitioners",
@@ -106,7 +106,7 @@ function navigationFor(
     {
       label: terminology.offeringPlural,
       segment: "offerings",
-      icon: CircleDollarSign,
+      icon: Layers3,
     },
     {
       label: terminology.teamMemberPlural,

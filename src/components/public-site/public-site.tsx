@@ -156,22 +156,14 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-function formatPrice(offering: PublicOffering, locale: string, currency: string) {
-  try {
-    const offeringCurrency = offering.currency || currency;
-    const fractionDigits = new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: offeringCurrency,
-    }).resolvedOptions().maximumFractionDigits ?? 2;
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: offeringCurrency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: fractionDigits,
-    }).format(offering.priceMinor / 10 ** fractionDigits);
-  } catch {
-    return `${offering.currency || currency} ${(offering.priceMinor / 100).toFixed(2)}`;
-  }
+function formatPrice(offering: PublicOffering, _locale?: string, _currency?: string) {
+  if (!offering || !Number.isFinite(offering.priceMinor)) return "₦0";
+  const fractionDigits = offering.priceMinor % 100 === 0 ? 0 : 2;
+  const formatted = (offering.priceMinor / 100).toLocaleString("en-NG", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: 2,
+  });
+  return `₦${formatted}`;
 }
 
 function SectionHeading({
