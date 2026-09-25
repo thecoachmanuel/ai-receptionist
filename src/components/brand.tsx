@@ -40,7 +40,7 @@ export function Brand({
     <Link
       href={href}
       className={cn("group inline-flex items-center gap-2.5", className)}
-      aria-label="Oneboard home"
+      aria-label="Qwilo home"
     >
       <BrandIcon inverted={inverted} />
       <span
@@ -49,7 +49,7 @@ export function Brand({
           inverted && "text-white",
         )}
       >
-        Oneboard
+        Qwilo
       </span>
     </Link>
   );

@@ -26,7 +26,7 @@ export default async function ContactPage() {
   ]);
 
   const phone = settings.contactPhone || "+2348168882014";
-  const email = settings.contactEmail || "oneboardng@gmail.com";
+  const email = settings.contactEmail || "qwilong@gmail.com";
   const cleanPhone = phone.replace(/[^0-9+]/g, "");
 
   return (
@@ -79,7 +79,7 @@ export default async function ContactPage() {
             We are here to help
           </p>
           <h1 className="mt-5 font-heading text-5xl font-medium leading-[0.92] tracking-[-0.055em] sm:text-6xl lg:text-7xl">
-            Get in touch with Oneboard.
+            Get in touch with Qwilo.
           </h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground">
             Have questions about setting up your AI Receptionist, custom pricing, or enterprise features? Reach out to our team directly.
@@ -207,7 +207,7 @@ export default async function ContactPage() {
             <a href={`tel:${cleanPhone}`} className="hover:text-foreground font-mono">{phone}</a>
           </div>
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Oneboard. All rights reserved.
+            © {new Date().getFullYear()} Qwilo. All rights reserved.
           </p>
         </div>
       </footer>

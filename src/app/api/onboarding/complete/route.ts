@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/nextauth-options";
 import { getDb } from "@/lib/db/mongodb";
 import { ObjectId } from "mongodb";
+import { getBusinessPreset } from "@/lib/business-presets";
+import { slugify } from "@/lib/defaults";
 
 export const runtime = "nodejs";
 
@@ -50,40 +52,59 @@ export async function POST(request: NextRequest) {
       finalSlug = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
     }
 
-    // Update the organization name and slug
+    const preset = getBusinessPreset(businessType);
+
+    // Update the organization name, slug, businessType, and preset terminology
     await db.collection("organizations").updateOne(orgFilter, {
       $set: {
         name: businessName.trim(),
         slug: finalSlug,
-        ...(businessType ? { businessType } : {}),
+        businessType: preset.id,
+        terminology: preset.terminology,
         updatedAt: Date.now(),
       },
     });
 
-    // Update the public site: sync siteSlug AND business name
+    // Update the public site: sync siteSlug, business name, and tailored preset copy
     await db.collection("publicSites").updateMany(
       { organizationId: activeOrgId },
       {
         $set: {
           siteSlug: finalSlug,
           "draft.businessName": businessName.trim(),
-          "draft.config.businessName": businessName.trim(),
+          "draft.headline": preset.headlineTemplate(businessName.trim()),
+          "draft.subheadline": preset.subheadlineTemplate(businessName.trim()),
+          "draft.about": preset.aboutTemplate(businessName.trim()),
+          "draft.agent.welcomeMessage": preset.welcomeMessageTemplate(businessName.trim()),
           updatedAt: Date.now(),
         },
       }
     );
 
-    // Also update alternate collection name used in some places
-    await db.collection("public_sites").updateMany(
-      { organizationId: activeOrgId },
-      {
-        $set: {
-          siteSlug: finalSlug,
-          "config.businessName": businessName.trim(),
-          updatedAt: Date.now(),
-        },
-      }
-    );
+    // Seed sample offerings if none exist yet for this organization
+    const existingOffering = await db.collection("offerings").findOne({ organizationId: activeOrgId });
+    if (!existingOffering && preset.sampleOfferings.length > 0) {
+      const now = Date.now();
+      const sampleDocs = preset.sampleOfferings.map((sample) => ({
+        organizationId: activeOrgId,
+        name: sample.name,
+        slug: slugify(sample.name),
+        description: sample.description,
+        category: sample.category,
+        durationMinutes: sample.durationMinutes,
+        bufferBeforeMinutes: 0,
+        bufferAfterMinutes: 0,
+        priceMinor: sample.priceMinor,
+        currency: "NGN",
+        capacity: 1,
+        locationIds: [],
+        active: true,
+        bookableOnline: true,
+        createdAt: now,
+        updatedAt: now,
+      }));
+      await db.collection("offerings").insertMany(sampleDocs as any);
+    }
 
     // Mark user as onboarded in DB
     const userIdStr = (session.user as any)?.id;

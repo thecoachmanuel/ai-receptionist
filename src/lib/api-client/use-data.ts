@@ -58,6 +58,8 @@ export function clearAllCache() {
   listeners.clear();
   if (typeof window !== "undefined") {
     try {
+      sessionStorage.removeItem("qwilo_auth_user");
+      sessionStorage.removeItem("qwilo_auth_org");
       sessionStorage.removeItem("oneboard_auth_user");
       sessionStorage.removeItem("oneboard_auth_org");
       sessionStorage.clear();

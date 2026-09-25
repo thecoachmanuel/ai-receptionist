@@ -7,7 +7,8 @@ import type { DbOrgMember, DbOrganization, DbSession, DbUser } from "@/lib/db/ty
 import { PLAN_FEATURES } from "@/lib/billing";
 import { createOrganizationForUser, isUserAuthorizedForOrg } from "@/lib/services/organizations";
 
-export const SESSION_COOKIE_NAME = "oneboard_session";
+export const SESSION_COOKIE_NAME = "qwilo_session";
+export const LEGACY_SESSION_COOKIE_NAME = "oneboard_session";
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 /**
@@ -18,13 +19,15 @@ const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
  */
 export function applySessionCookie(response: NextResponse, token: string): NextResponse {
   const isSecure = process.env.NODE_ENV === "production" || Boolean(process.env.NEXTAUTH_URL?.startsWith("https://"));
-  response.cookies.set(SESSION_COOKIE_NAME, token, {
+  const cookieOptions = {
     httpOnly: true,
     secure: isSecure,
-    sameSite: "lax",
+    sameSite: "lax" as const,
     path: "/",
     expires: new Date(Date.now() + SESSION_DURATION_MS),
-  });
+  };
+  response.cookies.set(SESSION_COOKIE_NAME, token, cookieOptions);
+  response.cookies.set(LEGACY_SESSION_COOKIE_NAME, token, cookieOptions);
   return response;
 }
 
@@ -33,6 +36,7 @@ export function applySessionCookie(response: NextResponse, token: string): NextR
  */
 export function clearSessionCookie(response: NextResponse): NextResponse {
   response.cookies.delete(SESSION_COOKIE_NAME);
+  response.cookies.delete(LEGACY_SESSION_COOKIE_NAME);
   return response;
 }
 
@@ -85,6 +89,13 @@ export async function createSession(userId: string, activeOrgId?: string): Promi
       path: "/",
       expires: new Date(expiresAt),
     });
+    cookieStore.set(LEGACY_SESSION_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: "lax",
+      path: "/",
+      expires: new Date(expiresAt),
+    });
   } catch {
     // Ignore if cookies() is read-only in current context
   }
@@ -95,7 +106,9 @@ export async function createSession(userId: string, activeOrgId?: string): Promi
 export async function clearSession(): Promise<void> {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    const token =
+      cookieStore.get(SESSION_COOKIE_NAME)?.value ||
+      cookieStore.get(LEGACY_SESSION_COOKIE_NAME)?.value;
 
     if (token) {
       const db = await getDb();
@@ -103,6 +116,7 @@ export async function clearSession(): Promise<void> {
     }
 
     cookieStore.delete(SESSION_COOKIE_NAME);
+    cookieStore.delete(LEGACY_SESSION_COOKIE_NAME);
   } catch {
     // Ignore if cookies() is read-only in current context
   }
@@ -111,7 +125,9 @@ export async function clearSession(): Promise<void> {
 export async function updateActiveOrganization(userId: string, orgId: string): Promise<void> {
   const db = await getDb();
   const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const token =
+    cookieStore.get(SESSION_COOKIE_NAME)?.value ||
+    cookieStore.get(LEGACY_SESSION_COOKIE_NAME)?.value;
 
   if (token) {
     await db.collection<DbSession>("sessions").updateOne(
@@ -209,7 +225,9 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
 
     // Fallback for legacy custom sessions during migration
     const cookieStore = await cookies();
-    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    const token =
+      cookieStore.get(SESSION_COOKIE_NAME)?.value ||
+      cookieStore.get(LEGACY_SESSION_COOKIE_NAME)?.value;
 
     if (!token) return null;
 

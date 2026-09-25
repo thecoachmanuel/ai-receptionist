@@ -1,4 +1,5 @@
 import type { BackendTerminology, SiteConfig } from "@/lib/db/types";
+import { getBusinessPreset, type BusinessPreset } from "@/lib/business-presets";
 
 export const DEFAULT_TERMINOLOGY: BackendTerminology = {
   offeringSingular: "Service",
@@ -11,14 +12,20 @@ export const DEFAULT_TERMINOLOGY: BackendTerminology = {
   bookingPlural: "Bookings",
 };
 
-export function defaultSiteConfig(businessName: string): SiteConfig {
+export function defaultSiteConfig(
+  businessName: string,
+  presetOrType?: BusinessPreset | string,
+): SiteConfig {
+  const preset =
+    typeof presetOrType === "object" && presetOrType
+      ? presetOrType
+      : getBusinessPreset(presetOrType);
+
   return {
     businessName,
-    headline: `A simpler way to book with ${businessName}.`,
-    subheadline:
-      "Choose what you need, find a time that works, and confirm in moments.",
-    about:
-      "Thoughtful service, straightforward scheduling, and a team ready to help.",
+    headline: preset.headlineTemplate(businessName),
+    subheadline: preset.subheadlineTemplate(businessName),
+    about: preset.aboutTemplate(businessName),
     template: "editorial",
     theme: {
       accentColor: "#2446D8",
@@ -49,7 +56,7 @@ export function defaultSiteConfig(businessName: string): SiteConfig {
       showWebChat: false,
       showVoiceChat: false,
       showVapiWidget: false,
-      welcomeMessage: `Hi, I'm the ${businessName} assistant. How can I help?`,
+      welcomeMessage: preset.welcomeMessageTemplate(businessName),
     },
   };
 }

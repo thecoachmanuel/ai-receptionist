@@ -41,7 +41,7 @@ const DEFAULTS: SystemSettings = {
   usdToNgnRate: 1500,
   baseCurrency: "NGN",
   contactPhone: "+2348168882014",
-  contactEmail: "oneboardng@gmail.com",
+  contactEmail: "qwilong@gmail.com",
   clientPageUrl: "",
   isWaitlistActive: false,
   vapi: {
@@ -80,7 +80,7 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       usdToNgnRate: doc.usdToNgnRate ?? 1500,
       baseCurrency: doc.baseCurrency ?? "NGN",
       contactPhone: doc.contactPhone ?? "+2348168882014",
-      contactEmail: doc.contactEmail ?? "oneboardng@gmail.com",
+      contactEmail: doc.contactEmail ?? "qwilong@gmail.com",
       clientPageUrl: doc.clientPageUrl ?? "",
       isWaitlistActive: doc.isWaitlistActive ?? false,
       vapi: {

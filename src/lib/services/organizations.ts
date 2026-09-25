@@ -1,7 +1,8 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/db/mongodb";
-import type { DbAgentIntegration, DbOrgMember, DbOrganization, DbPublicSite, PlanType } from "@/lib/db/types";
+import type { DbAgentIntegration, DbOrgMember, DbOrganization, DbPublicSite, DbOffering, PlanType } from "@/lib/db/types";
 import { DEFAULT_TERMINOLOGY, defaultSiteConfig, slugify } from "@/lib/defaults";
+import { getBusinessPreset } from "@/lib/business-presets";
 import { assertIanaTimezone } from "@/lib/time";
 import { optionalTrimmed, requiredTrimmed } from "@/lib/validation";
 
@@ -122,6 +123,7 @@ export async function createOrganizationForUser(
   rawCurrency?: string,
   rawLocale?: string,
   initialPlan?: PlanType,
+  businessType?: string,
 ) {
   const db = await getDb();
   const name = requiredTrimmed(rawName, "name", 120);
@@ -156,15 +158,18 @@ export async function createOrganizationForUser(
   const subscriptionExpiresAt = enforcePayment ? now : trialEndsAt;
   const planStatus = enforcePayment ? "expired" : "trialing";
 
+  const preset = getBusinessPreset(businessType);
+
   const newOrg: DbOrganization = {
     clerkOrgId,
     name,
     slug,
+    businessType: preset.id,
     createdBy: userId,
     timezone,
     currency,
     locale,
-    terminology: DEFAULT_TERMINOLOGY,
+    terminology: preset.terminology,
     plan: initialPlan || "free_org",
     planStatus,
     trialEndsAt,
@@ -189,7 +194,7 @@ export async function createOrganizationForUser(
   await db.collection<DbPublicSite>("publicSites").insertOne({
     organizationId: orgId,
     siteSlug: slug,
-    draft: defaultSiteConfig(name),
+    draft: defaultSiteConfig(name, preset),
     createdAt: now,
     updatedAt: now,
   });
@@ -202,6 +207,33 @@ export async function createOrganizationForUser(
     createdAt: now,
     updatedAt: now,
   });
+
+  // Seed sample offerings tailored to the business type if any
+  if (preset.sampleOfferings.length > 0) {
+    try {
+      const sampleDocs: DbOffering[] = preset.sampleOfferings.map((sample) => ({
+        organizationId: orgId,
+        name: sample.name,
+        slug: slugify(sample.name),
+        description: sample.description,
+        category: sample.category,
+        durationMinutes: sample.durationMinutes,
+        bufferBeforeMinutes: 0,
+        bufferAfterMinutes: 0,
+        priceMinor: sample.priceMinor,
+        currency: "NGN",
+        capacity: 1,
+        locationIds: [],
+        active: true,
+        bookableOnline: true,
+        createdAt: now,
+        updatedAt: now,
+      }));
+      await db.collection<DbOffering>("offerings").insertMany(sampleDocs);
+    } catch (err) {
+      console.error("[createOrganizationForUser] Failed to seed sample offerings:", err);
+    }
+  }
 
   return {
     ...newOrg,

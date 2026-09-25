@@ -33,7 +33,7 @@ export async function GET() {
         usdToNgnRate: 1500,
         baseCurrency: "NGN",
         contactPhone: "+2348168882014",
-        contactEmail: "oneboardng@gmail.com",
+        contactEmail: "qwilong@gmail.com",
         clientPageUrl: "",
       },
       { status: 200 },

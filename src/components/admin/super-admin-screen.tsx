@@ -352,7 +352,7 @@ export function SuperAdminScreen() {
 
   // Platform contact state
   const [contactPhone, setContactPhone] = useState("+2348168882014");
-  const [contactEmail, setContactEmail] = useState("oneboardng@gmail.com");
+  const [contactEmail, setContactEmail] = useState("qwilong@gmail.com");
   const [clientPageUrl, setClientPageUrl] = useState("");
   const [isWaitlistActive, setIsWaitlistActive] = useState(false);
   const [googleAuthEnabled, setGoogleAuthEnabled] = useState(true);
@@ -432,7 +432,7 @@ export function SuperAdminScreen() {
             voice: data.settings.planPrices?.voice ?? 75000,
           });
           setContactPhone(data.settings.contactPhone || "+2348168882014");
-          setContactEmail(data.settings.contactEmail || "oneboardng@gmail.com");
+          setContactEmail(data.settings.contactEmail || "qwilong@gmail.com");
           setClientPageUrl(data.settings.clientPageUrl || "");
           setIsWaitlistActive(data.settings.isWaitlistActive || false);
           if (typeof data.settings.googleAuthEnabled === "boolean") {
@@ -1781,7 +1781,7 @@ export function SuperAdminScreen() {
                           type="email"
                           value={contactEmail}
                           onChange={(e) => setContactEmail(e.target.value)}
-                          placeholder="hello@oneboard.ng"
+                          placeholder="hello@qwilo.ng"
                           className="text-sm"
                         />
                       </div>

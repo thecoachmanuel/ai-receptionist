@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name, organizationName, plan } = await request.json();
+    const { email, password, name, organizationName, plan, businessType } = await request.json();
     if (!email || !password || !name) {
       return NextResponse.json(
         { error: "Email, password, and full name are required." },
@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
         undefined,
         undefined,
         selectedPlan,
+        businessType,
       );
       orgId = createdOrg._id.toString();
       orgSlug = createdOrg.slug;

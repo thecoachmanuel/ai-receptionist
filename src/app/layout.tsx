@@ -29,8 +29,8 @@ const newsreader = Newsreader({
 
 export const metadata: Metadata = {
   title: {
-    default: "Oneboard — AI front desk for modern teams",
-    template: "%s · Oneboard",
+    default: "Qwilo — AI front desk for modern teams",
+    template: "%s · Qwilo",
   },
   description:
     "Run bookings, customer conversations, and a text-and-audio web assistant from one multi-tenant workspace.",

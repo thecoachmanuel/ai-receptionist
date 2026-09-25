@@ -62,7 +62,7 @@ export function WaitlistPage() {
           </h1>
           
           <p className="mt-9 max-w-xl text-lg leading-7 text-muted-foreground sm:text-xl sm:leading-8">
-            Oneboard is a next-generation AI receptionist that works 24/7 for your business. Oneboard handles your bookings, and chats with your customers exactly the way you would. Join the waitlist to be the first to know when we launch.
+            Qwilo is a next-generation AI receptionist that works 24/7 for your business. Qwilo handles your bookings, and chats with your customers exactly the way you would. Join the waitlist to be the first to know when we launch.
           </p>
           
           <div className="mt-12 w-full max-w-md bg-card border border-foreground/12 shadow-[8px_12px_0_0_oklch(0.205_0.018_264.4)] p-6 sm:p-8">
@@ -110,7 +110,7 @@ export function WaitlistPage() {
 
       <footer className="bg-card">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-5 px-5 py-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:px-8 lg:px-12">
-          <span>&copy; {new Date().getFullYear()} Oneboard Platform.</span>
+          <span>&copy; {new Date().getFullYear()} Qwilo Platform.</span>
           <span className="sm:ml-auto">
             Website built by <a href="https://www.instagram.com/thecoachmanuel" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 hover:underline">Coach Manuel</a>.
           </span>

@@ -2,16 +2,17 @@ import { getDb } from "@/lib/db/mongodb";
 import type { DbOrganization, PlanType } from "@/lib/db/types";
 import { ObjectId } from "mongodb";
 
-export type OneboardFeature =
+export type QwiloFeature =
   | "operations_hub"
   | "custom_public_page"
   | "web_agent"
   | "browser_voice"
   | "advanced_analytics";
 
-export type SwitchboardFeature = OneboardFeature;
+export type OneboardFeature = QwiloFeature;
+export type SwitchboardFeature = QwiloFeature;
 
-export const PLAN_FEATURES: Record<PlanType, OneboardFeature[]> = {
+export const PLAN_FEATURES: Record<PlanType, QwiloFeature[]> = {
   free_org: [
     "operations_hub",
     "custom_public_page",

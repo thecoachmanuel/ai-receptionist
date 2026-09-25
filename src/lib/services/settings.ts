@@ -35,7 +35,7 @@ const DEFAULTS: PlatformSettings = {
   planPrices: { core: 5000, engage: 25000, voice: 75000 },
   usdToNgnRate: 1500,
   contactPhone: "+2348168882014",
-  contactEmail: "oneboardng@gmail.com",
+  contactEmail: "qwilong@gmail.com",
   clientPageUrl: "",
   isWaitlistActive: false,
   updatedAt: 0,

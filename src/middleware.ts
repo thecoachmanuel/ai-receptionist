@@ -18,11 +18,12 @@ export async function middleware(request: NextRequest) {
     secureCookie: isSecure,
   });
 
-  const legacySessionToken =
+  const sessionToken =
+    request.cookies.get("qwilo_session")?.value ||
     request.cookies.get("oneboard_session")?.value ||
     request.cookies.get("switchboard_session")?.value;
 
-  const hasSession = Boolean(token || legacySessionToken);
+  const hasSession = Boolean(token || sessionToken);
 
   // Protect /app routes
   if (pathname.startsWith("/app") && !hasSession) {

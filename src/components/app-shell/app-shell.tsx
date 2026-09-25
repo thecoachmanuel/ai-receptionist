@@ -258,7 +258,7 @@ function ShellChrome({
             <BrandIcon />
             <span>
               <span className="block font-heading text-[17px] leading-none font-semibold tracking-[-0.02em]">
-                Oneboard
+                Qwilo
               </span>
               <span className="mt-1 block text-[9px] font-semibold tracking-[0.18em] text-sidebar-foreground/45 uppercase">
                 Operations desk

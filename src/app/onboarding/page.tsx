@@ -16,26 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const BUSINESS_TYPES = [
-  { value: "salon", label: "Hair Salon / Barbershop" },
-  { value: "spa", label: "Spa & Wellness" },
-  { value: "clinic", label: "Medical / Health Clinic" },
-  { value: "fitness", label: "Gym / Fitness Studio" },
-  { value: "beauty", label: "Beauty & Aesthetics" },
-  { value: "therapy", label: "Therapy & Counselling" },
-  { value: "dental", label: "Dental Practice" },
-  { value: "photography", label: "Photography Studio" },
-  { value: "consulting", label: "Consulting / Coaching" },
-  { value: "education", label: "Education / Tutoring" },
-  { value: "other", label: "Other" },
-];
+import { BUSINESS_PRESET_LIST } from "@/lib/business-presets";
 
 export default function OnboardingPage() {
   const router = useRouter();
   const { data: session, update: updateSession } = useSession();
   const [businessName, setBusinessName] = useState("");
-  const [businessType, setBusinessType] = useState("");
+  const [businessType, setBusinessType] = useState("barber");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -59,7 +46,7 @@ export default function OnboardingPage() {
       // Clear the isNewGoogleUser flag from session
       await updateSession({ isNewGoogleUser: false, orgSlug: data.slug });
 
-      toast.success("Business set up successfully! Welcome to Oneboard.");
+      toast.success("Business set up successfully! Welcome to Qwilo.");
 
       // Brief delay to allow session update to propagate
       setTimeout(() => {
@@ -128,14 +115,14 @@ export default function OnboardingPage() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                This will be the name of your Oneboard workspace and public booking site.
+                This will be the name of your Qwilo workspace and public booking site.
               </p>
             </div>
 
             {/* Business Type */}
             <div className="space-y-2">
               <Label htmlFor="businessType" className="text-sm font-semibold">
-                Business Type <span className="text-muted-foreground font-normal">(optional)</span>
+                Business Type / Industry
               </Label>
               <div className="relative">
                 <Briefcase className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground z-10" />
@@ -143,10 +130,11 @@ export default function OnboardingPage() {
                   <SelectTrigger id="businessType" className="h-12 pl-10 text-sm">
                     <SelectValue placeholder="Select your industry..." />
                   </SelectTrigger>
-                  <SelectContent>
-                    {BUSINESS_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
+                  <SelectContent className="max-h-72">
+                    {BUSINESS_PRESET_LIST.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        <span className="font-medium">{type.label}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">({type.description})</span>
                       </SelectItem>
                     ))}
                   </SelectContent>

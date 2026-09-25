@@ -10,8 +10,45 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { Check, ShieldCheck, Zap } from "lucide-react";
+import {
+  Check,
+  ShieldCheck,
+  Briefcase,
+  Camera,
+  Dumbbell,
+  Headphones,
+  HeartPulse,
+  Scissors,
+  SlidersHorizontal,
+  Smile,
+  Sparkles,
+} from "lucide-react";
 import type { PlanType } from "@/lib/db/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  BUSINESS_PRESET_LIST,
+  getBusinessPreset,
+  type BusinessPresetId,
+} from "@/lib/business-presets";
+
+const PRESET_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  barber: Scissors,
+  salon: Sparkles,
+  clinic: HeartPulse,
+  dental: Smile,
+  spa: Sparkles,
+  consulting: Briefcase,
+  fitness: Dumbbell,
+  support: Headphones,
+  photography: Camera,
+  general: SlidersHorizontal,
+};
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -21,6 +58,7 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [organizationName, setOrganizationName] = useState("");
+  const [businessType, setBusinessType] = useState<BusinessPresetId>("barber");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -28,6 +66,8 @@ export default function SignUpPage() {
   const [enforcePayment, setEnforcePayment] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanType>("free_org");
   const [planPrices, setPlanPrices] = useState({ core: 5000, engage: 25000, voice: 75000 });
+
+  const activePreset = getBusinessPreset(businessType);
 
   useEffect(() => {
     if (isLoaded && isAuthenticated) {
@@ -91,6 +131,7 @@ export default function SignUpPage() {
           email: formEmail,
           password: formPassword,
           organizationName: formOrg,
+          businessType,
           plan: selectedPlan,
         }),
       });
@@ -225,11 +266,48 @@ export default function SignUpPage() {
               name="organizationName"
               type="text"
               autoComplete="organization"
-              placeholder="e.g. Oneboard Barbershop"
+              placeholder="e.g. Qwilo Barbershop"
               value={organizationName}
               onChange={(e) => setOrganizationName(e.target.value)}
               className="h-11 text-base sm:text-sm"
             />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="businessType" className="text-sm font-semibold">
+                Business type / Industry
+              </Label>
+              <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
+                Preset terminology
+              </span>
+            </div>
+            <Select
+              value={businessType}
+              onValueChange={(val) => setBusinessType(val as BusinessPresetId)}
+            >
+              <SelectTrigger id="businessType" className="h-11 w-full text-base sm:text-sm bg-background">
+                <SelectValue placeholder="Select your industry..." />
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                {BUSINESS_PRESET_LIST.map((preset) => {
+                  const Icon = PRESET_ICONS[preset.id] || SlidersHorizontal;
+                  return (
+                    <SelectItem key={preset.id} value={preset.id} className="cursor-pointer py-2">
+                      <div className="flex items-center gap-2.5">
+                        <Icon className="size-4 text-primary shrink-0" />
+                        <div className="flex flex-col text-left">
+                          <span className="font-medium text-xs text-foreground">{preset.label}</span>
+                          <span className="text-[10px] text-muted-foreground">{preset.description}</span>
+                        </div>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Configures custom terminology ({activePreset.terminology.teamMemberPlural}, {activePreset.terminology.offeringPlural}), booking page copy, and AI receptionist greeting.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>

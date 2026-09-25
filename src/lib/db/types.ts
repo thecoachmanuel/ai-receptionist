@@ -84,6 +84,7 @@ export type DbOrganization = {
   currency: string;
   locale: string;
   terminology: BackendTerminology;
+  businessType?: string;
   plan: PlanType;
   planStatus: "active" | "trialing" | "canceled" | "past_due" | "expired";
   trialEndsAt?: number;

@@ -1,1 +1,1 @@
-export { organizationHasFeature, type OneboardFeature, type SwitchboardFeature } from "@/lib/billing";
+export { organizationHasFeature, type QwiloFeature, type OneboardFeature, type SwitchboardFeature } from "@/lib/billing";

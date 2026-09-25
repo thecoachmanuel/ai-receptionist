@@ -261,7 +261,7 @@ export function BillingScreen() {
 
       <div className="mt-6 flex items-start gap-2 rounded-lg border border-black/10 bg-white p-3 text-[11px] leading-5 text-muted-foreground">
         <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" />
-        Oneboard gates capabilities by real-time feature entitlement, backed by secure payment verification.
+        Qwilo gates capabilities by real-time feature entitlement, backed by secure payment verification.
       </div>
     </>
   );

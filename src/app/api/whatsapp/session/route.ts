@@ -254,7 +254,7 @@ export async function POST(request: NextRequest) {
 
       // Fallback pairing code token if offline
       if (!qrCode) {
-        qrCode = `1@${Buffer.from(`oneboard_wa_${org.slug}_${Date.now()}`).toString("base64")}`;
+        qrCode = `1@${Buffer.from(`qwilo_wa_${org.slug}_${Date.now()}`).toString("base64")}`;
       }
 
       await db.collection<DbOrganization>("organizations").updateOne(

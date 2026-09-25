@@ -53,21 +53,44 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function getStoredItem(key: string, legacyKey?: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return sessionStorage.getItem(key) || (legacyKey ? sessionStorage.getItem(legacyKey) : null);
+  } catch {
+    return null;
+  }
+}
+
+function setStoredItem(key: string, value: string, legacyKey?: string) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(key, value);
+    if (legacyKey) sessionStorage.setItem(legacyKey, value);
+  } catch {}
+}
+
+function removeStoredItem(key: string, legacyKey?: string) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(key);
+    if (legacyKey) sessionStorage.removeItem(legacyKey);
+  } catch {}
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(() => {
-    if (typeof window === "undefined") return null;
     try {
-      const stored = sessionStorage.getItem("oneboard_auth_user");
+      const stored = getStoredItem("qwilo_auth_user", "oneboard_auth_user");
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;
     }
   });
   const [organization, setOrganization] = useState<AuthOrg | null>(() => {
-    if (typeof window === "undefined") return null;
     try {
-      const stored = sessionStorage.getItem("oneboard_auth_org");
+      const stored = getStoredItem("qwilo_auth_org", "oneboard_auth_org");
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;
@@ -75,27 +98,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [userOrganizations, setUserOrganizations] = useState<UserOrgSummary[]>([]);
   const [role, setRole] = useState<string | undefined>(() => {
-    if (typeof window === "undefined") return undefined;
     try {
-      const stored = sessionStorage.getItem("oneboard_auth_role");
+      const stored = getStoredItem("qwilo_auth_role", "oneboard_auth_role");
       return stored ? JSON.parse(stored) : undefined;
     } catch {
       return undefined;
     }
   });
   const [permissions, setPermissions] = useState<string[]>(() => {
-    if (typeof window === "undefined") return [];
     try {
-      const stored = sessionStorage.getItem("oneboard_auth_permissions");
+      const stored = getStoredItem("qwilo_auth_permissions", "oneboard_auth_permissions");
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
     }
   });
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
     try {
-      const stored = sessionStorage.getItem("oneboard_auth_is_super_admin");
+      const stored = getStoredItem("qwilo_auth_is_super_admin", "oneboard_auth_is_super_admin");
       return stored ? JSON.parse(stored) : false;
     } catch {
       return false;
@@ -119,25 +139,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPermissions(data.permissions || []);
         setIsSuperAdmin(freshIsSuperAdmin);
 
-        if (typeof window !== "undefined") {
-          try {
-            if (freshUser) sessionStorage.setItem("oneboard_auth_user", JSON.stringify(freshUser));
-            if (freshOrg) sessionStorage.setItem("oneboard_auth_org", JSON.stringify(freshOrg));
-            if (data.permissions) sessionStorage.setItem("oneboard_auth_permissions", JSON.stringify(data.permissions));
-            if (data.role) sessionStorage.setItem("oneboard_auth_role", JSON.stringify(data.role));
-            sessionStorage.setItem("oneboard_auth_is_super_admin", JSON.stringify(freshIsSuperAdmin));
-          } catch {}
-        }
+        if (freshUser) setStoredItem("qwilo_auth_user", JSON.stringify(freshUser), "oneboard_auth_user");
+        if (freshOrg) setStoredItem("qwilo_auth_org", JSON.stringify(freshOrg), "oneboard_auth_org");
+        if (data.permissions) setStoredItem("qwilo_auth_permissions", JSON.stringify(data.permissions), "oneboard_auth_permissions");
+        if (data.role) setStoredItem("qwilo_auth_role", JSON.stringify(data.role), "oneboard_auth_role");
+        setStoredItem("qwilo_auth_is_super_admin", JSON.stringify(freshIsSuperAdmin), "oneboard_auth_is_super_admin");
       } else {
-        if (typeof window !== "undefined") {
-          try {
-            sessionStorage.removeItem("oneboard_auth_user");
-            sessionStorage.removeItem("oneboard_auth_org");
-            sessionStorage.removeItem("oneboard_auth_permissions");
-            sessionStorage.removeItem("oneboard_auth_role");
-            sessionStorage.removeItem("oneboard_auth_is_super_admin");
-          } catch {}
-        }
+        removeStoredItem("qwilo_auth_user", "oneboard_auth_user");
+        removeStoredItem("qwilo_auth_org", "oneboard_auth_org");
+        removeStoredItem("qwilo_auth_permissions", "oneboard_auth_permissions");
+        removeStoredItem("qwilo_auth_role", "oneboard_auth_role");
+        removeStoredItem("qwilo_auth_is_super_admin", "oneboard_auth_is_super_admin");
         setUser(null);
         setOrganization(null);
         setUserOrganizations([]);
@@ -216,15 +228,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await fetch("/api/auth/sign-out", { method: "POST" });
     } catch {}
     clearAllCache();
-    if (typeof window !== "undefined") {
-      try {
-        sessionStorage.removeItem("oneboard_auth_user");
-        sessionStorage.removeItem("oneboard_auth_org");
-        sessionStorage.removeItem("oneboard_auth_permissions");
-        sessionStorage.removeItem("oneboard_auth_role");
-        sessionStorage.removeItem("oneboard_auth_is_super_admin");
-      } catch {}
-    }
+    removeStoredItem("qwilo_auth_user", "oneboard_auth_user");
+    removeStoredItem("qwilo_auth_org", "oneboard_auth_org");
+    removeStoredItem("qwilo_auth_permissions", "oneboard_auth_permissions");
+    removeStoredItem("qwilo_auth_role", "oneboard_auth_role");
+    removeStoredItem("qwilo_auth_is_super_admin", "oneboard_auth_is_super_admin");
     setUser(null);
     setOrganization(null);
     setUserOrganizations([]);

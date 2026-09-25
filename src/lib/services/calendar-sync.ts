@@ -117,7 +117,7 @@ export async function syncBookingToExternalCalendar(booking: DbBooking) {
 
   const eventPayload = {
     summary: `${booking.offeringSnapshot.name} - ${booking.customerSnapshot.name}`,
-    description: `Booked via Oneboard AI Receptionist.\nCustomer: ${booking.customerSnapshot.name} (${booking.customerSnapshot.email || "No email"})\nConfirmation Code: ${booking.confirmationCode}`,
+    description: `Booked via Qwilo AI Receptionist.\nCustomer: ${booking.customerSnapshot.name} (${booking.customerSnapshot.email || "No email"})\nConfirmation Code: ${booking.confirmationCode}`,
     start: { dateTime: new Date(booking.startAt).toISOString() },
     end: { dateTime: new Date(booking.endAt).toISOString() },
   };

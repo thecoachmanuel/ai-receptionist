@@ -123,7 +123,7 @@ export const authOptions: NextAuthOptions = {
               updatedAt: now,
             });
             const userId = insertUserResult.insertedId.toString();
-            const org = await createOrganizationForUser(userId, "Oneboard Admin Workspace");
+            const org = await createOrganizationForUser(userId, "Qwilo Admin Workspace");
             const activeOrgId = org._id.toString();
 
             await db.collection<DbUser>("users").updateOne(
@@ -163,7 +163,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           if (!orgSlug) {
-            const org = await createOrganizationForUser(user._id!.toString(), "Oneboard Admin Workspace");
+            const org = await createOrganizationForUser(user._id!.toString(), "Qwilo Admin Workspace");
             activeOrgId = org._id.toString();
             orgSlug = org.slug;
             await db.collection<DbUser>("users").updateOne(
