@@ -49,7 +49,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // ── Platform Pricing ────────────────────────────────────
-    // Handles per-plan price: { plan: "core"|"engage"|"voice", price: number }
+    // Handles per-plan price in NGN: { plan: "core"|"engage"|"voice", price: number }
     if (body.plan && typeof (body.price ?? body.usdPrice) === "number") {
       const current = await getSystemSettings();
       updates.planPrices = {
@@ -58,12 +58,8 @@ export async function PATCH(request: NextRequest) {
       };
     }
 
-    // Handles exchange rate + base currency
-    if (typeof body.usdToNgnRate === "number") {
-      updates.usdToNgnRate = body.usdToNgnRate;
-    }
-    if (body.baseCurrency === "USD" || body.baseCurrency === "NGN") {
-      updates.baseCurrency = body.baseCurrency;
+    if (body.baseCurrency === "NGN") {
+      updates.baseCurrency = "NGN";
     }
 
     // ── Contact / Platform Settings ─────────────────────────

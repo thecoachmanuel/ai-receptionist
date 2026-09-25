@@ -4,8 +4,6 @@ import type { DbOrganization, PlanType } from "@/lib/db/types";
 import { ObjectId } from "mongodb";
 import { getPlatformSettings } from "@/lib/services/settings";
 
-export const USD_TO_NGN_RATE = Number(process.env.USD_TO_NGN_RATE || "1500");
-
 /** Compile-time defaults in NGN — the live values come from getPlatformSettings() at runtime. */
 export const PAYSTACK_PLANS: Record<
   PlanType,

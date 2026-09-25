@@ -95,7 +95,7 @@ type Tab =
   | "messages"
   | "waitlist"
   | "settings";
-type PlatformPrices = { core: number; engage: number; voice: number; usdToNgnRate: number };
+type PlatformPrices = { core: number; engage: number; voice: number };
 
 type AdminOrgStat = {
   _id: string;
@@ -337,8 +337,7 @@ export function SuperAdminScreen() {
   const [currency, setCurrency] = useState("NGN");
 
   // Pricing state
-  const [prices, setPrices] = useState<PlatformPrices>({ core: 5000, engage: 25000, voice: 75000, usdToNgnRate: 1500 });
-  const [baseCurrency, setBaseCurrency] = useState<"USD" | "NGN">("NGN");
+  const [prices, setPrices] = useState<PlatformPrices>({ core: 5000, engage: 25000, voice: 75000 });
   const [pricesLoaded, setPricesLoaded] = useState(false);
   const [savingPrices, setSavingPrices] = useState(false);
   const priceFormRef = useRef<HTMLFormElement>(null);
@@ -429,9 +428,7 @@ export function SuperAdminScreen() {
             core: data.settings.planPrices?.core ?? 5000,
             engage: data.settings.planPrices?.engage ?? 25000,
             voice: data.settings.planPrices?.voice ?? 75000,
-            usdToNgnRate: data.settings.usdToNgnRate ?? 1500,
           });
-          setBaseCurrency(data.settings.baseCurrency || "NGN");
           setContactPhone(data.settings.contactPhone || "+2348168882014");
           setContactEmail(data.settings.contactEmail || "oneboardng@gmail.com");
           setClientPageUrl(data.settings.clientPageUrl || "");
@@ -538,16 +535,16 @@ export function SuperAdminScreen() {
         const r = await fetch("/api/admin/settings", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plan, usdPrice: prices[plan] }),
+          body: JSON.stringify({ plan, price: prices[plan] }),
         });
         if (!r.ok) throw new Error(`Failed to save ${plan} price.`);
       }
       await fetch("/api/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usdToNgnRate: prices.usdToNgnRate, baseCurrency }),
+        body: JSON.stringify({ baseCurrency: "NGN" }),
       });
-      toast.success("Pricing configuration saved.");
+      toast.success("Naira pricing configuration saved.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save pricing.");
     } finally {
@@ -1303,7 +1300,7 @@ export function SuperAdminScreen() {
               <div className="space-y-5">
                 <SectionHeader
                   title="Platform Pricing"
-                  description="Set USD base prices for each subscription tier and the NGN exchange rate."
+                  description="Set subscription prices in Nigerian Naira (₦) for each plan tier."
                 />
                 {!pricesLoaded ? (
                   <div className="flex h-40 items-center justify-center">
@@ -1337,15 +1334,15 @@ export function SuperAdminScreen() {
                               colour === "purple" && "text-purple-600",
                             )}
                           >
-                            {label} Tier
+                            {label} Tier (₦)
                           </Label>
                           <div className="mt-2 flex items-center gap-1">
-                            <span className="text-lg font-bold text-muted-foreground">{baseCurrency === "NGN" ? "₦" : "$"}</span>
+                            <span className="text-lg font-bold text-muted-foreground">₦</span>
                             <Input
                               id={`price-${key}`}
                               type="number"
                               min="0"
-                              step="1"
+                              step="500"
                               value={prices[key]}
                               onChange={(e) => setPrices((p) => ({ ...p, [key]: Number(e.target.value) }))}
                               className="border-0 bg-transparent p-0 text-2xl font-bold shadow-none focus-visible:ring-0"
@@ -1357,52 +1354,13 @@ export function SuperAdminScreen() {
                       ))}
                     </div>
 
-                    {/* Base Currency */}
-                    <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
-                      <Label htmlFor="base-currency" className="text-xs font-bold text-primary">
-                        Platform Pricing Currency
-                      </Label>
-                      <div className="mt-2">
-                        <Select value={baseCurrency} onValueChange={(val: any) => setBaseCurrency(val)}>
-                          <SelectTrigger id="base-currency" className="w-36 text-sm bg-white">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="USD">USD ($)</SelectItem>
-                            <SelectItem value="NGN">NGN (₦)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <p className="mt-1.5 text-[11px] text-muted-foreground">
-                        The primary currency convention used across the platform and marketing pages.
-                      </p>
-                    </div>
-
-                    {/* Exchange rate */}
-                    <div className="rounded-2xl border border-amber-200/60 bg-amber-50/60 p-5">
-                      <Label htmlFor="rate-usd-ngn" className="text-xs font-bold text-amber-700">
-                        USD → NGN Exchange Rate
-                      </Label>
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className="text-xs font-medium text-muted-foreground">1 USD =</span>
-                        <Input
-                          id="rate-usd-ngn"
-                          type="number"
-                          min="1"
-                          step="0.01"
-                          value={prices.usdToNgnRate}
-                          onChange={(e) => setPrices((p) => ({ ...p, usdToNgnRate: Number(e.target.value) }))}
-                          className="w-36 font-mono text-sm"
-                        />
-                        <span className="text-xs font-medium text-muted-foreground">NGN</span>
-                      </div>
-                      <p className="mt-1.5 text-[11px] text-amber-700/70">
-                        Used for Paystack checkout calculations.
-                      </p>
+                    <div className="rounded-2xl border border-emerald-200/60 bg-emerald-50/40 p-4 text-xs text-emerald-900 flex items-center gap-2">
+                      <span className="font-semibold text-emerald-800">Purely Naira (₦) Billing:</span>
+                      <span>All platform subscriptions and customer checkouts are processed directly in Nigerian Naira via Paystack without any currency conversion.</span>
                     </div>
 
                     <Button type="submit" disabled={savingPrices} className="gap-2">
-                      {savingPrices ? <><LoaderCircle className="size-4 animate-spin" /> Saving…</> : <><Save className="size-4" /> Save Pricing</>}
+                      {savingPrices ? <><LoaderCircle className="size-4 animate-spin" /> Saving…</> : <><Save className="size-4" /> Save Naira Pricing</>}
                     </Button>
                   </form>
                 )}
@@ -1511,7 +1469,7 @@ export function SuperAdminScreen() {
               <div className="space-y-6">
                 <SectionHeader
                   title="WhatsApp Automation Gateway"
-                  description="Configure the platform-wide Free WhatsApp Gateway (WAHA) so tenant businesses can link their WhatsApp number via QR code with $0.00 Meta API fees."
+                  description="Configure the platform-wide Free WhatsApp Gateway (WAHA) so tenant businesses can link their WhatsApp number via QR code with zero Meta API fees (100% Free)."
                 />
 
                 {/* Architecture Banner */}
@@ -1918,10 +1876,7 @@ export function SuperAdminScreen() {
                 <Select value={currency} onValueChange={setCurrency}>
                   <SelectTrigger id="org-currency" className="text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="USD">USD ($)</SelectItem>
                     <SelectItem value="NGN">NGN (₦)</SelectItem>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                    <SelectItem value="GBP">GBP (£)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

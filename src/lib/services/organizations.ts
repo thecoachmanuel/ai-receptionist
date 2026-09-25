@@ -213,10 +213,10 @@ export async function updateOrganization(
   }
   if (updates.currency !== undefined) {
     const curr = (updates.currency || "").trim().toUpperCase();
-    if (curr !== "NGN" && curr !== "USD") {
-      throw new Error("Currency must be NGN or USD.");
+    if (curr && curr !== "NGN") {
+      throw new Error("Currency must be NGN (₦).");
     }
-    $set.currency = curr;
+    $set.currency = "NGN";
   }
   if (updates.locale !== undefined) {
     const loc = optionalTrimmed(updates.locale, "locale", 35);

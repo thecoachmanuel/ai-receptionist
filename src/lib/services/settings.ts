@@ -63,26 +63,26 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
 }
 
 /**
- * Updates a single plan's USD price. Admin-only.
+ * Updates a single plan's NGN price. Admin-only.
  */
 export async function updatePlanPrice(
   plan: "core" | "engage" | "voice",
-  usdPrice: number,
+  price: number,
 ): Promise<void> {
-  if (!Number.isFinite(usdPrice) || usdPrice < 0) {
+  if (!Number.isFinite(price) || price < 0) {
     throw new Error("Price must be a non-negative number.");
   }
   const current = await getSystemSettings();
   await updateSystemSettings({
     planPrices: {
       ...current.planPrices,
-      [plan]: Math.round(usdPrice * 100) / 100,
+      [plan]: Math.round(price),
     },
   });
 }
 
 /**
- * Updates the USD → NGN exchange rate used by Paystack checkout.
+ * Updates the USD → NGN exchange rate (legacy compatibility).
  */
 export async function updateExchangeRate(rate: number): Promise<void> {
   if (!Number.isFinite(rate) || rate <= 0) {
@@ -92,10 +92,10 @@ export async function updateExchangeRate(rate: number): Promise<void> {
 }
 
 /**
- * Updates the platform base currency convention.
+ * Updates the platform base currency convention (strictly NGN).
  */
-export async function updateBaseCurrency(currency: "USD" | "NGN"): Promise<void> {
-  await updateSystemSettings({ baseCurrency: currency });
+export async function updateBaseCurrency(currency: "NGN" = "NGN"): Promise<void> {
+  await updateSystemSettings({ baseCurrency: "NGN" });
 }
 
 /**

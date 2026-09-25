@@ -17,15 +17,11 @@ export default async function PricingPage() {
   const corePrice = settings.planPrices.core;
   const engagePrice = settings.planPrices.engage;
   const voicePrice = settings.planPrices.voice;
-  const rate = settings.usdToNgnRate;
-  const isNgn = settings.baseCurrency === "NGN";
-  const sym = isNgn ? "₦" : "$";
 
   const publicPlans = [
     {
       name: "Core",
-      price: `${sym}${corePrice.toLocaleString()}`,
-      ngnNote: null,
+      price: `₦${corePrice.toLocaleString()}`,
       description: "Bookings, operations, and a custom public page.",
       features: [
         "Bookings and availability",
@@ -36,8 +32,7 @@ export default async function PricingPage() {
     },
     {
       name: "Engage",
-      price: `${sym}${engagePrice.toLocaleString()}`,
-      ngnNote: !isNgn ? `≈ ₦${(engagePrice * rate).toLocaleString()} NGN` : null,
+      price: `₦${engagePrice.toLocaleString()}`,
       description: "Add an intelligent AI web agent to every client page.",
       features: [
         "Everything in Core",
@@ -48,8 +43,7 @@ export default async function PricingPage() {
     },
     {
       name: "Voice",
-      price: `${sym}${voicePrice.toLocaleString()}`,
-      ngnNote: !isNgn ? `≈ ₦${(voicePrice * rate).toLocaleString()} NGN` : null,
+      price: `₦${voicePrice.toLocaleString()}`,
       description:
         "Let clients speak with your agent directly in the browser.",
       features: [
@@ -106,11 +100,7 @@ export default async function PricingPage() {
                   /mo
                 </span>
               </p>
-              {plan.ngnNote && (
-                <p className="mt-1 font-mono text-[11px] opacity-55">
-                  {plan.ngnNote}
-                </p>
-              )}
+
               <p className="mt-4 text-sm leading-6 opacity-65">
                 {plan.description}
               </p>
@@ -135,8 +125,7 @@ export default async function PricingPage() {
         </div>
         <p className="mt-5 text-center text-xs text-muted-foreground">
           Create your organization first, then manage its plan securely inside
-          your workspace billing page. Payments are processed via Paystack in NGN.
-          {!isNgn && ` Conversion at $1 = ₦${rate.toLocaleString()} NGN.`}
+          your workspace billing page. All plans are billed monthly in Nigerian Naira (₦) via Paystack.
         </p>
       </section>
     </main>

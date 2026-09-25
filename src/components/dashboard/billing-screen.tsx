@@ -13,7 +13,7 @@ import { ScreenHeader } from "@/components/dashboard/screen-kit";
 import { useWorkspace } from "@/components/dashboard/workspace-context";
 
 type PlanPrices = { core: number; engage: number; voice: number };
-type PriceState = { prices: PlanPrices; rate: number; baseCurrency: "USD" | "NGN"; loaded: boolean };
+type PriceState = { prices: PlanPrices; loaded: boolean };
 
 const PRICE_DEFAULTS: PlanPrices = { core: 5000, engage: 25000, voice: 75000 };
 
@@ -31,8 +31,6 @@ export function BillingScreen() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [priceState, setPriceState] = useState<PriceState>({
     prices: PRICE_DEFAULTS,
-    rate: 1500,
-    baseCurrency: "NGN",
     loaded: false,
   });
 
@@ -43,8 +41,6 @@ export function BillingScreen() {
       .then((data) => {
         setPriceState({
           prices: data.planPrices ?? PRICE_DEFAULTS,
-          rate: data.usdToNgnRate ?? 1500,
-          baseCurrency: data.baseCurrency ?? "NGN",
           loaded: true,
         });
       })
@@ -54,9 +50,8 @@ export function BillingScreen() {
       });
   }, []);
 
-  const { prices, rate, baseCurrency, loaded } = priceState;
-  const isNgn = baseCurrency === "NGN";
-  const sym = isNgn ? "₦" : "$";
+  const { prices, loaded } = priceState;
+  const sym = "₦";
 
   const corePrice = prices.core ?? 5000;
   const engagePrice = prices.engage ?? 25000;

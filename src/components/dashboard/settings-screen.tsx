@@ -47,23 +47,6 @@ import { useWorkspace } from "@/components/dashboard/workspace-context";
 import { WorkspaceLanguageEditor } from "@/components/dashboard/workspace-language-editor";
 
 function CurrencySettingsCard({ organization }: { organization: any }) {
-  const updateCurrent = useMutation(dashboardApi.organizations.updateCurrent);
-  const [currency, setCurrency] = useState(organization?.currency || "NGN");
-  const [saving, setSaving] = useState(false);
-
-  async function handleCurrencyChange(newCurrency: string) {
-    setCurrency(newCurrency);
-    setSaving(true);
-    try {
-      await updateCurrent({ currency: newCurrency });
-      toast.success(`Business currency updated to ${newCurrency === "NGN" ? "Naira (₦)" : "USD ($)"}`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not update business currency");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   return (
     <Card className="h-fit bg-white">
       <CardHeader className="border-b border-black/8 pb-4">
@@ -74,31 +57,24 @@ function CurrencySettingsCard({ organization }: { organization: any }) {
               Business currency
             </CardTitle>
           </div>
-          {saving && <LoaderCircle className="size-4 animate-spin text-primary" />}
+          <Badge variant="outline" className="border-emerald-600/30 bg-emerald-50 text-emerald-700 text-[10px] font-semibold">
+            Purely Naira (₦)
+          </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pt-4">
         <p className="text-xs leading-5 text-muted-foreground">
-          Set the currency used for service pricing, bookings, public site offerings, and customer checkouts across this business.
+          The currency used for service pricing, bookings, deposits, and customer checkouts across this business.
         </p>
         <div className="space-y-2">
           <label className="text-xs font-semibold text-foreground">Active Currency</label>
-          <Select value={currency} onValueChange={handleCurrencyChange} disabled={saving}>
-            <SelectTrigger className="w-full bg-muted/20 font-medium">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="NGN">
-                <span className="font-semibold">Nigerian Naira</span> (NGN · ₦)
-              </SelectItem>
-              <SelectItem value="USD">
-                <span className="font-semibold">US Dollar</span> (USD · $)
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center justify-between rounded-lg border bg-muted/20 px-3 py-2 text-xs">
+            <span className="font-semibold text-foreground">Nigerian Naira (NGN · ₦)</span>
+            <span className="text-[11px] font-mono text-muted-foreground">₦ NGN</span>
+          </div>
         </div>
         <div className="rounded-lg bg-muted/40 p-3 text-[11px] leading-4 text-muted-foreground">
-          Current pricing mode: <span className="font-semibold text-foreground">{currency === "NGN" ? "₦ (Naira)" : "$ (USD)"}</span>
+          Current pricing mode: <span className="font-semibold text-foreground">₦ (Naira)</span>. All public services and bookings are priced directly in Naira.
         </div>
       </CardContent>
     </Card>
