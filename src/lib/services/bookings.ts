@@ -5,6 +5,7 @@ import { dayOfWeek, localPartsAt, zonedDateTimeToUtc } from "@/lib/time";
 import { normalizedEmail, normalizedPhone, optionalTrimmed, requiredTrimmed } from "@/lib/validation";
 import { upsertContact } from "./contacts";
 import { syncBookingToExternalCalendar } from "./calendar-sync";
+import { sendAutomatedWhatsAppNotification } from "./whatsapp";
 
 function generateConfirmationCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -235,6 +236,17 @@ export async function createBooking(
     tags: ["booking_client"],
   }).catch(() => null);
 
+  // Trigger free automated WhatsApp notification to client
+  if (args.customer.phone) {
+    void sendAutomatedWhatsAppNotification({
+      orgId,
+      bookingId: result.insertedId.toString(),
+      type: "confirmation",
+    }).catch((err) =>
+      console.error("Automated WhatsApp notification error:", err),
+    );
+  }
+
   return {
     bookingId: result.insertedId.toString(),
     status: newBooking.status,
@@ -357,7 +369,7 @@ export async function getPublicAvailableSlots(
 
     const nowMs = Date.now();
     rules = availableStaff
-      .filter((m: any) => !m.offeringIds?.length || m.offeringIds.includes(offering._id.toString()))
+      .filter((m: any) => !m.offeringIds?.length || (offering._id && m.offeringIds.includes(offering._id.toString())))
       .map((m: any) => ({
         _id: new ObjectId(),
         organizationId: effectiveOrgId,
@@ -389,7 +401,7 @@ export async function getPublicAvailableSlots(
 
     // Check if staff member supports this offering
     if (member.offeringIds && member.offeringIds.length > 0) {
-      const supportsOffering = member.offeringIds.some((id: string) => id === offering._id.toString());
+      const supportsOffering = member.offeringIds.some((id: string) => offering._id && id === offering._id.toString());
       if (!supportsOffering) continue;
     }
 

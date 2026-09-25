@@ -95,11 +95,16 @@ function fontFamilies(font: PublishedSite["site"]["config"]["theme"]["font"]) {
 function tenantStyle(
   theme?: PublishedSite["site"]["config"]["theme"],
 ): TenantStyle {
+  const rawBg = theme?.backgroundColor?.trim() || "";
+  const bg =
+    !rawBg || rawBg.toUpperCase() === "#F5F1E8"
+      ? "#FAFAFA"
+      : rawBg;
   const t = {
     accentColor: theme?.accentColor || "#2446D8",
-    backgroundColor: theme?.backgroundColor || "#F5F1E8",
+    backgroundColor: bg,
     foregroundColor: theme?.foregroundColor || "#171717",
-    mutedColor: theme?.mutedColor || "#6B675F",
+    mutedColor: theme?.mutedColor || "#64748B",
     radius: theme?.radius || "soft",
     font: theme?.font || "editorial",
   };
@@ -481,6 +486,24 @@ export function PublicSite({
                     </div>
                   </div>
                 ) : null}
+                {config.contact.whatsapp ? (
+                  <div className="flex gap-3">
+                    <MessageCircle className="mt-0.5 size-4 shrink-0 text-emerald-400" aria-hidden="true" />
+                    <div>
+                      <dt className="text-xs text-background/45">WhatsApp</dt>
+                      <dd className="mt-1.5">
+                        <a
+                          href={`https://wa.me/${config.contact.whatsapp.replace(/[^0-9]/g, "")}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-emerald-400 underline-offset-4 hover:underline"
+                        >
+                          {config.contact.whatsapp} <ArrowUpRight className="size-3" />
+                        </a>
+                      </dd>
+                    </div>
+                  </div>
+                ) : null}
                 {config.contact.email ? (
                   <div className="flex gap-3">
                     <Mail className="mt-0.5 size-4 shrink-0 text-background/50" aria-hidden="true" />
@@ -524,6 +547,8 @@ export function PublicSite({
             currency={organization.currency}
             timezone={organization.timezone}
             maximumAdvanceDays={config.booking.maximumAdvanceDays}
+            depositConfig={config.booking?.deposit}
+            businessWhatsapp={config.contact?.whatsapp || config.contact?.phone}
           />
         </div>
       </SectionShell>

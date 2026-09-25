@@ -10,8 +10,12 @@ import {
   Check,
   CheckCircle2,
   Clock3,
+  Copy,
+  CreditCard,
+  Landmark,
   Mail,
   MapPin,
+  MessageCircle,
   Phone,
   RefreshCcw,
   Sparkles,
@@ -243,6 +247,8 @@ export function BookingFlow({
   currency,
   timezone,
   maximumAdvanceDays,
+  depositConfig,
+  businessWhatsapp,
 }: {
   siteSlug: string;
   businessName: string;
@@ -254,6 +260,15 @@ export function BookingFlow({
   currency: string;
   timezone: string;
   maximumAdvanceDays: number;
+  depositConfig?: {
+    enabled: boolean;
+    percentage: number;
+    bankName?: string;
+    accountNumber?: string;
+    accountName?: string;
+    instructions?: string;
+  };
+  businessWhatsapp?: string;
 }) {
   const [step, setStep] = useState<BookingStep>("offering");
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
@@ -270,8 +285,17 @@ export function BookingFlow({
     useState<BookingConfirmation | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copiedBank, setCopiedBank] = useState(false);
   const idempotencyKeyRef = useRef<string | null>(null);
   const bookingToday = useMemo(() => todayInTimezone(timezone), [timezone]);
+
+  function handleCopyAccount(text: string) {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedBank(true);
+      setTimeout(() => setCopiedBank(false), 2000);
+    }
+  }
 
   const selectedLocation = useMemo(
     () => locations?.find((l) => l._id === selectedLocationId),
@@ -287,6 +311,20 @@ export function BookingFlow({
 
   const createBooking = useMutation<any, any>("publicBooking/create");
   const selectedOffering = offerings.find((item: any) => item._id === offeringId);
+
+  const depositPercentage = depositConfig?.enabled ? (depositConfig.percentage || 50) : 0;
+  const isDepositRequired = Boolean(
+    depositConfig?.enabled &&
+    depositPercentage > 0 &&
+    selectedOffering &&
+    selectedOffering.priceMinor > 0,
+  );
+  const depositMinor = isDepositRequired
+    ? Math.round((selectedOffering!.priceMinor * depositPercentage) / 100)
+    : 0;
+  const balanceMinor = isDepositRequired
+    ? Math.max(0, selectedOffering!.priceMinor - depositMinor)
+    : 0;
   
   const eligibleTeamMembers = useMemo(() => {
     let list = teamMembers;
@@ -537,6 +575,18 @@ export function BookingFlow({
                       )}
                     </span>
                   </p>
+                  {isDepositRequired ? (
+                    <p className="flex items-start justify-between gap-3 text-primary font-medium">
+                      <span>Deposit ({depositPercentage}%):</span>
+                      <span className="shrink-0">
+                        {formatPrice(
+                          depositMinor,
+                          selectedOffering.currency || currency,
+                          locale,
+                        )}
+                      </span>
+                    </p>
+                  ) : null}
                   {selectedOffering.durationMinutes ? (
                     <p>{selectedOffering.durationMinutes} min</p>
                   ) : null}
@@ -885,6 +935,104 @@ export function BookingFlow({
                   </div>
                 </div>
 
+                {isDepositRequired && selectedOffering ? (
+                  <div className="space-y-4 rounded-xl border border-primary/25 bg-primary/[0.035] p-4 sm:p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Landmark className="size-4 text-primary" />
+                        <h4 className="font-heading text-base font-semibold text-foreground">
+                          Deposit & Bank Transfer
+                        </h4>
+                      </div>
+                      <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary font-medium text-xs">
+                        {depositPercentage}% Deposit Required
+                      </Badge>
+                    </div>
+
+                    <div className="grid gap-3 rounded-lg border bg-background/80 p-3 text-xs sm:grid-cols-3">
+                      <div>
+                        <span className="text-[11px] text-muted-foreground block">Total Service Price</span>
+                        <span className="font-semibold text-foreground text-sm">
+                          {formatPrice(selectedOffering.priceMinor, selectedOffering.currency || currency, locale)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[11px] text-primary font-medium block">Deposit Payable Now</span>
+                        <span className="font-bold text-primary text-sm">
+                          {formatPrice(depositMinor, selectedOffering.currency || currency, locale)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[11px] text-muted-foreground block">Remaining Balance Due</span>
+                        <span className="font-semibold text-foreground text-sm">
+                          {formatPrice(balanceMinor, selectedOffering.currency || currency, locale)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {(depositConfig?.bankName || depositConfig?.accountNumber || depositConfig?.accountName) ? (
+                      <div className="rounded-lg border border-border/80 bg-background p-3.5 space-y-2.5">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          Bank Account for Transfer
+                        </p>
+                        <div className="grid gap-2 text-xs sm:grid-cols-2">
+                          {depositConfig.bankName ? (
+                            <div>
+                              <span className="text-[10px] text-muted-foreground uppercase block">Bank Name</span>
+                              <span className="font-medium text-foreground">{depositConfig.bankName}</span>
+                            </div>
+                          ) : null}
+                          {depositConfig.accountName ? (
+                            <div>
+                              <span className="text-[10px] text-muted-foreground uppercase block">Account Name</span>
+                              <span className="font-medium text-foreground">{depositConfig.accountName}</span>
+                            </div>
+                          ) : null}
+                          {depositConfig.accountNumber ? (
+                            <div className="sm:col-span-2 flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 border border-border/50">
+                              <div>
+                                <span className="text-[10px] text-muted-foreground uppercase block">Account Number</span>
+                                <span className="font-mono text-sm font-bold tracking-wider text-foreground">
+                                  {depositConfig.accountNumber}
+                                </span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCopyAccount(depositConfig.accountNumber!)}
+                                className="h-8 gap-1.5 text-xs"
+                              >
+                                {copiedBank ? (
+                                  <>
+                                    <Check className="size-3.5 text-emerald-600" />
+                                    Copied
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="size-3.5" />
+                                    Copy
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {depositConfig?.instructions ? (
+                      <p className="text-xs text-muted-foreground leading-relaxed italic bg-muted/20 p-2.5 rounded-md border border-border/40">
+                        📌 {depositConfig.instructions}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground">
+                        Please make a deposit transfer of {formatPrice(depositMinor, selectedOffering.currency || currency, locale)} to confirm your booking.
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+
                 {submitError ? (
                   <Alert variant="destructive" aria-live="polite">
                     <RefreshCcw />
@@ -960,7 +1108,97 @@ export function BookingFlow({
                       </div>
                     ) : null}
                   </dl>
+
+                  {isDepositRequired ? (
+                    <div className="mt-5 rounded-xl border border-primary/20 bg-primary/[0.04] p-4 text-left space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-primary uppercase tracking-wide">
+                          Deposit Payment Status
+                        </span>
+                        <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700 text-xs">
+                          Deposit: {formatPrice(depositMinor, (confirmation.offering as any).currency || currency, locale)} ({depositPercentage}%)
+                        </Badge>
+                      </div>
+                      <div className="grid gap-2 text-xs sm:grid-cols-2 pt-1 border-t border-border/60">
+                        <div>
+                          <span className="text-muted-foreground block text-[11px]">Deposit Required:</span>
+                          <span className="font-bold text-primary">
+                            {formatPrice(depositMinor, (confirmation.offering as any).currency || currency, locale)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block text-[11px]">Balance at Appointment:</span>
+                          <span className="font-medium text-foreground">
+                            {formatPrice(balanceMinor, (confirmation.offering as any).currency || currency, locale)}
+                          </span>
+                        </div>
+                        {(depositConfig?.bankName || depositConfig?.accountNumber) ? (
+                          <div className="sm:col-span-2 pt-2 border-t border-border/60 flex items-center justify-between">
+                            <div>
+                              <span className="text-[10px] text-muted-foreground block">Transfer To Bank:</span>
+                              <span className="font-medium text-foreground">
+                                {depositConfig.bankName} · <span className="font-mono font-bold">{depositConfig.accountNumber}</span>
+                                {depositConfig.accountName ? ` (${depositConfig.accountName})` : ""}
+                              </span>
+                            </div>
+                            {depositConfig.accountNumber ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCopyAccount(depositConfig.accountNumber!)}
+                                className="h-7 text-[11px] gap-1"
+                              >
+                                {copiedBank ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
+                                {copiedBank ? "Copied" : "Copy"}
+                              </Button>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
+
+                {businessWhatsapp ? (() => {
+                  const cleanWhatsapp = businessWhatsapp.replace(/[^0-9]/g, "");
+                  const whatsappLines = [
+                    `Hello *${businessName}*!`,
+                    `I just booked an appointment on your booking page:`,
+                    ``,
+                    `📋 *Booking Code:* ${confirmation.confirmationCode}`,
+                    `✨ *${terminology.offeringSingular}:* ${confirmation.offering.name}`,
+                    `📅 *When:* ${formatDateTime(confirmation.startAt, locale, timezone)}`,
+                    `👤 *Client Name:* ${confirmation.customer.name}`,
+                    confirmation.customer.phone ? `📞 *Phone:* ${confirmation.customer.phone}` : null,
+                    selectedLocation ? `📍 *Branch:* ${selectedLocation.name}` : null,
+                    isDepositRequired ? `💰 *Total Cost:* ${formatPrice((confirmation.offering as any).priceMinor, (confirmation.offering as any).currency || currency, locale)}` : null,
+                    isDepositRequired ? `💵 *Deposit Required (${depositPercentage}%):* ${formatPrice(depositMinor, (confirmation.offering as any).currency || currency, locale)}` : null,
+                    isDepositRequired ? `💳 *Balance Due:* ${formatPrice(balanceMinor, (confirmation.offering as any).currency || currency, locale)}` : null,
+                    depositConfig?.bankName ? `🏦 *Paid to:* ${depositConfig.bankName} (${depositConfig.accountNumber || ""})` : null,
+                    ``,
+                    `Please find my booking details. Thank you!`,
+                  ].filter(Boolean).join("\n");
+                  const whatsappUrl = `https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(whatsappLines)}`;
+
+                  return (
+                    <div className="mt-6 flex flex-col items-center gap-2">
+                      <Button
+                        asChild
+                        size="lg"
+                        className="w-full sm:w-auto h-11 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-md shadow-emerald-600/20 px-6 gap-2"
+                      >
+                        <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                          <MessageCircle className="size-4" />
+                          Send Details & Receipt to WhatsApp
+                        </a>
+                      </Button>
+                      <p className="text-[11px] text-muted-foreground text-center">
+                        Free direct WhatsApp booking communication for {businessName}.
+                      </p>
+                    </div>
+                  );
+                })() : null}
 
                 <Button type="button" variant="outline" size="lg" onClick={startAgain} className="mt-6 h-11">
                   <Sparkles data-icon="inline-start" />

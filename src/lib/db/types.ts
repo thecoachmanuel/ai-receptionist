@@ -13,6 +13,15 @@ export type BackendTerminology = {
   bookingPlural: string;
 };
 
+export type DepositSettings = {
+  enabled: boolean;
+  percentage: number;
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
+  instructions?: string;
+};
+
 export type SiteConfig = {
   businessName: string;
   headline: string;
@@ -33,6 +42,7 @@ export type SiteConfig = {
   contact: {
     email?: string;
     phone?: string;
+    whatsapp?: string;
     address?: string;
     mapUrl?: string;
   };
@@ -43,6 +53,7 @@ export type SiteConfig = {
     slotIntervalMinutes: number;
     minimumNoticeMinutes: number;
     maximumAdvanceDays: number;
+    deposit?: DepositSettings;
   };
   agent: {
     showWebChat: boolean;

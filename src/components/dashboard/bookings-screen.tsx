@@ -3,10 +3,14 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
 import {
+  Bell,
   Building2,
   CalendarDays,
   CalendarPlus,
+  Check,
   Eye,
+  FileText,
+  MessageCircle,
   Search,
   SlidersHorizontal,
 } from "lucide-react";
@@ -385,6 +389,86 @@ function BookingDetailDialog({
               </div>
             )}
           </div>
+
+          {/* WhatsApp Direct Actions */}
+          {booking.contactPhone ? (() => {
+            const cleanPhone = (booking.contactPhone || "").replace(/[^0-9]/g, "");
+            const businessTitle = organization?.name || "our team";
+            const dateFormatted = formatDateTime(booking.startAt, organization?.timezone);
+            const moneyFormatted = formatMoney(
+              booking.priceCents,
+              booking.currency || organization?.currency,
+              organization?.locale,
+            );
+
+            const confirmMsg = `Hello ${booking.contactName || "there"}!\n\nYour appointment with *${businessTitle}* is confirmed.\n\n📋 *Booking Code:* ${booking.confirmationCode || booking._id.slice(-6)}\n✨ *Service:* ${booking.offeringName}\n📅 *When:* ${dateFormatted}\n\nWe look forward to seeing you!`;
+            const invoiceMsg = `Hello ${booking.contactName || "there"}!\n\nHere is your booking invoice from *${businessTitle}*:\n\n📋 *Booking Code:* ${booking.confirmationCode || booking._id.slice(-6)}\n✨ *Service:* ${booking.offeringName}\n💰 *Amount:* ${moneyFormatted}\n📅 *Date:* ${dateFormatted}\n\nPlease let us know once payment has been made. Thank you!`;
+            const reminderMsg = `Friendly reminder: Hello ${booking.contactName || "there"}! You have an upcoming appointment with *${businessTitle}* for *${booking.offeringName}* on *${dateFormatted}*.\n\nSee you soon!`;
+
+            return (
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-emerald-800 flex items-center gap-1.5">
+                    <MessageCircle className="size-3.5 text-emerald-600" />
+                    Free WhatsApp Notification
+                  </span>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full font-medium">
+                    {booking.contactPhone}
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Send 1-click automated messages directly to this client on WhatsApp for free:
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px] gap-1 border-emerald-600/30 hover:bg-emerald-50 text-emerald-700"
+                  >
+                    <a
+                      href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(confirmMsg)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <Check className="size-3 text-emerald-600" />
+                      Confirmation
+                    </a>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px] gap-1 border-emerald-600/30 hover:bg-emerald-50 text-emerald-700"
+                  >
+                    <a
+                      href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(invoiceMsg)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <FileText className="size-3 text-emerald-600" />
+                      Invoice
+                    </a>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px] gap-1 border-emerald-600/30 hover:bg-emerald-50 text-emerald-700"
+                  >
+                    <a
+                      href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(reminderMsg)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <Bell className="size-3 text-emerald-600" />
+                      Reminder
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            );
+          })() : null}
 
           {/* Status Change */}
           <div className="flex items-center justify-between gap-3 pt-2 border-t">

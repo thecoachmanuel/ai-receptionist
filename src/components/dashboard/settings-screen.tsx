@@ -7,8 +7,10 @@ import {
   Clock3,
   Coins,
   Globe2,
+  Landmark,
   Languages,
   LoaderCircle,
+  MessageCircle,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -27,6 +29,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   LoadingPanel,
   ScreenHeader,
@@ -220,6 +224,328 @@ function TimezoneSettingsCard({ organization }: { organization: any }) {
   );
 }
 
+function DepositSettingsCard({ publicSite }: { publicSite: any }) {
+  const updateDraft = useMutation(dashboardApi.publicSite.updateDraft);
+  const publish = useMutation(dashboardApi.publicSite.publish);
+  const currentConfig = publicSite?.site?.draft || publicSite?.site?.config || {};
+  const currentDeposit = currentConfig?.booking?.deposit || {};
+
+  const [enabled, setEnabled] = useState(Boolean(currentDeposit.enabled));
+  const [percentage, setPercentage] = useState(currentDeposit.percentage ?? 50);
+  const [bankName, setBankName] = useState(currentDeposit.bankName ?? "");
+  const [accountNumber, setAccountNumber] = useState(currentDeposit.accountNumber ?? "");
+  const [accountName, setAccountName] = useState(currentDeposit.accountName ?? "");
+  const [instructions, setInstructions] = useState(currentDeposit.instructions ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!publicSite?.site?.siteSlug) return;
+    setSaving(true);
+    try {
+      const updatedConfig = {
+        ...currentConfig,
+        booking: {
+          ...(currentConfig.booking || {}),
+          deposit: {
+            enabled,
+            percentage: Number(percentage) || 50,
+            bankName: bankName.trim() || undefined,
+            accountNumber: accountNumber.trim() || undefined,
+            accountName: accountName.trim() || undefined,
+            instructions: instructions.trim() || undefined,
+          },
+        },
+      };
+      await updateDraft({ siteSlug: publicSite.site.siteSlug, config: updatedConfig });
+      await publish({ siteSlug: publicSite.site.siteSlug, config: updatedConfig });
+      toast.success("Deposit and bank transfer details saved & published!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save deposit settings");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card className="h-fit bg-white">
+      <CardHeader className="border-b border-black/8 pb-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Landmark className="size-4 text-primary" />
+            <CardTitle className="font-heading text-xl tracking-tight">
+              Deposit & Bank Details
+            </CardTitle>
+          </div>
+          {saving && <LoaderCircle className="size-4 animate-spin text-primary" />}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-4">
+        <form onSubmit={handleSave} className="space-y-4">
+          <p className="text-xs leading-5 text-muted-foreground">
+            Optionally require clients to pay a percentage deposit when booking, and show your bank details.
+          </p>
+          <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/20">
+            <div>
+              <label className="text-xs font-semibold text-foreground block">
+                Require Booking Deposit
+              </label>
+              <span className="text-[11px] text-muted-foreground">
+                Clients must pay upfront to secure their slot.
+              </span>
+            </div>
+            <Switch checked={enabled} onCheckedChange={setEnabled} disabled={saving} />
+          </div>
+
+          {enabled && (
+            <div className="space-y-3 pt-1">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-foreground">Deposit Percentage (%)</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={percentage}
+                    onChange={(e) => setPercentage(Number(e.target.value))}
+                    disabled={saving}
+                    className="h-8 text-xs w-28 bg-muted/20 font-medium"
+                  />
+                  <span className="text-xs text-muted-foreground">% of service price</span>
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">Bank Name</label>
+                  <Input
+                    placeholder="e.g. GTBank / Chase"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    disabled={saving}
+                    className="h-8 text-xs bg-muted/20"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">Account Number</label>
+                  <Input
+                    placeholder="e.g. 0123456789"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    disabled={saving}
+                    className="h-8 text-xs font-mono bg-muted/20"
+                  />
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="text-xs font-semibold text-foreground">Account Name</label>
+                  <Input
+                    placeholder="e.g. Business / Registered Name"
+                    value={accountName}
+                    onChange={(e) => setAccountName(e.target.value)}
+                    disabled={saving}
+                    className="h-8 text-xs bg-muted/20"
+                  />
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="text-xs font-semibold text-foreground">Payment Instructions</label>
+                  <Textarea
+                    placeholder="e.g. Use booking reference as transfer remark and keep proof of payment."
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    disabled={saving}
+                    rows={2}
+                    className="text-xs bg-muted/20 resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <Button type="submit" size="sm" disabled={saving} className="w-full">
+            Save Deposit & Bank Settings
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+function WhatsAppSettingsCard({ publicSite }: { publicSite: any }) {
+  const updateDraft = useMutation(dashboardApi.publicSite.updateDraft);
+  const publish = useMutation(dashboardApi.publicSite.publish);
+  const currentConfig = publicSite?.site?.draft || publicSite?.site?.config || {};
+  const currentAutomation = (currentConfig as any)?.whatsappAutomation || {};
+
+  const [whatsapp, setWhatsapp] = useState(currentConfig?.contact?.whatsapp ?? "");
+  const [autoConfirm, setAutoConfirm] = useState(currentAutomation.autoConfirm ?? true);
+  const [autoInvoice, setAutoInvoice] = useState(currentAutomation.autoInvoice ?? true);
+  const [autoReminder, setAutoReminder] = useState(currentAutomation.autoReminder ?? true);
+  const [aiTone, setAiTone] = useState<string>(currentAutomation.aiTone ?? "warm");
+  const [gatewayUrl, setGatewayUrl] = useState(currentAutomation.gatewayUrl ?? "");
+  const [geminiApiKey, setGeminiApiKey] = useState(currentAutomation.geminiApiKey ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!publicSite?.site?.siteSlug) return;
+    setSaving(true);
+    try {
+      const updatedConfig = {
+        ...currentConfig,
+        contact: {
+          ...(currentConfig.contact || {}),
+          whatsapp: whatsapp.trim() || undefined,
+        },
+        whatsappAutomation: {
+          enabled: Boolean(whatsapp.trim()),
+          autoConfirm,
+          autoInvoice,
+          autoReminder,
+          aiTone,
+          gatewayUrl: gatewayUrl.trim() || undefined,
+          geminiApiKey: geminiApiKey.trim() || undefined,
+        },
+      };
+      await updateDraft({ siteSlug: publicSite.site.siteSlug, config: updatedConfig });
+      await publish({ siteSlug: publicSite.site.siteSlug, config: updatedConfig });
+      toast.success("Free WhatsApp & AI notification settings saved & published!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save WhatsApp settings");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card className="h-fit bg-white">
+      <CardHeader className="border-b border-black/8 pb-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="size-4 text-emerald-600" />
+            <CardTitle className="font-heading text-xl tracking-tight">
+              Free AI & WhatsApp Automation
+            </CardTitle>
+          </div>
+          <Badge variant="outline" className="border-emerald-600/30 bg-emerald-50 text-emerald-700 text-[11px] font-medium">
+            100% Free · No Meta Fees
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-4">
+        <form onSubmit={handleSave} className="space-y-4">
+          <p className="text-xs leading-5 text-muted-foreground">
+            Configure automated WhatsApp confirmations, invoices, and reminders using Free AI with zero Meta (Facebook) API fees.
+          </p>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">Business WhatsApp Number</label>
+            <Input
+              type="tel"
+              placeholder="+234 801 234 5678 or 2348012345678"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              disabled={saving}
+              className="h-8 text-xs bg-muted/20"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Your business WhatsApp phone number including country code.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">Free AI Message Tone</label>
+            <Select value={aiTone} onValueChange={setAiTone} disabled={saving}>
+              <SelectTrigger className="h-8 text-xs bg-muted/20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="warm">Warm & Welcoming (Recommended)</SelectItem>
+                <SelectItem value="professional">Professional & Direct</SelectItem>
+                <SelectItem value="friendly">Friendly & Casual</SelectItem>
+                <SelectItem value="luxury">Luxury & Exclusive</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground">
+              Free AI crafts each WhatsApp confirmation, invoice, and reminder using this tone.
+            </p>
+          </div>
+
+          <div className="rounded-lg border bg-muted/10 p-3 space-y-2.5">
+            <span className="text-[11px] font-semibold text-foreground block">
+              Automated Notification Triggers (Free)
+            </span>
+
+            <div className="flex items-center justify-between text-xs">
+              <div>
+                <span className="font-medium text-foreground block">Instant Booking Confirmation</span>
+                <span className="text-[10px] text-muted-foreground">Sends booking code, service name, and time.</span>
+              </div>
+              <Switch checked={autoConfirm} onCheckedChange={setAutoConfirm} disabled={saving} />
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between text-xs">
+              <div>
+                <span className="font-medium text-foreground block">Invoice & Bank Deposit Details</span>
+                <span className="text-[10px] text-muted-foreground">Sends required deposit amount and your bank details.</span>
+              </div>
+              <Switch checked={autoInvoice} onCheckedChange={setAutoInvoice} disabled={saving} />
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between text-xs">
+              <div>
+                <span className="font-medium text-foreground block">Appointment Reminders</span>
+                <span className="text-[10px] text-muted-foreground">Sends upcoming reminders before client appointments.</span>
+              </div>
+              <Switch checked={autoReminder} onCheckedChange={setAutoReminder} disabled={saving} />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">
+              Free Self-Hosted WhatsApp Gateway URL <span className="font-normal text-muted-foreground">(Optional)</span>
+            </label>
+            <Input
+              type="url"
+              placeholder="e.g. http://localhost:8080 or https://evolution.yourdomain.com"
+              value={gatewayUrl}
+              onChange={(e) => setGatewayUrl(e.target.value)}
+              disabled={saving}
+              className="h-8 text-xs font-mono bg-muted/20"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Connect any free open-source gateway (Evolution API, WAHA, or Baileys container). If left blank, instant 1-click WhatsApp dispatch is used automatically at $0.00 cost.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">
+              Google Gemini API Key <span className="font-normal text-muted-foreground">(Optional · Free 1,500 req/day)</span>
+            </label>
+            <Input
+              type="password"
+              placeholder="AIzaSy..."
+              value={geminiApiKey}
+              onChange={(e) => setGeminiApiKey(e.target.value)}
+              disabled={saving}
+              className="h-8 text-xs font-mono bg-muted/20"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Optional free Gemini key from ai.google.dev for personalized AI message writing. Built-in AI formatting engine works automatically even without a key.
+            </p>
+          </div>
+
+          <Button type="submit" size="sm" disabled={saving} className="w-full">
+            Save Free WhatsApp & AI Settings
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function SettingsScreen() {
   const { user } = useAuth();
   const { organization } = useWorkspace();
@@ -254,6 +580,8 @@ export function SettingsScreen() {
           {organization && <NameSettingsCard organization={organization} />}
           {organization && <CurrencySettingsCard organization={organization} />}
           {organization && <TimezoneSettingsCard organization={organization} />}
+          {publicSite && <DepositSettingsCard publicSite={publicSite} />}
+          {publicSite && <WhatsAppSettingsCard publicSite={publicSite} />}
         </div>
 
         {organization ? (

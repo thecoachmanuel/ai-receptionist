@@ -11,6 +11,7 @@ import {
   Eye,
   Globe2,
   ImageIcon,
+  Landmark,
   LoaderCircle,
   MessageCircle,
   Mic,
@@ -65,9 +66,11 @@ const accentPalettes = [
 ];
 
 const backgroundPalettes = [
-  { name: "Warm paper", value: "#F5F1E8" },
+  { name: "Crisp white", value: "#FAFAFA" },
+  { name: "Pure white", value: "#FFFFFF" },
   { name: "Soft ivory", value: "#FFFDF7" },
   { name: "Cloud blue", value: "#EEF4F8" },
+  { name: "Warm paper", value: "#F5F1E8" },
   { name: "Sage mist", value: "#EEF3EC" },
   { name: "Blush linen", value: "#F7EFEF" },
   { name: "Lavender paper", value: "#F3F0F8" },
@@ -970,6 +973,27 @@ function SiteEditor({
                   }
                 />
               </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="contactWhatsapp" className="flex items-center gap-1.5">
+                  <MessageCircle className="size-3.5 text-emerald-600" />
+                  Business WhatsApp number
+                </Label>
+                <Input
+                  id="contactWhatsapp"
+                  type="tel"
+                  placeholder="+234 801 234 5678 or 2348012345678"
+                  value={config.contact.whatsapp ?? ""}
+                  onChange={(event) =>
+                    update("contact", {
+                      ...config.contact,
+                      whatsapp: event.target.value || undefined,
+                    })
+                  }
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Clients can send instant confirmations, payment receipts, and inquiries directly to your business WhatsApp for free.
+                </p>
+              </div>
             </div>
 
             <div className="space-y-3 border-t border-black/8 pt-4">
@@ -990,6 +1014,161 @@ function SiteEditor({
                   }
                 />
               </div>
+
+              {config.booking.enabled && (
+                <div className="space-y-3 rounded-xl border border-primary/20 bg-muted/20 p-3.5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <Label htmlFor="depositEnabled" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                        <Landmark className="size-3.5 text-primary" />
+                        Require Booking Deposit
+                      </Label>
+                      <p className="text-[10px] text-muted-foreground">
+                        Require clients to pay an upfront percentage of the service to book.
+                      </p>
+                    </div>
+                    <Switch
+                      id="depositEnabled"
+                      checked={Boolean(config.booking.deposit?.enabled)}
+                      onCheckedChange={(enabled) =>
+                        update("booking", {
+                          ...config.booking,
+                          deposit: {
+                            ...(config.booking.deposit || {
+                              percentage: 50,
+                              bankName: "",
+                              accountNumber: "",
+                              accountName: "",
+                              instructions: "",
+                            }),
+                            enabled,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+
+                  {config.booking.deposit?.enabled && (
+                    <div className="space-y-3 pt-2 border-t border-black/8">
+                      <div className="space-y-1">
+                        <Label htmlFor="depositPercentage" className="text-xs">
+                          Deposit percentage (%)
+                        </Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id="depositPercentage"
+                            type="number"
+                            min={1}
+                            max={100}
+                            value={config.booking.deposit?.percentage ?? 50}
+                            onChange={(e) =>
+                              update("booking", {
+                                ...config.booking,
+                                deposit: {
+                                  ...(config.booking.deposit || {}),
+                                  enabled: true,
+                                  percentage: Math.min(100, Math.max(1, Number(e.target.value) || 50)),
+                                },
+                              })
+                            }
+                            className="h-8 text-xs font-medium w-24"
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            % of service price
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-2.5 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <Label htmlFor="depositBankName" className="text-xs">
+                            Bank Name
+                          </Label>
+                          <Input
+                            id="depositBankName"
+                            placeholder="e.g. GTBank / Chase"
+                            value={config.booking.deposit?.bankName ?? ""}
+                            onChange={(e) =>
+                              update("booking", {
+                                ...config.booking,
+                                deposit: {
+                                  ...(config.booking.deposit || { enabled: true, percentage: 50 }),
+                                  bankName: e.target.value || undefined,
+                                },
+                              })
+                            }
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <Label htmlFor="depositAccountNumber" className="text-xs">
+                            Account Number
+                          </Label>
+                          <Input
+                            id="depositAccountNumber"
+                            placeholder="e.g. 0123456789"
+                            value={config.booking.deposit?.accountNumber ?? ""}
+                            onChange={(e) =>
+                              update("booking", {
+                                ...config.booking,
+                                deposit: {
+                                  ...(config.booking.deposit || { enabled: true, percentage: 50 }),
+                                  accountNumber: e.target.value || undefined,
+                                },
+                              })
+                            }
+                            className="h-8 text-xs font-mono"
+                          />
+                        </div>
+
+                        <div className="space-y-1 sm:col-span-2">
+                          <Label htmlFor="depositAccountName" className="text-xs">
+                            Account Name
+                          </Label>
+                          <Input
+                            id="depositAccountName"
+                            placeholder="e.g. Business / Company Name"
+                            value={config.booking.deposit?.accountName ?? ""}
+                            onChange={(e) =>
+                              update("booking", {
+                                ...config.booking,
+                                deposit: {
+                                  ...(config.booking.deposit || { enabled: true, percentage: 50 }),
+                                  accountName: e.target.value || undefined,
+                                },
+                              })
+                            }
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        <div className="space-y-1 sm:col-span-2">
+                          <Label htmlFor="depositInstructions" className="text-xs">
+                            Payment Instructions / Remarks
+                          </Label>
+                          <Textarea
+                            id="depositInstructions"
+                            placeholder="e.g. Please use your full name or booking reference as transfer remark and keep proof of payment."
+                            value={config.booking.deposit?.instructions ?? ""}
+                            onChange={(e) =>
+                              update("booking", {
+                                ...config.booking,
+                                deposit: {
+                                  ...(config.booking.deposit || { enabled: true, percentage: 50 }),
+                                  instructions: e.target.value || undefined,
+                                },
+                              })
+                            }
+                            rows={2}
+                            className="text-xs resize-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="flex items-center justify-between gap-4">
                 <Label htmlFor="showTeam">
                   Show {terminology.teamMemberPlural.toLowerCase()}

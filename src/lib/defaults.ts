@@ -22,9 +22,9 @@ export function defaultSiteConfig(businessName: string): SiteConfig {
     template: "editorial",
     theme: {
       accentColor: "#2446D8",
-      backgroundColor: "#F5F1E8",
+      backgroundColor: "#FAFAFA",
       foregroundColor: "#171717",
-      mutedColor: "#6B675F",
+      mutedColor: "#64748B",
       radius: "soft",
       font: "editorial",
     },
@@ -36,6 +36,14 @@ export function defaultSiteConfig(businessName: string): SiteConfig {
       slotIntervalMinutes: 30,
       minimumNoticeMinutes: 60,
       maximumAdvanceDays: 90,
+      deposit: {
+        enabled: false,
+        percentage: 50,
+        bankName: "",
+        accountNumber: "",
+        accountName: "",
+        instructions: "",
+      },
     },
     agent: {
       showWebChat: false,

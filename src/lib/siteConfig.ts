@@ -52,6 +52,7 @@ export function sanitizeSiteConfig(config: SiteConfig): SiteConfig {
     contact: {
       email: optionalTrimmed(config.contact?.email, "contact.email", 320),
       phone: optionalTrimmed(config.contact?.phone, "contact.phone", 40),
+      whatsapp: optionalTrimmed(config.contact?.whatsapp, "contact.whatsapp", 40),
       address: optionalTrimmed(config.contact?.address, "contact.address", 500),
       mapUrl: safeOptionalUrl(config.contact?.mapUrl, "contact.mapUrl"),
     },
@@ -80,6 +81,37 @@ export function sanitizeSiteConfig(config: SiteConfig): SiteConfig {
         1,
         730,
       ),
+      deposit: config.booking?.deposit
+        ? {
+            enabled: Boolean(config.booking.deposit.enabled),
+            percentage: boundedInteger(
+              config.booking.deposit.percentage ?? 50,
+              "booking.deposit.percentage",
+              1,
+              100,
+            ),
+            bankName: optionalTrimmed(
+              config.booking.deposit.bankName,
+              "booking.deposit.bankName",
+              120,
+            ),
+            accountNumber: optionalTrimmed(
+              config.booking.deposit.accountNumber,
+              "booking.deposit.accountNumber",
+              60,
+            ),
+            accountName: optionalTrimmed(
+              config.booking.deposit.accountName,
+              "booking.deposit.accountName",
+              150,
+            ),
+            instructions: optionalTrimmed(
+              config.booking.deposit.instructions,
+              "booking.deposit.instructions",
+              1000,
+            ),
+          }
+        : undefined,
     },
     agent: {
       showWebChat: config.agent?.showWebChat ?? true,

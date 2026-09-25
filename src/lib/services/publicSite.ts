@@ -93,7 +93,14 @@ export async function getPublishedBySlug(siteSlug: string) {
     ...pub,
     theme: { ...defaults.theme, ...(pub.theme || {}) },
     contact: { ...defaults.contact, ...(pub.contact || {}) },
-    booking: { ...defaults.booking, ...(pub.booking || {}) },
+    booking: {
+      ...defaults.booking,
+      ...(pub.booking || {}),
+      deposit: {
+        ...(defaults.booking.deposit || {}),
+        ...(pub.booking?.deposit || {}),
+      },
+    },
     agent: { ...defaults.agent, ...(pub.agent || {}) },
     sections: pub.sections || defaults.sections,
     socialLinks: pub.socialLinks || defaults.socialLinks,
