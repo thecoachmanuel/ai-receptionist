@@ -152,31 +152,61 @@ export async function sendAutomatedWhatsAppNotification(
       const cleanGateway = gatewayUrl.replace(/\/$/, "");
       const sessionName = organization.whatsappInstance?.instanceName || organization.slug;
 
-      // Try WAHA format first (standard for QR scanned sessions)
-      let res = await fetch(`${cleanGateway}/api/sendText`, {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        ...(gatewayApiKey
+          ? {
+              "x-api-secret": gatewayApiKey,
+              "X-Api-Key": gatewayApiKey,
+              apikey: gatewayApiKey,
+              Authorization: `Bearer ${gatewayApiKey}`,
+            }
+          : {}),
+      };
+
+      // 1. Try Nectar multi-tenant format: POST /sessions/:orgSlug/send
+      let res = await fetch(`${cleanGateway}/sessions/${encodeURIComponent(sessionName)}/send`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(gatewayApiKey ? { "X-Api-Key": gatewayApiKey, apikey: gatewayApiKey } : {}),
-        },
+        headers,
         body: JSON.stringify({
-          session: sessionName,
-          chatId: `${targetPhone}@c.us`,
-          text: messageContent,
+          phone: targetPhone,
+          message: messageContent,
         }),
       });
 
-      // If WAHA endpoint not found (404), fall back to Evolution API format
+      // 2. If 404, try WAHA format: POST /api/sendText
+      if (!res.ok && res.status === 404) {
+        res = await fetch(`${cleanGateway}/api/sendText`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            session: sessionName,
+            chatId: `${targetPhone}@c.us`,
+            text: messageContent,
+          }),
+        });
+      }
+
+      // 3. If 404, try Evolution API format
       if (!res.ok && res.status === 404) {
         res = await fetch(`${cleanGateway}/message/sendText/${encodeURIComponent(sessionName)}`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(gatewayApiKey ? { apikey: gatewayApiKey } : {}),
-          },
+          headers,
           body: JSON.stringify({
             number: targetPhone,
             text: messageContent,
+          }),
+        });
+      }
+
+      // 4. If 404, try legacy single-session format: POST /send
+      if (!res.ok && res.status === 404) {
+        res = await fetch(`${cleanGateway}/send`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            phone: targetPhone,
+            message: messageContent,
           }),
         });
       }

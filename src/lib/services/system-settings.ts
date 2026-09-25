@@ -47,7 +47,7 @@ const DEFAULTS: SystemSettings = {
   },
   whatsappGateway: {
     enabled: true,
-    serverUrl: process.env.WHATSAPP_GATEWAY_URL || process.env.WAHA_SERVER_URL || "http://localhost:3000",
+    serverUrl: process.env.WHATSAPP_GATEWAY_URL || process.env.WAHA_SERVER_URL || "https://nectar-58qj.onrender.com",
     apiKey: process.env.WHATSAPP_GATEWAY_API_KEY || process.env.WAHA_API_KEY || "",
   },
   updatedAt: Date.now(),

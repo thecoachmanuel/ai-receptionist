@@ -6,6 +6,19 @@ import type { DbOrganization } from "@/lib/db/types";
 
 export const runtime = "nodejs";
 
+function buildGatewayHeaders(apiKey?: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (apiKey) {
+    headers["x-api-secret"] = apiKey;
+    headers["X-Api-Key"] = apiKey;
+    headers["apikey"] = apiKey;
+    headers["Authorization"] = `Bearer ${apiKey}`;
+  }
+  return headers;
+}
+
 /**
  * Check the connection status of an organization's WhatsApp instance.
  */
@@ -39,48 +52,89 @@ export async function GET(request: NextRequest) {
     if (gateway?.serverUrl && (instanceStatus === "connecting" || instanceStatus === "connected")) {
       try {
         const cleanUrl = gateway.serverUrl.replace(/\/$/, "");
-        const checkRes = await fetch(`${cleanUrl}/api/sessions/${encodeURIComponent(org.slug)}`, {
-          headers: gateway.apiKey ? { "X-Api-Key": gateway.apiKey, apikey: gateway.apiKey } : {},
-        });
+        const headers = buildGatewayHeaders(gateway.apiKey);
+        let checked = false;
 
-        if (checkRes.ok) {
-          const checkData = await checkRes.json();
-          // WAHA uses status "WORKING" or "CONNECTED" when authenticated
-          const isWorking =
-            checkData.status === "WORKING" ||
-            checkData.status === "CONNECTED" ||
-            checkData.status === "PAIRED";
-
-          if (isWorking) {
-            instanceStatus = "connected";
-            qrCode = undefined;
-            connectedPhone = checkData.me?.id ? checkData.me.id.split("@")[0] : connectedPhone;
-
-            await db.collection<DbOrganization>("organizations").updateOne(
-              { _id: org._id },
-              {
-                $set: {
-                  "whatsappInstance.status": "connected",
-                  "whatsappInstance.phone": connectedPhone,
-                  "whatsappInstance.qrCode": null,
-                  "whatsappInstance.connectedAt": Date.now(),
-                  updatedAt: Date.now(),
-                },
-              },
-            );
-          } else if (checkData.status === "SCAN_QR_CODE" || checkData.status === "STARTING") {
-            // Fetch live QR code if not present or refreshed
-            const qrRes = await fetch(`${cleanUrl}/api/${encodeURIComponent(org.slug)}/auth/qr`, {
-              headers: gateway.apiKey ? { "X-Api-Key": gateway.apiKey, apikey: gateway.apiKey } : {},
-            });
-            if (qrRes.ok) {
-              const qrData = await qrRes.json();
-              qrCode = qrData.qr || qrData.image || qrData.url;
+        // 1. Try Nectar / Baileys multi-tenant route: /sessions/:orgSlug/status
+        try {
+          const res = await fetch(`${cleanUrl}/sessions/${encodeURIComponent(org.slug)}/status`, { headers });
+          if (res.ok) {
+            const data = await res.json();
+            checked = true;
+            if (data.connected === true || data.connection === "open") {
+              instanceStatus = "connected";
+              qrCode = undefined;
+              connectedPhone = data.phone || connectedPhone;
+            } else if (data.connection === "connecting" || data.connection === "qr_pending" || data.qrReady) {
+              instanceStatus = "connecting";
+              // Fetch QR if not available
+              const qrRes = await fetch(`${cleanUrl}/sessions/${encodeURIComponent(org.slug)}/qr`, { headers });
+              if (qrRes.ok) {
+                const qrData = await qrRes.json();
+                if (qrData.qr) qrCode = qrData.qr;
+              }
             }
           }
+        } catch (_) {}
+
+        // 2. Try WAHA format: /api/sessions/:orgSlug
+        if (!checked) {
+          try {
+            const checkRes = await fetch(`${cleanUrl}/api/sessions/${encodeURIComponent(org.slug)}`, { headers });
+            if (checkRes.ok) {
+              const checkData = await checkRes.json();
+              checked = true;
+              const isWorking =
+                checkData.status === "WORKING" ||
+                checkData.status === "CONNECTED" ||
+                checkData.status === "PAIRED";
+
+              if (isWorking) {
+                instanceStatus = "connected";
+                qrCode = undefined;
+                connectedPhone = checkData.me?.id ? checkData.me.id.split("@")[0] : connectedPhone;
+              } else if (checkData.status === "SCAN_QR_CODE" || checkData.status === "STARTING") {
+                const qrRes = await fetch(`${cleanUrl}/api/${encodeURIComponent(org.slug)}/auth/qr`, { headers });
+                if (qrRes.ok) {
+                  const qrData = await qrRes.json();
+                  qrCode = qrData.qr || qrData.image || qrData.url;
+                }
+              }
+            }
+          } catch (_) {}
+        }
+
+        // 3. Fallback to single-tenant /status if still unchecked
+        if (!checked) {
+          try {
+            const legacyRes = await fetch(`${cleanUrl}/status`, { headers });
+            if (legacyRes.ok) {
+              const legacyData = await legacyRes.json();
+              if (legacyData.connected === true || legacyData.connection === "open") {
+                instanceStatus = "connected";
+                qrCode = undefined;
+              }
+            }
+          } catch (_) {}
+        }
+
+        // Persist verified live status to MongoDB
+        if (instanceStatus === "connected" && org.whatsappInstance?.status !== "connected") {
+          await db.collection<DbOrganization>("organizations").updateOne(
+            { _id: org._id },
+            {
+              $set: {
+                "whatsappInstance.status": "connected",
+                "whatsappInstance.phone": connectedPhone,
+                "whatsappInstance.qrCode": null,
+                "whatsappInstance.connectedAt": Date.now(),
+                updatedAt: Date.now(),
+              },
+            },
+          );
         }
       } catch (err) {
-        // Gateway momentarily offline or mock mode
+        // Gateway momentarily offline
       }
     }
 
@@ -125,53 +179,80 @@ export async function POST(request: NextRequest) {
     const sys = await getSystemSettings();
     const gateway = sys.whatsappGateway;
     const cleanUrl = gateway?.serverUrl?.replace(/\/$/, "");
-    const gatewayApiKey = gateway?.apiKey;
+    const headers = buildGatewayHeaders(gateway?.apiKey);
 
     if (action === "start") {
       let qrCode: string | undefined;
 
       if (cleanUrl) {
         try {
-          // 1. Request WAHA / Evolution gateway to spin up session for this tenant
-          const startRes = await fetch(`${cleanUrl}/api/sessions/start`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(gatewayApiKey ? { "X-Api-Key": gatewayApiKey, apikey: gatewayApiKey } : {}),
-            },
-            body: JSON.stringify({
-              name: org.slug,
-              config: {
-                noweb: {
-                  store: {
-                    enabled: true,
-                  },
-                },
-              },
-            }),
-          });
+          // 1. Try Nectar multi-tenant start / qr
+          try {
+            const nectarStart = await fetch(`${cleanUrl}/sessions/${encodeURIComponent(org.slug)}/start`, {
+              method: "POST",
+              headers,
+            });
+            if (nectarStart.ok) {
+              const data = await nectarStart.json();
+              if (data.qr) qrCode = data.qr;
+            }
+          } catch (_) {}
 
-          if (startRes.ok) {
-            const startData = await startRes.json();
-            qrCode = startData.qr || startData.image;
+          if (!qrCode) {
+            try {
+              const nectarQr = await fetch(`${cleanUrl}/sessions/${encodeURIComponent(org.slug)}/qr`, { headers });
+              if (nectarQr.ok) {
+                const data = await nectarQr.json();
+                if (data.qr) qrCode = data.qr;
+              }
+            } catch (_) {}
           }
 
-          // 2. Fetch QR if not returned in session start
+          // 2. Try WAHA / Evolution gateway
           if (!qrCode) {
-            const qrRes = await fetch(`${cleanUrl}/api/${encodeURIComponent(org.slug)}/auth/qr`, {
-              headers: gatewayApiKey ? { "X-Api-Key": gatewayApiKey, apikey: gatewayApiKey } : {},
-            });
-            if (qrRes.ok) {
-              const qrData = await qrRes.json();
-              qrCode = qrData.qr || qrData.image || qrData.url;
-            }
+            try {
+              const startRes = await fetch(`${cleanUrl}/api/sessions/start`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                  name: org.slug,
+                  config: {
+                    noweb: { store: { enabled: true } },
+                  },
+                }),
+              });
+
+              if (startRes.ok) {
+                const startData = await startRes.json();
+                qrCode = startData.qr || startData.image;
+              }
+
+              if (!qrCode) {
+                const qrRes = await fetch(`${cleanUrl}/api/${encodeURIComponent(org.slug)}/auth/qr`, { headers });
+                if (qrRes.ok) {
+                  const qrData = await qrRes.json();
+                  qrCode = qrData.qr || qrData.image || qrData.url;
+                }
+              }
+            } catch (_) {}
+          }
+
+          // 3. Fallback to legacy single session /qr
+          if (!qrCode) {
+            try {
+              const singleQrRes = await fetch(`${cleanUrl}/qr`, { headers });
+              if (singleQrRes.ok) {
+                const data = await singleQrRes.json();
+                if (data.qr) qrCode = data.qr;
+              }
+            } catch (_) {}
           }
         } catch (err) {
-          console.warn("Could not reach WAHA gateway directly, generating fallback pairing code:", err);
+          console.warn("Could not reach WhatsApp gateway directly:", err);
         }
       }
 
-      // If gateway is not currently reachable or in development, generate a clean QR pairing token
+      // Fallback pairing code token if offline
       if (!qrCode) {
         qrCode = `1@${Buffer.from(`oneboard_wa_${org.slug}_${Date.now()}`).toString("base64")}`;
       }
@@ -200,14 +281,21 @@ export async function POST(request: NextRequest) {
     if (action === "disconnect") {
       if (cleanUrl) {
         try {
+          // 1. Try Nectar multi-tenant logout
+          await fetch(`${cleanUrl}/sessions/${encodeURIComponent(org.slug)}/logout`, {
+            method: "POST",
+            headers,
+          }).catch(() => {});
+
+          // 2. Try WAHA stop
           await fetch(`${cleanUrl}/api/sessions/stop`, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(gatewayApiKey ? { "X-Api-Key": gatewayApiKey, apikey: gatewayApiKey } : {}),
-            },
+            headers,
             body: JSON.stringify({ name: org.slug, logout: true }),
-          });
+          }).catch(() => {});
+
+          // 3. Fallback to legacy logout
+          await fetch(`${cleanUrl}/logout`, { method: "POST", headers }).catch(() => {});
         } catch (err) {
           // ignore disconnect fetch failures
         }
