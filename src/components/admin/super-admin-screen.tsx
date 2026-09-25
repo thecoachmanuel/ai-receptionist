@@ -356,6 +356,8 @@ export function SuperAdminScreen() {
   const [clientPageUrl, setClientPageUrl] = useState("");
   const [isWaitlistActive, setIsWaitlistActive] = useState(false);
   const [googleAuthEnabled, setGoogleAuthEnabled] = useState(true);
+  const [enforcePaymentOnSignup, setEnforcePaymentOnSignup] = useState(false);
+  const [trialDays, setTrialDays] = useState(14);
   const [savingContact, setSavingContact] = useState(false);
 
   // Subscriptions state
@@ -435,6 +437,12 @@ export function SuperAdminScreen() {
           setIsWaitlistActive(data.settings.isWaitlistActive || false);
           if (typeof data.settings.googleAuthEnabled === "boolean") {
             setGoogleAuthEnabled(data.settings.googleAuthEnabled);
+          }
+          if (typeof data.settings.enforcePaymentOnSignup === "boolean") {
+            setEnforcePaymentOnSignup(data.settings.enforcePaymentOnSignup);
+          }
+          if (typeof data.settings.trialDays === "number") {
+            setTrialDays(data.settings.trialDays);
           }
         }
         if (typeof data.googleAuthEnabled === "boolean") {
@@ -516,10 +524,12 @@ export function SuperAdminScreen() {
           clientPageUrl,
           isWaitlistActive,
           googleAuthEnabled,
+          enforcePaymentOnSignup,
+          trialDays: Number(trialDays) || 14,
         }),
       });
       if (!res.ok) throw new Error("Failed to update contact info.");
-      toast.success("Platform contact and client page settings updated.");
+      toast.success("Platform settings and payment enforcement updated.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save contact settings.");
     } finally {
@@ -1818,6 +1828,50 @@ export function SuperAdminScreen() {
                         onCheckedChange={setGoogleAuthEnabled}
                       />
                     </div>
+                    <Separator />
+                    <div className="flex flex-row items-center justify-between rounded-lg border p-4 bg-muted/10">
+                      <div className="space-y-0.5 max-w-lg">
+                        <div className="flex items-center gap-2">
+                          <Label className="text-sm font-semibold">Compulsory Payment on Signup</Label>
+                          {enforcePaymentOnSignup ? (
+                            <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-[10px]">
+                              Enforced
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                              Default (Disabled)
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          When disabled (default), new users register freely and access their workspace immediately with a free trial. When enabled, new users must select a plan and complete Paystack payment during registration before workspace activation.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={enforcePaymentOnSignup}
+                        onCheckedChange={setEnforcePaymentOnSignup}
+                      />
+                    </div>
+
+                    {!enforcePaymentOnSignup && (
+                      <div className="space-y-1.5 rounded-lg border bg-muted/5 p-4">
+                        <Label htmlFor="trial-days" className="text-xs font-semibold">
+                          Free Trial Duration (Days)
+                        </Label>
+                        <Input
+                          id="trial-days"
+                          type="number"
+                          min={1}
+                          max={365}
+                          value={trialDays}
+                          onChange={(e) => setTrialDays(Number(e.target.value))}
+                          className="text-sm max-w-xs"
+                        />
+                        <p className="text-[11px] text-muted-foreground">
+                          Number of days granted before service expires when compulsory payment is disabled (default: 14 days).
+                        </p>
+                      </div>
+                    )}
                     <Separator />
                     <Button type="submit" disabled={savingContact} className="gap-2">
                       {savingContact ? (

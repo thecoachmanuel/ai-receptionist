@@ -6,6 +6,7 @@ import { normalizedEmail, normalizedPhone, optionalTrimmed, requiredTrimmed } fr
 import { upsertContact } from "./contacts";
 import { syncBookingToExternalCalendar } from "./calendar-sync";
 import { sendAutomatedWhatsAppNotification } from "./whatsapp";
+import { isSubscriptionActive } from "@/lib/billing";
 
 function generateConfirmationCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -80,6 +81,22 @@ export async function createBooking(
   },
 ) {
   const db = await getDb();
+
+  // Enforce service expiration for public site and AI agent bookings
+  if (args.source !== "dashboard") {
+    const org = await db.collection<DbOrganization>("organizations").findOne({
+      $or: [
+        { clerkOrgId: orgId },
+        ...(ObjectId.isValid(orgId) ? [{ _id: new ObjectId(orgId) }] : []),
+      ],
+    });
+
+    if (org && !isSubscriptionActive(org)) {
+      throw new Error(
+        "Online booking is temporarily unavailable as this organization's subscription has expired. Please contact the business directly.",
+      );
+    }
+  }
 
   // Check idempotency
   if (args.idempotencyKey) {

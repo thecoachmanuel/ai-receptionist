@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { Check, ShieldCheck, Zap } from "lucide-react";
+import type { PlanType } from "@/lib/db/types";
+
 export default function SignUpPage() {
   const router = useRouter();
   const { isAuthenticated, isLoaded } = useAuth();
@@ -22,6 +25,9 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleAuthEnabled, setGoogleAuthEnabled] = useState(true);
+  const [enforcePayment, setEnforcePayment] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>("free_org");
+  const [planPrices, setPlanPrices] = useState({ core: 5000, engage: 25000, voice: 75000 });
 
   useEffect(() => {
     if (isLoaded && isAuthenticated) {
@@ -30,12 +36,29 @@ export default function SignUpPage() {
   }, [isAuthenticated, isLoaded, router]);
 
   useEffect(() => {
+    // Read ?plan= query param if present
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlPlan = params.get("plan");
+      if (urlPlan === "voice") setSelectedPlan("voice");
+      else if (urlPlan === "engage") setSelectedPlan("engage");
+      else if (urlPlan === "core") setSelectedPlan("free_org");
+    }
+
     async function checkPublicSettings() {
       try {
         const res = await fetch("/api/public/settings");
         if (res.ok) {
           const data = await res.json();
           setGoogleAuthEnabled(data.googleAuthEnabled !== false);
+          setEnforcePayment(data.enforcePaymentOnSignup === true);
+          if (data.planPrices) {
+            setPlanPrices({
+              core: data.planPrices.core ?? 5000,
+              engage: data.planPrices.engage ?? 25000,
+              voice: data.planPrices.voice ?? 75000,
+            });
+          }
         }
       } catch {}
     }
@@ -68,6 +91,7 @@ export default function SignUpPage() {
           email: formEmail,
           password: formPassword,
           organizationName: formOrg,
+          plan: selectedPlan,
         }),
       });
       const data = await res.json();
@@ -82,6 +106,16 @@ export default function SignUpPage() {
         password: formPassword,
         redirect: false,
       });
+
+      if (data.paymentRequired && data.authorizationUrl) {
+        window.location.href = data.authorizationUrl;
+        return;
+      }
+
+      if (data.billingUrl) {
+        window.location.href = data.billingUrl;
+        return;
+      }
 
       if (typeof window !== "undefined") {
         await new Promise((resolve) => setTimeout(resolve, 150));
@@ -212,8 +246,59 @@ export default function SignUpPage() {
               className="h-11 text-base sm:text-sm"
             />
           </div>
+
+          {enforcePayment && (
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold text-foreground">Select Subscription Plan</Label>
+                <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
+                  Compulsory on signup
+                </span>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {[
+                  { id: "free_org" as const, name: "Core", price: planPrices.core, desc: "Bookings & public site" },
+                  { id: "engage" as const, name: "Engage", price: planPrices.engage, desc: "AI text assistant" },
+                  { id: "voice" as const, name: "Voice", price: planPrices.voice, desc: "Live browser audio" },
+                ].map((p) => {
+                  const isSelected = selectedPlan === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setSelectedPlan(p.id)}
+                      className={`flex flex-col items-start p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        isSelected
+                          ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs"
+                          : "border-border/70 bg-card hover:border-border hover:bg-muted/30"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="font-semibold text-xs text-foreground">{p.name}</span>
+                        {isSelected && <Check className="size-3.5 text-primary" />}
+                      </div>
+                      <span className="font-heading text-sm font-bold text-foreground mt-1">
+                        ₦{p.price.toLocaleString()}
+                        <span className="text-[10px] font-normal text-muted-foreground">/mo</span>
+                      </span>
+                      <span className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{p.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 pt-0.5">
+                <ShieldCheck className="size-3.5 text-emerald-600 shrink-0" />
+                Paystack secured Nigerian Naira (₦) checkout.
+              </p>
+            </div>
+          )}
+
           <Button type="submit" className="w-full h-11 text-sm font-medium cursor-pointer" disabled={loading || googleLoading}>
-            {loading ? "Creating account..." : "Create workspace"}
+            {loading
+              ? enforcePayment ? "Connecting to Paystack..." : "Creating account..."
+              : enforcePayment
+              ? `Pay ₦${(selectedPlan === "voice" ? planPrices.voice : selectedPlan === "engage" ? planPrices.engage : planPrices.core).toLocaleString()} with Paystack`
+              : "Create workspace"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
             Already have an account?{" "}

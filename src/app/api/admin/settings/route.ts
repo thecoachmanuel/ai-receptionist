@@ -24,6 +24,8 @@ export async function GET(request: NextRequest) {
         clientPageUrl: settings.clientPageUrl,
         isWaitlistActive: settings.isWaitlistActive,
         googleAuthEnabled: settings.googleAuthEnabled,
+        enforcePaymentOnSignup: settings.enforcePaymentOnSignup ?? false,
+        trialDays: settings.trialDays ?? 14,
       },
       vapi: settings.vapi,
       whatsappGateway: settings.whatsappGateway,
@@ -67,6 +69,8 @@ export async function PATCH(request: NextRequest) {
     if (typeof body.contactEmail === "string") updates.contactEmail = body.contactEmail;
     if (typeof body.clientPageUrl === "string") updates.clientPageUrl = body.clientPageUrl;
     if (typeof body.isWaitlistActive === "boolean") updates.isWaitlistActive = body.isWaitlistActive;
+    if (typeof body.enforcePaymentOnSignup === "boolean") updates.enforcePaymentOnSignup = body.enforcePaymentOnSignup;
+    if (typeof body.trialDays === "number") updates.trialDays = Math.max(0, Math.round(body.trialDays));
 
     // ── Free WhatsApp Gateway Config ────────────────────────
     if (body.whatsappGateway && typeof body.whatsappGateway === "object") {

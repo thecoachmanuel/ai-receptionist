@@ -298,19 +298,25 @@ export async function getSession(): Promise<ActiveAuthContext | null> {
         avatarUrl: user.avatarUrl,
       },
       organization: organization && organization._id
-        ? {
-            id: organization._id.toString(),
-            clerkOrgId: organization.clerkOrgId,
-            name: organization.name,
-            slug: organization.slug,
-            timezone: organization.timezone,
-            currency: organization.currency,
-            locale: organization.locale,
-            plan: organization.plan || "free_org",
-            planStatus: organization.planStatus || "active",
-            subscriptionExpiresAt: organization.subscriptionExpiresAt,
-            whatsappInstance: organization.whatsappInstance,
-          }
+        ? (() => {
+            const isExpired =
+              organization.planStatus === "expired" ||
+              (typeof organization.subscriptionExpiresAt === "number" &&
+                organization.subscriptionExpiresAt < Date.now());
+            return {
+              id: organization._id.toString(),
+              clerkOrgId: organization.clerkOrgId,
+              name: organization.name,
+              slug: organization.slug,
+              timezone: organization.timezone,
+              currency: organization.currency,
+              locale: organization.locale,
+              plan: organization.plan || "free_org",
+              planStatus: isExpired ? "expired" : (organization.planStatus || "active"),
+              subscriptionExpiresAt: organization.subscriptionExpiresAt,
+              whatsappInstance: organization.whatsappInstance,
+            };
+          })()
         : null,
       role,
       permissions,

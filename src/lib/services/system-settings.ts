@@ -8,6 +8,8 @@ export interface PlanPrices {
 
 export interface SystemSettings {
   googleAuthEnabled: boolean;
+  enforcePaymentOnSignup: boolean;
+  trialDays: number;
   planPrices: PlanPrices;
   usdToNgnRate: number;
   baseCurrency: "USD" | "NGN";
@@ -33,6 +35,8 @@ const SETTINGS_DOC_ID = "global_system_settings";
 
 const DEFAULTS: SystemSettings = {
   googleAuthEnabled: true,
+  enforcePaymentOnSignup: false,
+  trialDays: 14,
   planPrices: { core: 5000, engage: 25000, voice: 75000 },
   usdToNgnRate: 1500,
   baseCurrency: "NGN",
@@ -66,6 +70,8 @@ export async function getSystemSettings(): Promise<SystemSettings> {
 
     return {
       googleAuthEnabled: doc.googleAuthEnabled !== false,
+      enforcePaymentOnSignup: doc.enforcePaymentOnSignup === true,
+      trialDays: typeof doc.trialDays === "number" ? doc.trialDays : 14,
       planPrices: {
         core: typeof rawCore === "number" && rawCore > 0 ? rawCore : 5000,
         engage: typeof rawEngage === "number" && rawEngage > 1000 ? rawEngage : 25000,

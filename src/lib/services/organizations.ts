@@ -1,11 +1,22 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/db/mongodb";
-import type { DbAgentIntegration, DbOrgMember, DbOrganization, DbPublicSite } from "@/lib/db/types";
+import type { DbAgentIntegration, DbOrgMember, DbOrganization, DbPublicSite, PlanType } from "@/lib/db/types";
 import { DEFAULT_TERMINOLOGY, defaultSiteConfig, slugify } from "@/lib/defaults";
 import { assertIanaTimezone } from "@/lib/time";
 import { optionalTrimmed, requiredTrimmed } from "@/lib/validation";
 
+import { getSystemSettings } from "@/lib/services/system-settings";
+
 export async function viewOrganization(org: DbOrganization, role: string = "admin") {
+  const now = Date.now();
+  const isExpired =
+    org.planStatus === "expired" ||
+    (typeof org.subscriptionExpiresAt === "number" && org.subscriptionExpiresAt < now);
+
+  const effectiveStatus = isExpired
+    ? "expired"
+    : (org.planStatus || "active");
+
   return {
     _id: org._id?.toString() || org.clerkOrgId,
     clerkOrgId: org.clerkOrgId,
@@ -16,7 +27,10 @@ export async function viewOrganization(org: DbOrganization, role: string = "admi
     locale: org.locale,
     terminology: org.terminology,
     plan: org.plan || "free_org",
-    planStatus: org.planStatus || "active",
+    planStatus: effectiveStatus,
+    trialEndsAt: org.trialEndsAt,
+    subscriptionExpiresAt: org.subscriptionExpiresAt,
+    paystack: org.paystack,
     role: role || "admin",
     createdAt: org.createdAt,
     updatedAt: org.updatedAt,
@@ -107,6 +121,7 @@ export async function createOrganizationForUser(
   rawTimezone?: string,
   rawCurrency?: string,
   rawLocale?: string,
+  initialPlan?: PlanType,
 ) {
   const db = await getDb();
   const name = requiredTrimmed(rawName, "name", 120);
@@ -133,6 +148,14 @@ export async function createOrganizationForUser(
   const now = Date.now();
   const defaultAgentId = process.env.VAPI_ASSISTANT_ID?.trim() || process.env.VAPI_DEFAULT_ASSISTANT_ID?.trim() || process.env.ELEVENLABS_DEFAULT_AGENT_ID?.trim();
 
+  const settings = await getSystemSettings().catch(() => null);
+  const enforcePayment = settings?.enforcePaymentOnSignup ?? false;
+  const trialDays = settings?.trialDays ?? 14;
+
+  const trialEndsAt = enforcePayment ? undefined : now + trialDays * 24 * 60 * 60 * 1000;
+  const subscriptionExpiresAt = enforcePayment ? now : trialEndsAt;
+  const planStatus = enforcePayment ? "expired" : "trialing";
+
   const newOrg: DbOrganization = {
     clerkOrgId,
     name,
@@ -142,8 +165,10 @@ export async function createOrganizationForUser(
     currency,
     locale,
     terminology: DEFAULT_TERMINOLOGY,
-    plan: "free_org",
-    planStatus: "active",
+    plan: initialPlan || "free_org",
+    planStatus,
+    trialEndsAt,
+    subscriptionExpiresAt,
     createdAt: now,
     updatedAt: now,
   };

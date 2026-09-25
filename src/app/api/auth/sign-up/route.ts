@@ -2,14 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { hashPassword } from "@/lib/auth/password";
 import { applySessionCookie, createSession } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/mongodb";
-import type { DbUser } from "@/lib/db/types";
+import type { DbUser, PlanType } from "@/lib/db/types";
 import { createOrganizationForUser } from "@/lib/services/organizations";
+import { getSystemSettings } from "@/lib/services/system-settings";
+import { initializePaystackTransaction } from "@/lib/paystack";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name, organizationName } = await request.json();
+    const { email, password, name, organizationName, plan } = await request.json();
     if (!email || !password || !name) {
       return NextResponse.json(
         { error: "Email, password, and full name are required." },
@@ -50,6 +52,9 @@ export async function POST(request: NextRequest) {
     let orgId = "";
     let orgSlug = "";
 
+    const selectedPlan: PlanType =
+      plan === "voice" ? "voice" : plan === "engage" ? "engage" : "free_org";
+
     if (matchingTeamMember && matchingTeamMember.organizationId) {
       const orgIdStr = matchingTeamMember.organizationId;
       const existingOrg = await db.collection("organizations").findOne({
@@ -82,7 +87,14 @@ export async function POST(request: NextRequest) {
 
     if (!orgSlug) {
       const orgName = organizationName?.trim() || `${name}'s Organization`;
-      const createdOrg = await createOrganizationForUser(userId, orgName);
+      const createdOrg = await createOrganizationForUser(
+        userId,
+        orgName,
+        undefined,
+        undefined,
+        undefined,
+        selectedPlan,
+      );
       orgId = createdOrg._id.toString();
       orgSlug = createdOrg.slug;
     }
@@ -94,8 +106,53 @@ export async function POST(request: NextRequest) {
 
     const sessionToken = await createSession(userId, orgId);
 
+    // Check if compulsory payment is enabled globally by Super Admin
+    const settings = await getSystemSettings().catch(() => null);
+    const isCompulsoryPayment = settings?.enforcePaymentOnSignup === true;
+
+    if (isCompulsoryPayment && !matchingTeamMember) {
+      try {
+        const origin =
+          request.headers.get("origin") ||
+          request.headers.get("referer")?.replace(/\/sign-up.*$/, "") ||
+          "";
+        const callbackUrl = `${origin}/api/billing/verify?orgSlug=${encodeURIComponent(orgSlug)}&signup=true`;
+
+        const transaction = await initializePaystackTransaction({
+          email: emailNorm,
+          planId: selectedPlan,
+          orgId,
+          callbackUrl,
+        });
+
+        return applySessionCookie(
+          NextResponse.json({
+            success: true,
+            userId,
+            orgSlug,
+            paymentRequired: true,
+            authorizationUrl: transaction.authorizationUrl,
+          }),
+          sessionToken,
+        );
+      } catch (paystackErr) {
+        console.error("Paystack initialization failed during compulsory signup", paystackErr);
+        // Fall back to allowing login but routing them to billing in workspace
+        return applySessionCookie(
+          NextResponse.json({
+            success: true,
+            userId,
+            orgSlug,
+            paymentRequired: true,
+            billingUrl: `/app/${orgSlug}/billing?required=true`,
+          }),
+          sessionToken,
+        );
+      }
+    }
+
     return applySessionCookie(
-      NextResponse.json({ success: true, userId, orgSlug }),
+      NextResponse.json({ success: true, userId, orgSlug, paymentRequired: false }),
       sessionToken,
     );
   } catch (error) {
