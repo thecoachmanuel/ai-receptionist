@@ -170,7 +170,8 @@ export default async function Home() {
               AI Front Desk & 24/7 Smart Booking Platform
             </Badge>
             <h1 className="font-heading text-[clamp(3.8rem,8vw,7.4rem)] font-medium leading-[0.82] tracking-[-0.065em] text-balance">
-              Never miss a booking.
+              Never miss
+              <span className="mt-3 block text-primary italic">a booking.</span>
             </h1>
             <p className="mt-9 max-w-xl text-lg leading-7 text-muted-foreground sm:text-xl sm:leading-8">
               Qwilo pairs an effortless online booking engine with intelligent AI voice and web receptionists. Clients book appointments around the clock, get questions answered instantly, and receive automated WhatsApp confirmations—even while you sleep.
