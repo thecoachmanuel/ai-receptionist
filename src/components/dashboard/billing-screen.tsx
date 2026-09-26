@@ -71,7 +71,7 @@ export function BillingScreen() {
 
   // Subscription expiry info
   const subscriptionExpiresAt = (organization as any)?.subscriptionExpiresAt;
-  const planStatus = (organization as any)?.planStatus ?? authOrg?.planStatus;
+  const planStatus = (organization as any)?.planStatus as string | undefined;
   const orgBillingCycle = (organization as any)?.billingCycle;
   const isExpired = planStatus === "expired" || planStatus === "canceled";
   const daysUntilExpiry = subscriptionExpiresAt
