@@ -28,7 +28,7 @@ export function PricingSection({ plans }: { plans: Plan[] }) {
       {/* Header row */}
       <div className="mb-12 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary">
             Feature-based plans
           </p>
           <h2 className="mt-4 font-heading text-5xl font-medium tracking-[-0.05em] sm:text-6xl">
@@ -61,19 +61,19 @@ export function PricingSection({ plans }: { plans: Plan[] }) {
               }`}
             >
               Yearly
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
-                <Zap className="size-2.5" />2 free
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
+                <Zap className="size-3" />2 free
               </span>
             </button>
           </div>
           {cycle === "yearly" && (
-            <p className="text-[11px] font-medium text-emerald-700">
+            <p className="text-xs sm:text-sm font-medium text-emerald-700">
               🎉 You save 2 months on every plan!
             </p>
           )}
           <Link
             href="/pricing"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
           >
             Full plan comparison →
           </Link>
@@ -100,13 +100,13 @@ export function PricingSection({ plans }: { plans: Plan[] }) {
               }`}
             >
               {plan.featured && (
-                <span className="absolute right-5 top-5 font-mono text-[9px] uppercase tracking-[0.15em] text-primary-foreground/60">
+                <span className="absolute right-5 top-5 font-mono text-xs font-semibold uppercase tracking-wider text-primary-foreground/90">
                   Most popular
                 </span>
               )}
 
               {/* Plan name */}
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-55">
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] opacity-75">
                 {plan.name}
               </p>
 
@@ -114,23 +114,23 @@ export function PricingSection({ plans }: { plans: Plan[] }) {
               <div className="mt-8">
                 <p className="font-heading text-6xl font-medium tracking-[-0.06em] leading-none">
                   {sym}{shownAmt.toLocaleString()}
-                  <span className="ml-1 font-sans text-sm font-normal tracking-normal opacity-60">
+                  <span className="ml-1 font-sans text-sm font-normal tracking-normal opacity-70">
                     /{cycle === "yearly" ? "yr" : "mo"}
                   </span>
                 </p>
 
                 {/* Yearly savings callout */}
                 {cycle === "yearly" ? (
-                  <p className={`mt-2 text-[11px] font-medium ${plan.featured ? "text-primary-foreground/60" : "text-emerald-700"}`}>
-                    <span className="line-through opacity-50">
+                  <p className={`mt-2.5 text-xs sm:text-sm font-medium ${plan.featured ? "text-primary-foreground/80" : "text-emerald-700"}`}>
+                    <span className="line-through opacity-60">
                       {sym}{fullYearlyAmt.toLocaleString()}/yr
                     </span>
                     {" "}— you save {sym}{(fullYearlyAmt - shownAmt).toLocaleString()}
                   </p>
                 ) : (
-                  <p className={`mt-2 text-[11px] ${plan.featured ? "text-primary-foreground/55" : "text-muted-foreground"}`}>
+                  <p className={`mt-2.5 text-xs sm:text-sm ${plan.featured ? "text-primary-foreground/75" : "text-muted-foreground"}`}>
                     or {sym}{toYearly(monthlyAmt).toLocaleString()}/yr{" "}
-                    <span className={`font-semibold ${plan.featured ? "text-primary-foreground/80" : "text-emerald-700"}`}>
+                    <span className={`font-semibold ${plan.featured ? "text-primary-foreground/95" : "text-emerald-700"}`}>
                       (save 2 months)
                     </span>
                   </p>
@@ -138,13 +138,13 @@ export function PricingSection({ plans }: { plans: Plan[] }) {
               </div>
 
               {/* Description */}
-              <p className="mt-5 text-sm leading-6 opacity-65">{plan.copy}</p>
+              <p className="mt-5 text-sm sm:text-base leading-relaxed opacity-75">{plan.copy}</p>
 
               {/* Features */}
-              <div className="mt-8 space-y-3 border-t border-current/15 pt-6 flex-1">
+              <div className="mt-8 space-y-3.5 border-t border-current/15 pt-6 flex-1">
                 {plan.features.map((feature) => (
-                  <p key={feature} className="flex items-center gap-2 text-sm">
-                    <Check className="size-3.5 shrink-0 opacity-80" /> {feature}
+                  <p key={feature} className="flex items-center gap-2.5 text-sm sm:text-base">
+                    <Check className="size-4 shrink-0 opacity-85" /> {feature}
                   </p>
                 ))}
               </div>
@@ -166,7 +166,7 @@ export function PricingSection({ plans }: { plans: Plan[] }) {
       </div>
 
       {/* Footer note */}
-      <p className="mt-5 text-center text-xs text-muted-foreground">
+      <p className="mt-6 text-center text-xs sm:text-sm text-muted-foreground">
         All plans billed in Nigerian Naira (₦) via Paystack.
         {cycle === "yearly" ? " Yearly billing charged as a single payment." : " Switch to yearly anytime to save 2 months."}
       </p>

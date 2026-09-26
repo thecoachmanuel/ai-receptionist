@@ -52,8 +52,8 @@ export function PricingTogglePage({
             }`}
           >
             Yearly
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
-              <Zap className="size-2.5" />2 months free
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
+              <Zap className="size-3" />2 months free
             </span>
           </button>
         </div>
@@ -82,33 +82,33 @@ export function PricingTogglePage({
                 plan.featured ? "bg-primary text-primary-foreground" : "bg-card hover:bg-muted/20"
               }`}
             >
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-60">
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] opacity-75">
                 {plan.name}
               </p>
 
               <div className="mt-8">
                 <p className="font-heading text-6xl tracking-[-0.06em] leading-none">
                   {sym}{shownAmt.toLocaleString()}
-                  <span className="ml-1 font-sans text-sm tracking-normal opacity-60">
+                  <span className="ml-1 font-sans text-sm tracking-normal opacity-70">
                     /{cycle === "yearly" ? "yr" : "mo"}
                   </span>
                 </p>
 
                 {cycle === "yearly" ? (
-                  <p className={`mt-2 text-[11px] font-medium ${plan.featured ? "text-primary-foreground/60" : "text-emerald-700"}`}>
-                    <span className="line-through opacity-50">
+                  <p className={`mt-2.5 text-xs sm:text-sm font-medium ${plan.featured ? "text-primary-foreground/80" : "text-emerald-700"}`}>
+                    <span className="line-through opacity-60">
                       {sym}{fullYearlyAmt.toLocaleString()}/yr
                     </span>
                     {" "}— save {sym}{(fullYearlyAmt - shownAmt).toLocaleString()}
                   </p>
                 ) : (
-                  <p className={`mt-2 text-[11px] ${plan.featured ? "text-primary-foreground/55" : "text-muted-foreground"}`}>
+                  <p className={`mt-2.5 text-xs sm:text-sm ${plan.featured ? "text-primary-foreground/75" : "text-muted-foreground"}`}>
                     or{" "}
                     <button
                       type="button"
                       onClick={() => setCycle("yearly")}
                       className={`font-semibold underline underline-offset-2 cursor-pointer ${
-                        plan.featured ? "text-primary-foreground/80" : "text-emerald-700"
+                        plan.featured ? "text-primary-foreground/95" : "text-emerald-700"
                       }`}
                     >
                       {sym}{toYearly(monthlyAmt).toLocaleString()}/yr
@@ -118,12 +118,12 @@ export function PricingTogglePage({
                 )}
               </div>
 
-              <p className="mt-5 text-sm leading-6 opacity-65">{plan.description}</p>
+              <p className="mt-5 text-sm sm:text-base leading-relaxed opacity-75">{plan.description}</p>
 
-              <div className="mt-8 space-y-3 border-t border-current/15 pt-6 flex-1">
+              <div className="mt-8 space-y-3.5 border-t border-current/15 pt-6 flex-1">
                 {plan.features.map((feature) => (
-                  <p key={feature} className="flex items-center gap-2 text-sm">
-                    <Check className="size-3.5 shrink-0" /> {feature}
+                  <p key={feature} className="flex items-center gap-2.5 text-sm sm:text-base">
+                    <Check className="size-4 shrink-0 opacity-85" /> {feature}
                   </p>
                 ))}
               </div>
