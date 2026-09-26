@@ -143,15 +143,6 @@ export function PublicSiteSuspended({
             )}
           </div>
         )}
-
-        <div className="mt-12 border-t border-border/60 pt-6">
-          <p className="text-xs text-muted-foreground">
-            Are you the business owner?{" "}
-            <Link href="/sign-in" className="font-semibold text-primary hover:underline">
-              Sign in to activate or renew subscription →
-            </Link>
-          </p>
-        </div>
       </div>
     </main>
   );
