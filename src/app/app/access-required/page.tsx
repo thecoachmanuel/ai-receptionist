@@ -28,7 +28,7 @@ export default async function AccessRequiredPage() {
   }
 
   return (
-    <main className="min-h-svh bg-[#f3f0e8] px-4 py-6 text-foreground sm:px-6 sm:py-10">
+    <main className="min-h-svh bg-[#fafafa] px-4 py-6 text-foreground sm:px-6 sm:py-10">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4">
         <Brand />
         <div className="flex items-center gap-3">
@@ -37,7 +37,7 @@ export default async function AccessRequiredPage() {
         </div>
       </div>
 
-      <Card className="mx-auto mt-12 max-w-2xl overflow-hidden border-black/10 bg-[#faf9f5] shadow-[0_24px_70px_rgba(44,36,24,0.12)] sm:mt-20">
+      <Card className="mx-auto mt-12 max-w-2xl overflow-hidden border-border bg-card shadow-[0_24px_70px_rgba(0,0,0,0.06)] sm:mt-20">
         <CardContent className="grid gap-8 p-7 sm:grid-cols-[auto_1fr] sm:p-10">
           <div className="grid size-14 place-items-center rounded-xl bg-foreground text-background">
             <ShieldCheck className="size-6" aria-hidden="true" />

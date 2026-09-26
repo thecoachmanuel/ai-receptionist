@@ -353,7 +353,7 @@ export function WorkspaceLanguageEditor({
               {fieldGroups.map((group, index) => (
                 <fieldset
                   key={group.label}
-                  className="rounded-xl border border-black/8 bg-[#faf9f6] p-4"
+                  className="rounded-xl border border-border/80 bg-[#fafafa] p-4"
                   disabled={!canEdit || saving}
                 >
                   <legend className="sr-only">{group.label} labels</legend>

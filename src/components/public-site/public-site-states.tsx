@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function PublicSiteSkeleton() {
   return (
     <main
-      className="min-h-screen bg-[#f3f0e8] text-[#20211d]"
+      className="min-h-screen bg-[#fafafa] text-[#20211d]"
       aria-busy="true"
       aria-label="Loading public page"
     >
@@ -58,7 +58,7 @@ export function PublicSiteSkeleton() {
 
 export function PublicSiteUnavailable() {
   return (
-    <main className="grid min-h-screen place-items-center bg-[#f3f0e8] px-5 py-16 text-[#20211d]">
+    <main className="grid min-h-screen place-items-center bg-[#fafafa] px-5 py-16 text-[#20211d]">
       <div className="w-full max-w-md text-center">
         <div className="mx-auto mb-6 grid size-16 place-items-center rounded-full border border-black/10 bg-white shadow-sm">
           <CalendarX2 className="size-7" aria-hidden="true" />

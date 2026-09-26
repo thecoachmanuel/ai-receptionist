@@ -21,8 +21,8 @@ export default async function AppIndexPage() {
   }
 
   return (
-    <main className="grid min-h-svh place-items-center bg-[#f3f0e8] px-4 py-12 text-foreground">
-      <section className="w-full max-w-5xl overflow-hidden rounded-2xl border border-black/10 bg-[#faf9f5] shadow-[0_24px_70px_rgba(44,36,24,0.12)]">
+    <main className="grid min-h-svh place-items-center bg-[#fafafa] px-4 py-12 text-foreground">
+      <section className="w-full max-w-5xl overflow-hidden rounded-2xl border border-border bg-card shadow-[0_24px_70px_rgba(0,0,0,0.06)]">
         <div className="grid lg:grid-cols-[0.8fr_1.2fr]">
           <div className="flex min-h-72 flex-col justify-between border-b border-black/10 bg-[#1c1c1a] p-7 text-white lg:min-h-[620px] lg:border-r lg:border-b-0 lg:p-10">
             <Brand inverted />

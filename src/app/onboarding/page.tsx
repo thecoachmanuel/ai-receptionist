@@ -62,7 +62,7 @@ export default function OnboardingPage() {
   const userName = (session?.user as any)?.name || "there";
 
   return (
-    <div className="min-h-screen bg-[#f3f0e8] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[#fafafa] flex items-center justify-center px-4 py-12">
       {/* Subtle grid background */}
       <div
         className="pointer-events-none fixed inset-0 opacity-[0.03]"
@@ -87,7 +87,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* Card */}
-        <div className="overflow-hidden rounded-2xl border border-black/10 bg-[#faf9f5] shadow-[0_24px_70px_rgba(44,36,24,0.12)]">
+        <div className="overflow-hidden rounded-2xl border border-border/80 bg-[#fafafa] shadow-[0_24px_70px_rgba(0,0,0,0.06)]">
           {/* Progress indicator */}
           <div className="flex items-center gap-3 border-b border-black/8 bg-black/[0.02] px-6 py-4">
             <div className="flex size-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">1</div>

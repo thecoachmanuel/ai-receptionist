@@ -314,8 +314,8 @@ function ShellChrome({
         <SidebarRail />
       </Sidebar>
 
-      <SidebarInset className="min-w-0 bg-[#faf9f5]">
-        <header className="sticky top-0 z-30 flex h-14 items-center border-b border-black/10 bg-[#faf9f5]/95 px-4 supports-[backdrop-filter]:bg-[#faf9f5]/85 supports-[backdrop-filter]:backdrop-blur-md sm:px-6">
+      <SidebarInset className="min-w-0 bg-[#fafafa]">
+        <header className="sticky top-0 z-30 flex h-14 items-center border-b border-border/60 bg-[#fafafa]/95 px-4 supports-[backdrop-filter]:bg-[#fafafa]/85 supports-[backdrop-filter]:backdrop-blur-md sm:px-6">
           <SidebarTrigger className="mr-3 md:hidden" />
 
           <div className="flex min-w-0 flex-1 items-center gap-2 text-sm">
