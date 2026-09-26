@@ -1,6 +1,7 @@
 import type { ObjectId } from "mongodb";
 
 export type PlanType = "free_org" | "engage" | "voice";
+export type BillingCycle = "monthly" | "yearly";
 
 export type BackendTerminology = {
   offeringSingular: string;
@@ -87,6 +88,7 @@ export type DbOrganization = {
   businessType?: string;
   plan: PlanType;
   planStatus: "active" | "trialing" | "canceled" | "past_due" | "expired";
+  billingCycle?: BillingCycle;
   trialEndsAt?: number;
   subscriptionExpiresAt?: number;
   paystack?: {
@@ -96,7 +98,9 @@ export type DbOrganization = {
     customerCode?: string;
     authorizationCode?: string;
     lastPaymentDate?: number;
+    nextBillingDate?: number;
     amount?: number;
+    billingCycle?: BillingCycle;
     currency?: string;
     channel?: "paystack" | "manual" | "bank_transfer" | "cash" | "complimentary";
     manualNotes?: string;

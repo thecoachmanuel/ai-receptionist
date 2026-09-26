@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name, organizationName, plan, businessType } = await request.json();
+    const { email, password, name, organizationName, plan, businessType, billingCycle } = await request.json();
     if (!email || !password || !name) {
       return NextResponse.json(
         { error: "Email, password, and full name are required." },
@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
 
     const selectedPlan: PlanType =
       plan === "voice" ? "voice" : plan === "engage" ? "engage" : "free_org";
+    const selectedCycle = billingCycle === "yearly" ? "yearly" : "monthly";
 
     if (matchingTeamMember && matchingTeamMember.organizationId) {
       const orgIdStr = matchingTeamMember.organizationId;
@@ -124,6 +125,7 @@ export async function POST(request: NextRequest) {
           planId: selectedPlan,
           orgId,
           callbackUrl,
+          billingCycle: selectedCycle,
         });
 
         return applySessionCookie(

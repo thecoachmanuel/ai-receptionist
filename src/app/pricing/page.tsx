@@ -1,11 +1,12 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth/session";
 import { getPlatformSettings } from "@/lib/services/settings";
+import { PricingTogglePage } from "./pricing-toggle";
 
 export default async function PricingPage() {
   const [session, settings] = await Promise.all([
@@ -14,14 +15,11 @@ export default async function PricingPage() {
   ]);
   const userId = session?.user.id;
 
-  const corePrice = settings.planPrices.core;
-  const engagePrice = settings.planPrices.engage;
-  const voicePrice = settings.planPrices.voice;
-
-  const publicPlans = [
+  const plans = [
     {
       name: "Core",
-      price: `₦${corePrice.toLocaleString()}`,
+      planKey: "free_org" as const,
+      monthlyPrice: settings.planPrices.core,
       description: "Bookings, operations, and a custom public page.",
       features: [
         "Bookings and availability",
@@ -32,7 +30,8 @@ export default async function PricingPage() {
     },
     {
       name: "Engage",
-      price: `₦${engagePrice.toLocaleString()}`,
+      planKey: "engage" as const,
+      monthlyPrice: settings.planPrices.engage,
       description: "Add an intelligent AI web agent to every client page.",
       features: [
         "Everything in Core",
@@ -43,9 +42,9 @@ export default async function PricingPage() {
     },
     {
       name: "Voice",
-      price: `₦${voicePrice.toLocaleString()}`,
-      description:
-        "Let clients speak with your agent directly in the browser.",
+      planKey: "voice" as const,
+      monthlyPrice: settings.planPrices.voice,
+      description: "Let clients speak with your agent directly in the browser.",
       features: [
         "Everything in Engage",
         "Live browser audio (Voice chat)",
@@ -81,51 +80,10 @@ export default async function PricingPage() {
           </p>
         </div>
 
-        <div className="grid border-l border-t lg:grid-cols-3">
-          {publicPlans.map((plan) => (
-            <article
-              key={plan.name}
-              className={`flex min-h-[440px] flex-col border-b border-r p-8 ${
-                plan.featured
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card"
-              }`}
-            >
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-60">
-                {plan.name}
-              </p>
-              <p className="mt-8 font-heading text-6xl tracking-[-0.06em]">
-                {plan.price}
-                <span className="ml-1 font-sans text-xs tracking-normal opacity-60">
-                  /mo
-                </span>
-              </p>
+        <PricingTogglePage plans={plans} userId={userId ?? null} />
 
-              <p className="mt-4 text-sm leading-6 opacity-65">
-                {plan.description}
-              </p>
-              <div className="mt-8 space-y-3 border-t border-current/15 pt-6">
-                {plan.features.map((feature) => (
-                  <p key={feature} className="flex items-center gap-2 text-sm">
-                    <Check className="size-3.5" /> {feature}
-                  </p>
-                ))}
-              </div>
-              <Button
-                asChild
-                variant={plan.featured ? "secondary" : "outline"}
-                className="mt-auto shadow-none"
-              >
-                <Link href={userId ? "/app" : "/sign-up"}>
-                  {userId ? "Manage in workspace" : "Create an organization"}
-                </Link>
-              </Button>
-            </article>
-          ))}
-        </div>
         <p className="mt-5 text-center text-xs text-muted-foreground">
-          Create your organization first, then manage its plan securely inside
-          your workspace billing page. All plans are billed monthly in Nigerian Naira (₦) via Paystack.
+          Yearly billing saves you 2 months. All plans billed in Nigerian Naira (₦) via Paystack.
         </p>
       </section>
     </main>

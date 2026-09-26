@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { initializePaystackTransaction } from "@/lib/paystack";
+import type { BillingCycle } from "@/lib/db/types";
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -16,8 +17,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json().catch(() => ({}))) as { planId?: unknown };
+  const body = (await request.json().catch(() => ({}))) as {
+    planId?: unknown;
+    billingCycle?: unknown;
+  };
   const planId = body.planId;
+  const billingCycle: BillingCycle =
+    body.billingCycle === "yearly" ? "yearly" : "monthly";
 
   if (planId !== "free_org" && planId !== "engage" && planId !== "voice") {
     return NextResponse.json(
@@ -35,6 +41,7 @@ export async function POST(request: Request) {
       planId,
       orgId: session.organization.id,
       callbackUrl,
+      billingCycle,
     });
 
     return NextResponse.json(transaction);

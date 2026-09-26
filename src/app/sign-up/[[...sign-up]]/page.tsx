@@ -50,6 +50,8 @@ const PRESET_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
   general: SlidersHorizontal,
 };
 
+type BillingCycle = "monthly" | "yearly";
+
 export default function SignUpPage() {
   const router = useRouter();
   const { isAuthenticated, isLoaded } = useAuth();
@@ -65,9 +67,14 @@ export default function SignUpPage() {
   const [googleAuthEnabled, setGoogleAuthEnabled] = useState(true);
   const [enforcePayment, setEnforcePayment] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanType>("free_org");
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [planPrices, setPlanPrices] = useState({ core: 1000, engage: 5000, voice: 15000 });
 
   const activePreset = getBusinessPreset(businessType);
+
+  const yearlyPrice = (p: number) => p * 10;
+  const displayPrice = (monthly: number) =>
+    billingCycle === "yearly" ? yearlyPrice(monthly) : monthly;
 
   useEffect(() => {
     if (isLoaded && isAuthenticated) {
@@ -76,13 +83,14 @@ export default function SignUpPage() {
   }, [isAuthenticated, isLoaded, router]);
 
   useEffect(() => {
-    // Read ?plan= query param if present
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const urlPlan = params.get("plan");
+      const urlCycle = params.get("cycle");
       if (urlPlan === "voice") setSelectedPlan("voice");
       else if (urlPlan === "engage") setSelectedPlan("engage");
       else if (urlPlan === "core") setSelectedPlan("free_org");
+      if (urlCycle === "yearly") setBillingCycle("yearly");
     }
 
     async function checkPublicSettings() {
@@ -104,6 +112,13 @@ export default function SignUpPage() {
     }
     void checkPublicSettings();
   }, []);
+
+  const currentPrice =
+    selectedPlan === "voice"
+      ? planPrices.voice
+      : selectedPlan === "engage"
+        ? planPrices.engage
+        : planPrices.core;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -133,6 +148,7 @@ export default function SignUpPage() {
           organizationName: formOrg,
           businessType,
           plan: selectedPlan,
+          billingCycle,
         }),
       });
       const data = await res.json();
@@ -141,7 +157,6 @@ export default function SignUpPage() {
         throw new Error(data.error || "Sign up failed");
       }
 
-      // Also trigger NextAuth sign in
       await signIn("credentials", {
         email: formEmail,
         password: formPassword,
@@ -192,22 +207,10 @@ export default function SignUpPage() {
               disabled={googleLoading || loading}
             >
               <svg className="size-4 shrink-0" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
               </svg>
               {googleLoading ? "Connecting to Google..." : "Sign up with Google"}
             </Button>
@@ -326,13 +329,44 @@ export default function SignUpPage() {
           </div>
 
           {enforcePayment && (
-            <div className="space-y-2 pt-1">
+            <div className="space-y-3 pt-1">
+              {/* Plan selector */}
               <div className="flex items-center justify-between">
                 <Label className="text-xs font-semibold text-foreground">Select Subscription Plan</Label>
                 <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
                   Compulsory on signup
                 </span>
               </div>
+
+              {/* Billing cycle toggle */}
+              <div className="inline-flex items-center rounded-md border border-border/70 bg-muted/40 p-0.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setBillingCycle("monthly")}
+                  className={`rounded px-3 py-1.5 font-medium transition-all ${
+                    billingCycle === "monthly"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillingCycle("yearly")}
+                  className={`flex items-center gap-1.5 rounded px-3 py-1.5 font-medium transition-all ${
+                    billingCycle === "yearly"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  Yearly
+                  <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[8px] font-bold text-emerald-700">
+                    2 FREE
+                  </span>
+                </button>
+              </div>
+
               <div className="grid gap-2 sm:grid-cols-3">
                 {[
                   { id: "free_org" as const, name: "Core", price: planPrices.core, desc: "Bookings & public site" },
@@ -340,6 +374,7 @@ export default function SignUpPage() {
                   { id: "voice" as const, name: "Voice", price: planPrices.voice, desc: "Live browser audio" },
                 ].map((p) => {
                   const isSelected = selectedPlan === p.id;
+                  const shown = displayPrice(p.price);
                   return (
                     <button
                       key={p.id}
@@ -356,9 +391,14 @@ export default function SignUpPage() {
                         {isSelected && <Check className="size-3.5 text-primary" />}
                       </div>
                       <span className="font-heading text-sm font-bold text-foreground mt-1">
-                        ₦{p.price.toLocaleString()}
-                        <span className="text-[10px] font-normal text-muted-foreground">/mo</span>
+                        ₦{shown.toLocaleString()}
+                        <span className="text-[10px] font-normal text-muted-foreground">
+                          /{billingCycle === "yearly" ? "yr" : "mo"}
+                        </span>
                       </span>
+                      {billingCycle === "yearly" && (
+                        <span className="text-[9px] text-emerald-700 font-medium">2 months free</span>
+                      )}
                       <span className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{p.desc}</span>
                     </button>
                   );
@@ -371,12 +411,18 @@ export default function SignUpPage() {
             </div>
           )}
 
-          <Button type="submit" className="w-full h-11 text-sm font-medium cursor-pointer" disabled={loading || googleLoading}>
+          <Button
+            type="submit"
+            className="w-full h-11 text-sm font-medium cursor-pointer"
+            disabled={loading || googleLoading}
+          >
             {loading
-              ? enforcePayment ? "Connecting to Paystack..." : "Creating account..."
+              ? enforcePayment
+                ? "Connecting to Paystack..."
+                : "Creating account..."
               : enforcePayment
-              ? `Pay ₦${(selectedPlan === "voice" ? planPrices.voice : selectedPlan === "engage" ? planPrices.engage : planPrices.core).toLocaleString()} with Paystack`
-              : "Create workspace"}
+                ? `Pay ₦${displayPrice(currentPrice).toLocaleString()}/${billingCycle === "yearly" ? "yr" : "mo"} with Paystack`
+                : "Create workspace"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
             Already have an account?{" "}

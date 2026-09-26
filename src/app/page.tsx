@@ -6,7 +6,6 @@ import {
   Bot,
   CalendarDays,
   Check,
-  ChevronRight,
   Headphones,
   MessageSquareText,
   Mic,
@@ -20,6 +19,7 @@ import { Brand } from "@/components/brand";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { WaitlistPage } from "./waitlist-page";
+import { PricingSection } from "./pricing-section";
 
 const moments = [
   {
@@ -98,24 +98,26 @@ export default async function Home() {
   const [session, settings] = await Promise.all([getSession(), getPlatformSettings()]);
   const userId = session?.user.id;
 
-  const symbol = "₦";
   const plans = [
     {
       name: "Core",
-      price: `${symbol}${settings.planPrices.core.toLocaleString()}`,
+      planKey: "free_org" as const,
+      monthlyPrice: settings.planPrices.core,
       copy: "The operational home for a new organization.",
       features: ["Bookings and availability", "Offerings and team", "Custom public page", "WhatsApp notifications"],
     },
     {
       name: "Engage",
-      price: `${symbol}${settings.planPrices.engage.toLocaleString()}`,
+      planKey: "engage" as const,
+      monthlyPrice: settings.planPrices.engage,
       copy: "Give every visitor an AI assistant on the web.",
       features: ["Everything in Core", "Vapi AI web agent", "Conversation history"],
       featured: true,
     },
     {
       name: "Voice",
-      price: `${symbol}${settings.planPrices.voice.toLocaleString()}`,
+      planKey: "voice" as const,
+      monthlyPrice: settings.planPrices.voice,
       copy: "Let clients speak with your AI front desk from any browser.",
       features: ["Everything in Engage", "Live browser audio", "Advanced analytics"],
     },
@@ -158,7 +160,7 @@ export default async function Home() {
               </Button>
             </div>
             <div className="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t pt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-              <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> From ₦5,000/mo</span>
+              <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> From ₦1,000/mo</span>
               <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> Instant setup</span>
               <span className="flex items-center gap-2"><Check className="size-3 text-primary" /> Built on Vapi AI</span>
             </div>
@@ -259,35 +261,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section id="pricing" className="mx-auto max-w-[1400px] px-5 py-24 sm:px-8 lg:px-12 lg:py-32">
-        <div className="mb-12 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <div>
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">Feature-based plans</p>
-            <h2 className="mt-4 font-heading text-5xl font-medium tracking-[-0.05em] sm:text-6xl">Start useful. Add a voice.</h2>
-          </div>
-          <Link href="/pricing" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-            Compare plans <ChevronRight className="size-4" />
-          </Link>
-        </div>
-        <div className="grid border-l border-t lg:grid-cols-3">
-          {plans.map((plan: any) => (
-            <article key={plan.name} className={`relative flex min-h-[430px] flex-col border-b border-r p-7 sm:p-9 ${plan.featured ? "bg-primary text-primary-foreground" : "bg-card"}`}>
-              {plan.featured ? <span className="absolute right-5 top-5 font-mono text-[9px] uppercase tracking-[0.15em] text-primary-foreground/65">Most popular</span> : null}
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-55">{plan.name}</p>
-              <p className="mt-8 font-heading text-6xl font-medium tracking-[-0.06em]">{plan.price}<span className="ml-1 font-sans text-xs font-normal tracking-normal opacity-60">/mo</span></p>
-              <p className="mt-4 max-w-xs text-sm leading-6 opacity-65">{plan.copy}</p>
-              <div className="mt-9 space-y-3 border-t border-current/15 pt-6">
-                {plan.features.map((feature: any) => (
-                  <p key={feature} className="flex items-center gap-2 text-sm"><Check className="size-3.5" /> {feature}</p>
-                ))}
-              </div>
-              <Button asChild variant={plan.featured ? "secondary" : "outline"} className="mt-auto h-11 justify-between rounded-md shadow-none">
-                <Link href="/sign-up">Choose {plan.name}<ArrowRight className="size-4" /></Link>
-              </Button>
-            </article>
-          ))}
-        </div>
-      </section>
+      <PricingSection plans={plans} />
 
       <section className="border-t bg-[#dce6ff]">
         <div className="mx-auto flex max-w-[1400px] flex-col items-start gap-8 px-5 py-20 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:px-12 lg:py-24">

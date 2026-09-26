@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Check, CreditCard, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
+import {
+  Check,
+  CreditCard,
+  ShieldCheck,
+  Sparkles,
+  UsersRound,
+  CalendarDays,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/context";
 import { Badge } from "@/components/ui/badge";
@@ -14,14 +23,15 @@ import { useWorkspace } from "@/components/dashboard/workspace-context";
 
 type PlanPrices = { core: number; engage: number; voice: number };
 type PriceState = { prices: PlanPrices; loaded: boolean };
+type BillingCycle = "monthly" | "yearly";
 
 const PRICE_DEFAULTS: PlanPrices = { core: 1000, engage: 5000, voice: 15000 };
 
 function PriceSkeleton() {
-  return (
-    <span className="inline-block h-5 w-14 animate-pulse rounded bg-muted" />
-  );
+  return <span className="inline-block h-5 w-14 animate-pulse rounded bg-muted" />;
 }
+
+const yearlyPrice = (p: number) => p * 10;
 
 export function BillingScreen() {
   const searchParams = useSearchParams();
@@ -29,12 +39,12 @@ export function BillingScreen() {
   const { has, isLoaded, organization: authOrg, updatePlan } = useAuth();
   const { organization } = useWorkspace();
   const [updating, setUpdating] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [priceState, setPriceState] = useState<PriceState>({
     prices: PRICE_DEFAULTS,
     loaded: false,
   });
 
-  // Load live plan prices — no layout shift because we reserve space via PriceSkeleton
   useEffect(() => {
     fetch("/api/settings/public")
       .then((r) => r.json())
@@ -45,7 +55,6 @@ export function BillingScreen() {
         });
       })
       .catch(() => {
-        // Fall back to defaults silently
         setPriceState((prev) => ({ ...prev, loaded: true }));
       });
   }, []);
@@ -57,12 +66,23 @@ export function BillingScreen() {
   const engagePrice = prices.engage ?? 5000;
   const voicePrice = prices.voice ?? 15000;
 
+  const displayPrice = (p: number) =>
+    billingCycle === "yearly" ? yearlyPrice(p) : p;
+
+  // Subscription expiry info
+  const subscriptionExpiresAt = (organization as any)?.subscriptionExpiresAt;
+  const planStatus = (organization as any)?.planStatus ?? authOrg?.planStatus;
+  const orgBillingCycle = (organization as any)?.billingCycle;
+  const isExpired = planStatus === "expired" || planStatus === "canceled";
+  const daysUntilExpiry = subscriptionExpiresAt
+    ? Math.max(0, Math.ceil((subscriptionExpiresAt - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
+
   const dashboardPlans = [
     {
       id: "free_org" as const,
       name: "Core",
-      price: loaded ? `${sym}${corePrice.toLocaleString()}` : null,
-      subPrice: null as string | null,
+      monthlyPrice: corePrice,
       description: "The operational home for your business with online bookings.",
       features: [
         "Operations hub (Bookings, team, availability)",
@@ -74,8 +94,7 @@ export function BillingScreen() {
     {
       id: "engage" as const,
       name: "Engage",
-      price: loaded ? `${sym}${engagePrice.toLocaleString()}` : null,
-      subPrice: null as string | null,
+      monthlyPrice: engagePrice,
       description: "Add a Vapi AI web assistant to every customer touchpoint.",
       features: [
         "Everything in Core",
@@ -88,8 +107,7 @@ export function BillingScreen() {
     {
       id: "voice" as const,
       name: "Voice",
-      price: loaded ? `${sym}${voicePrice.toLocaleString()}` : null,
-      subPrice: null as string | null,
+      monthlyPrice: voicePrice,
       description: "Add live browser audio to the web assistant and measure every outcome.",
       features: [
         "Everything in Engage",
@@ -107,14 +125,14 @@ export function BillingScreen() {
       : "Core";
 
   const handlePlanSelect = async (planId: "free_org" | "engage" | "voice") => {
-    if (authOrg?.plan === planId) return;
+    if (authOrg?.plan === planId && !isExpired) return;
     setUpdating(planId);
 
     try {
       const res = await fetch("/api/billing/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({ planId, billingCycle }),
       });
       const data = await res.json();
 
@@ -143,6 +161,35 @@ export function BillingScreen() {
         </div>
       )}
 
+      {/* Expiry / renewal alert */}
+      {isExpired && (
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4 rounded-xl border border-rose-300/80 bg-rose-50/90 p-4 shadow-sm text-rose-950">
+          <AlertCircle className="size-5 text-rose-600 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold">Subscription Expired</p>
+            <p className="text-xs text-rose-700/90 mt-0.5">
+              Your workspace subscription has expired. Public features and AI capabilities are paused.
+              Choose a plan below to renew.
+            </p>
+          </div>
+          <Badge variant="outline" className="border-rose-300 text-rose-700 shrink-0">
+            {planStatus === "canceled" ? "Canceled" : "Expired"}
+          </Badge>
+        </div>
+      )}
+
+      {!isExpired && daysUntilExpiry !== null && daysUntilExpiry <= 7 && (
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-amber-300/80 bg-amber-50/80 p-4 text-amber-900">
+          <CalendarDays className="size-4 shrink-0 text-amber-600" />
+          <p className="text-xs font-medium">
+            Your subscription renews in <strong>{daysUntilExpiry} day{daysUntilExpiry !== 1 ? "s" : ""}</strong>.
+            {(organization as any)?.paystack?.authorizationCode
+              ? " Your saved card will be charged automatically."
+              : " Make sure to renew manually before it expires."}
+          </p>
+        </div>
+      )}
+
       <section className="grid gap-4 md:grid-cols-[minmax(18rem,0.8fr)_minmax(0,1.2fr)]">
         <Card className="bg-[#20201e] text-white ring-black/15">
           <CardContent className="flex h-full flex-col justify-between pt-0">
@@ -151,8 +198,15 @@ export function BillingScreen() {
                 <span className="grid size-9 place-items-center rounded-lg bg-white/10">
                   <CreditCard className="size-4 text-primary" />
                 </span>
-                <Badge variant="outline" className="border-white/15 bg-white/5 text-white">
-                  Active (Paystack)
+                <Badge
+                  variant="outline"
+                  className={`border-white/15 bg-white/5 text-white ${isExpired ? "border-rose-500/40 text-rose-400" : ""}`}
+                >
+                  {isExpired
+                    ? "Expired"
+                    : planStatus === "trialing"
+                      ? "Trial"
+                      : `Active · ${orgBillingCycle === "yearly" ? "Yearly" : "Monthly"}`}
                 </Badge>
               </div>
               <p className="mt-8 text-[10px] font-semibold tracking-[0.16em] text-white/45 uppercase">
@@ -161,6 +215,16 @@ export function BillingScreen() {
               <p className="mt-1 font-heading text-4xl font-semibold tracking-[-0.045em]">
                 {isLoaded ? currentTier : "—"}
               </p>
+              {subscriptionExpiresAt && (
+                <p className="mt-2 text-xs text-white/45">
+                  {isExpired ? "Expired" : "Renews"}{" "}
+                  {new Date(subscriptionExpiresAt).toLocaleDateString("en-NG", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </p>
+              )}
               <p className="mt-3 text-xs leading-5 text-white/50">
                 Feature access is verified securely on every session.
               </p>
@@ -168,6 +232,9 @@ export function BillingScreen() {
             <div className="mt-8 space-y-2 border-t border-white/10 pt-4 text-[11px] text-white/60">
               <p className="flex items-center gap-2">
                 <ShieldCheck className="size-3.5 text-emerald-400" /> Paystack Secured Billing
+              </p>
+              <p className="flex items-center gap-2">
+                <RefreshCw className="size-3.5 text-sky-400" /> Auto-renewal with saved card
               </p>
               <p className="flex items-center gap-2">
                 <UsersRound className="size-3.5 text-sky-400" /> Real-time feature entitlements
@@ -182,25 +249,59 @@ export function BillingScreen() {
       </section>
 
       <section className="mt-8">
-        <div className="mb-4 flex items-end justify-between gap-4">
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[10px] font-semibold tracking-[0.16em] text-primary uppercase">
-              Compare plans
+              {isExpired ? "Renew subscription" : "Compare plans"}
             </p>
             <h2 className="mt-1 font-heading text-2xl font-semibold tracking-[-0.025em]">
-              Choose the channels you need.
+              {isExpired ? "Choose a plan to reactivate." : "Choose the channels you need."}
             </h2>
           </div>
-          <span className="hidden items-center gap-1.5 text-[11px] text-muted-foreground sm:inline-flex">
-            <Check className="size-3.5" /> Paystack Instant Checkout
-          </span>
+
+          {/* Billing cycle toggle */}
+          <div className="flex flex-col items-start gap-1.5 sm:items-end">
+            <div className="inline-flex items-center rounded-lg border border-border/70 bg-muted/40 p-1">
+              <button
+                onClick={() => setBillingCycle("monthly")}
+                className={`rounded-md px-3.5 py-1.5 text-xs font-medium transition-all ${
+                  billingCycle === "monthly"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingCycle("yearly")}
+                className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium transition-all ${
+                  billingCycle === "yearly"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Yearly
+                <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[8px] font-bold text-emerald-700">
+                  2 FREE
+                </span>
+              </button>
+            </div>
+            <span className="hidden items-center gap-1.5 text-[11px] text-muted-foreground sm:inline-flex">
+              <Check className="size-3.5" /> Paystack Instant Checkout
+            </span>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
           {dashboardPlans.map((plan) => {
             const isCurrent =
-              authOrg?.plan === plan.id ||
-              (!authOrg?.plan && plan.id === "free_org");
+              (authOrg?.plan === plan.id || (!authOrg?.plan && plan.id === "free_org")) &&
+              !isExpired;
+            const shownPrice = loaded ? displayPrice(plan.monthlyPrice) : null;
+            const priceLabel = shownPrice !== null
+              ? `${sym}${shownPrice.toLocaleString()}`
+              : null;
+
             return (
               <div
                 key={plan.id}
@@ -208,7 +309,7 @@ export function BillingScreen() {
                   plan.featured
                     ? "border-primary/50 bg-primary/5 shadow-sm"
                     : "bg-white"
-                }`}
+                } ${isExpired ? "ring-1 ring-rose-200" : ""}`}
               >
                 <div>
                   <div className="flex items-center justify-between">
@@ -220,14 +321,21 @@ export function BillingScreen() {
                         Current plan
                       </Badge>
                     )}
+                    {isExpired && authOrg?.plan === plan.id && (
+                      <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100">
+                        Expired
+                      </Badge>
+                    )}
                   </div>
                   <p className="mt-4 font-heading text-4xl font-semibold">
-                    {plan.price ?? <PriceSkeleton />}
-                    <span className="text-xs font-normal text-muted-foreground">/mo</span>
+                    {priceLabel ?? <PriceSkeleton />}
+                    <span className="text-xs font-normal text-muted-foreground">
+                      /{billingCycle === "yearly" ? "yr" : "mo"}
+                    </span>
                   </p>
-                  {plan.subPrice && (
-                    <p className="mt-1 text-[11px] font-medium text-emerald-700">
-                      {plan.subPrice}
+                  {billingCycle === "yearly" && shownPrice && (
+                    <p className="mt-0.5 text-[11px] font-medium text-emerald-700">
+                      Save {sym}{(plan.monthlyPrice * 2).toLocaleString()} vs monthly
                     </p>
                   )}
                   <p className="mt-2 text-xs text-muted-foreground">{plan.description}</p>
@@ -241,7 +349,15 @@ export function BillingScreen() {
                 </div>
                 <Button
                   className="mt-8 w-full"
-                  variant={isCurrent ? "outline" : plan.featured ? "default" : "secondary"}
+                  variant={
+                    isExpired && authOrg?.plan === plan.id
+                      ? "default"
+                      : isCurrent
+                        ? "outline"
+                        : plan.featured
+                          ? "default"
+                          : "secondary"
+                  }
                   disabled={isCurrent || updating !== null || !loaded}
                   onClick={() => handlePlanSelect(plan.id)}
                 >
@@ -249,9 +365,11 @@ export function BillingScreen() {
                     ? "Connecting to Paystack..."
                     : isCurrent
                       ? "Current Plan"
-                      : plan.price
-                        ? `Pay with Paystack (${plan.price}/mo)`
-                        : "Loading..."}
+                      : isExpired && authOrg?.plan === plan.id
+                        ? `Renew (${priceLabel}/${billingCycle === "yearly" ? "yr" : "mo"})`
+                        : priceLabel
+                          ? `Pay ${priceLabel}/${billingCycle === "yearly" ? "yr" : "mo"}`
+                          : "Loading..."}
                 </Button>
               </div>
             );
@@ -261,6 +379,7 @@ export function BillingScreen() {
 
       <div className="mt-6 flex items-start gap-2 rounded-lg border border-black/10 bg-white p-3 text-[11px] leading-5 text-muted-foreground">
         <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" />
+        Yearly billing gives you 2 months free (10× monthly rate). Auto-renewal charges your saved card before expiry.
         Qwilo gates capabilities by real-time feature entitlement, backed by secure payment verification.
       </div>
     </>

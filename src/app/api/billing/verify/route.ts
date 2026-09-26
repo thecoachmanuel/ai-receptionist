@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { updateOrgPlanFromPaystack, verifyPaystackTransaction } from "@/lib/paystack";
+import type { BillingCycle } from "@/lib/db/types";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -14,13 +15,25 @@ export async function GET(request: Request) {
     const data = await verifyPaystackTransaction(reference);
 
     if (data.status === "success" && data.metadata?.orgId && data.metadata?.planId) {
-      await updateOrgPlanFromPaystack(data.metadata.orgId, data.metadata.planId, {
-        reference: data.reference,
-        amount: data.amount,
-        currency: data.currency,
-        paidAt: data.paid_at,
-        customerCode: data.customer.customer_code,
-      });
+      const billingCycle: BillingCycle =
+        data.metadata.billingCycle === "yearly" ? "yearly" : "monthly";
+
+      await updateOrgPlanFromPaystack(
+        data.metadata.orgId,
+        data.metadata.planId,
+        {
+          reference: data.reference,
+          amount: data.amount,
+          currency: data.currency,
+          paidAt: data.paid_at,
+          customerCode: data.customer.customer_code,
+          authorizationCode: data.authorization?.authorization_code,
+          cardBrand: data.authorization?.brand,
+          cardLast4: data.authorization?.last4,
+          reusable: data.authorization?.reusable,
+        },
+        billingCycle,
+      );
 
       const targetSlug = orgSlug || data.metadata.orgId;
       return NextResponse.redirect(
