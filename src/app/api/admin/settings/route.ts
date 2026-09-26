@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
       },
       vapi: settings.vapi,
       whatsappGateway: settings.whatsappGateway,
+      saasWhatsapp: settings.saasWhatsapp,
     });
   } catch (err) {
     return NextResponse.json({ error: "Failed to fetch admin settings" }, { status: 500 });
@@ -79,6 +80,15 @@ export async function PATCH(request: NextRequest) {
         enabled: typeof body.whatsappGateway.enabled === "boolean" ? body.whatsappGateway.enabled : (current.whatsappGateway?.enabled ?? true),
         serverUrl: typeof body.whatsappGateway.serverUrl === "string" ? body.whatsappGateway.serverUrl.trim() : (current.whatsappGateway?.serverUrl ?? ""),
         apiKey: typeof body.whatsappGateway.apiKey === "string" ? body.whatsappGateway.apiKey.trim() : (current.whatsappGateway?.apiKey ?? ""),
+      };
+    }
+
+    // ── SaaS Platform WhatsApp Settings ─────────────────────
+    if (body.saasWhatsapp && typeof body.saasWhatsapp === "object") {
+      const current = await getSystemSettings();
+      updates.saasWhatsapp = {
+        ...(current.saasWhatsapp || {}),
+        ...body.saasWhatsapp,
       };
     }
 

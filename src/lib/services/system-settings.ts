@@ -27,11 +27,57 @@ export interface SystemSettings {
     serverUrl: string;
     apiKey: string;
   };
+  saasWhatsapp?: SaasWhatsappSettings;
   updatedAt: number;
   updatedBy?: string;
 }
 
+export interface SaasWhatsappSettings {
+  enabled: boolean;
+  status: "disconnected" | "connecting" | "connected";
+  phone: string;
+  instanceName: string;
+  qrCode?: string | null;
+  connectedAt?: number | null;
+  welcomeOnWaUpload: boolean;
+  welcomeTemplate: string;
+  subscriptionExpiryAlert: boolean;
+  expiryWarningDays: number;
+  expiryAlertTemplate: string;
+  subscriptionRenewedAlert: boolean;
+  renewedTemplate: string;
+}
+
 const SETTINGS_DOC_ID = "global_system_settings";
+
+const DEFAULT_WELCOME_TEMPLATE = `🎉 *Welcome to Qwilo!*
+
+Hello *{businessName}*, your business WhatsApp number (*{phone}*) has been linked to Qwilo.
+
+Your clients will now automatically receive instant booking confirmations, invoices, and reminders directly from your business.
+
+If you ever need help or support, simply reply to this message!
+— The Qwilo Team`;
+
+const DEFAULT_EXPIRY_TEMPLATE = `⚠️ *Qwilo Subscription Expiry Notice*
+
+Hello *{businessName}*,
+
+Your Qwilo *{planName}* subscription is expiring in *{daysLeft} day(s)* on *{expiryDate}*.
+
+To keep your AI receptionist and automated booking workflows active without interruption, please renew now:
+👉 {renewUrl}
+
+Thank you for choosing Qwilo!`;
+
+const DEFAULT_RENEWED_TEMPLATE = `✅ *Qwilo Subscription Renewed!*
+
+Hello *{businessName}*,
+
+Your Qwilo *{planName}* subscription has been successfully renewed until *{expiryDate}*.
+
+All your automated bookings, AI reception, and WhatsApp notifications remain fully active.
+Thank you for your business!`;
 
 const DEFAULTS: SystemSettings = {
   googleAuthEnabled: true,
@@ -54,6 +100,21 @@ const DEFAULTS: SystemSettings = {
     serverUrl: process.env.WHATSAPP_GATEWAY_URL || process.env.WAHA_SERVER_URL || "https://nectar-58qj.onrender.com",
     apiKey: process.env.WHATSAPP_GATEWAY_API_KEY || process.env.WAHA_API_KEY || "",
   },
+  saasWhatsapp: {
+    enabled: true,
+    status: "disconnected",
+    phone: "+2348168882014",
+    instanceName: "saas_platform",
+    qrCode: null,
+    connectedAt: null,
+    welcomeOnWaUpload: true,
+    welcomeTemplate: DEFAULT_WELCOME_TEMPLATE,
+    subscriptionExpiryAlert: true,
+    expiryWarningDays: 3,
+    expiryAlertTemplate: DEFAULT_EXPIRY_TEMPLATE,
+    subscriptionRenewedAlert: true,
+    renewedTemplate: DEFAULT_RENEWED_TEMPLATE,
+  },
   updatedAt: Date.now(),
 };
 
@@ -68,14 +129,16 @@ export async function getSystemSettings(): Promise<SystemSettings> {
     const rawEngage = doc.planPrices?.engage;
     const rawVoice = doc.planPrices?.voice;
 
+    const saasWa = doc.saasWhatsapp || {};
+
     return {
       googleAuthEnabled: doc.googleAuthEnabled !== false,
       enforcePaymentOnSignup: doc.enforcePaymentOnSignup === true,
       trialDays: typeof doc.trialDays === "number" ? doc.trialDays : 14,
       planPrices: {
-        core: typeof rawCore === "number" && rawCore > 0 ? rawCore : 5000,
-        engage: typeof rawEngage === "number" && rawEngage > 1000 ? rawEngage : 25000,
-        voice: typeof rawVoice === "number" && rawVoice > 1000 ? rawVoice : 75000,
+        core: typeof rawCore === "number" && rawCore > 0 ? rawCore : 1000,
+        engage: typeof rawEngage === "number" && rawEngage > 1000 ? rawEngage : 5000,
+        voice: typeof rawVoice === "number" && rawVoice > 1000 ? rawVoice : 15000,
       },
       usdToNgnRate: doc.usdToNgnRate ?? 1500,
       baseCurrency: doc.baseCurrency ?? "NGN",
@@ -92,6 +155,21 @@ export async function getSystemSettings(): Promise<SystemSettings> {
         enabled: doc.whatsappGateway?.enabled ?? DEFAULTS.whatsappGateway!.enabled,
         serverUrl: doc.whatsappGateway?.serverUrl || DEFAULTS.whatsappGateway!.serverUrl,
         apiKey: doc.whatsappGateway?.apiKey || DEFAULTS.whatsappGateway!.apiKey,
+      },
+      saasWhatsapp: {
+        enabled: saasWa.enabled !== false,
+        status: saasWa.status || "disconnected",
+        phone: saasWa.phone || DEFAULTS.saasWhatsapp!.phone,
+        instanceName: saasWa.instanceName || "saas_platform",
+        qrCode: saasWa.qrCode || null,
+        connectedAt: saasWa.connectedAt || null,
+        welcomeOnWaUpload: saasWa.welcomeOnWaUpload !== false,
+        welcomeTemplate: saasWa.welcomeTemplate || DEFAULT_WELCOME_TEMPLATE,
+        subscriptionExpiryAlert: saasWa.subscriptionExpiryAlert !== false,
+        expiryWarningDays: typeof saasWa.expiryWarningDays === "number" ? saasWa.expiryWarningDays : 3,
+        expiryAlertTemplate: saasWa.expiryAlertTemplate || DEFAULT_EXPIRY_TEMPLATE,
+        subscriptionRenewedAlert: saasWa.subscriptionRenewedAlert !== false,
+        renewedTemplate: saasWa.renewedTemplate || DEFAULT_RENEWED_TEMPLATE,
       },
       updatedAt: doc.updatedAt || Date.now(),
       updatedBy: doc.updatedBy,
@@ -125,6 +203,10 @@ export async function updateSystemSettings(
     whatsappGateway: updates.whatsappGateway
       ? { ...(current.whatsappGateway || {}), ...updates.whatsappGateway } as any
       : current.whatsappGateway,
+    // Merge nested saasWhatsapp object
+    saasWhatsapp: updates.saasWhatsapp
+      ? { ...(current.saasWhatsapp || {}), ...updates.saasWhatsapp } as any
+      : current.saasWhatsapp,
     updatedAt: now,
     updatedBy: userId || current.updatedBy,
   };

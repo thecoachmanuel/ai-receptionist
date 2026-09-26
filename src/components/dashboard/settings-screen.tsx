@@ -486,6 +486,19 @@ function WhatsAppSettingsCard({
       };
       await updateDraft({ siteSlug: publicSite.site.siteSlug, config: updatedConfig });
       await publish({ siteSlug: publicSite.site.siteSlug, config: updatedConfig });
+
+      if (targetPhone.trim()) {
+        await fetch("/api/whatsapp/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "save_number",
+            phone: targetPhone.trim(),
+            orgSlug: organization.slug,
+          }),
+        }).catch(() => null);
+      }
+
       toast.success("Free WhatsApp & AI notification settings saved & published!");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to save WhatsApp settings");

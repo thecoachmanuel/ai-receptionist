@@ -7,6 +7,7 @@ import {
   AlertCircle,
   ArrowUpRight,
   Banknote,
+  Bell,
   Bot,
   Building2,
   CalendarClock,
@@ -24,14 +25,17 @@ import {
   LayoutDashboard,
   LoaderCircle,
   LogOut,
+  Megaphone,
   Menu,
   MessageSquare,
   Minus,
   Plus,
   QrCode,
+  Radio,
   RefreshCw,
   Save,
   Search,
+  Send,
   Settings2,
   ShieldAlert,
   ShieldCheck,
@@ -80,6 +84,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
 import { Brand } from "@/components/brand";
 
 /* ─────────────────────────────────────────────
@@ -160,7 +165,7 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ElementType; badge?: stri
   { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
   { id: "pricing", label: "Pricing", icon: Receipt },
   { id: "ai_engine", label: "AI & Engine", icon: Bot },
-  { id: "whatsapp", label: "WhatsApp Gateway", icon: MessageSquare },
+  { id: "whatsapp", label: "SaaS WhatsApp & Gateway", icon: MessageSquare },
   { id: "messages", label: "Messages", icon: ClipboardList },
   { id: "waitlist", label: "Waitlist", icon: UsersRound },
   { id: "settings", label: "Settings", icon: Settings2 },
@@ -379,6 +384,34 @@ export function SuperAdminScreen() {
   const [savingWaGateway, setSavingWaGateway] = useState(false);
   const [testingWaGateway, setTestingWaGateway] = useState(false);
 
+  // SaaS WhatsApp Platform Link & Broadcast state
+  const [saasWaStatus, setSaasWaStatus] = useState<"disconnected" | "connecting" | "connected">("disconnected");
+  const [saasWaPhone, setSaasWaPhone] = useState<string>("+2348168882014");
+  const [saasWaQrCode, setSaasWaQrCode] = useState<string | null>(null);
+  const [loadingSaasWa, setLoadingSaasWa] = useState<boolean>(false);
+  const [saasWelcomeOnUpload, setSaasWelcomeOnUpload] = useState<boolean>(true);
+  const [saasWelcomeTemplate, setSaasWelcomeTemplate] = useState<string>(
+    "🎉 *Welcome to Qwilo!*\n\nHello *{businessName}*, your business WhatsApp number (*{phone}*) has been linked to Qwilo.\n\nYour clients will now automatically receive instant booking confirmations, invoices, and reminders directly from your business.\n\nIf you ever need help or support, simply reply to this message!\n— The Qwilo Team"
+  );
+  const [saasExpiryAlert, setSaasExpiryAlert] = useState<boolean>(true);
+  const [saasExpiryDays, setSaasExpiryDays] = useState<number>(3);
+  const [saasExpiryTemplate, setSaasExpiryTemplate] = useState<string>(
+    "⚠️ *Qwilo Subscription Expiry Notice*\n\nHello *{businessName}*,\n\nYour Qwilo *{planName}* subscription is expiring in *{daysLeft} day(s)* on *{expiryDate}*.\n\nTo keep your AI receptionist and automated booking workflows active without interruption, please renew now:\n👉 {renewUrl}\n\nThank you for choosing Qwilo!"
+  );
+  const [saasRenewedAlert, setSaasRenewedAlert] = useState<boolean>(true);
+  const [saasRenewedTemplate, setSaasRenewedTemplate] = useState<string>(
+    "✅ *Qwilo Subscription Renewed!*\n\nHello *{businessName}*,\n\nYour Qwilo *{planName}* subscription has been successfully renewed until *{expiryDate}*.\n\nAll your automated bookings, AI reception, and WhatsApp notifications remain fully active.\nThank you for your business!"
+  );
+  const [savingSaasSettings, setSavingSaasSettings] = useState<boolean>(false);
+  const [broadcastMessage, setBroadcastMessage] = useState<string>("");
+  const [broadcastAudience, setBroadcastAudience] = useState<"all" | "active" | "expiring" | "expired">("all");
+  const [sendingBroadcast, setSendingBroadcast] = useState<boolean>(false);
+  const [broadcastHistory, setBroadcastHistory] = useState<any[]>([]);
+  const [broadcastStats, setBroadcastStats] = useState<{ totalTenants: number; tenantsWithPhone: number }>({
+    totalTenants: 0,
+    tenantsWithPhone: 0,
+  });
+
   // Messages state
   const [messages, setMessages] = useState<any[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -453,6 +486,18 @@ export function SuperAdminScreen() {
           setWaGatewayUrl(data.whatsappGateway.serverUrl || "http://localhost:3000");
           setWaGatewayApiKey(data.whatsappGateway.apiKey || "");
         }
+        if (data.saasWhatsapp) {
+          setSaasWaStatus(data.saasWhatsapp.status || "disconnected");
+          setSaasWaPhone(data.saasWhatsapp.phone || "+2348168882014");
+          if (data.saasWhatsapp.qrCode) setSaasWaQrCode(data.saasWhatsapp.qrCode);
+          if (typeof data.saasWhatsapp.welcomeOnWaUpload === "boolean") setSaasWelcomeOnUpload(data.saasWhatsapp.welcomeOnWaUpload);
+          if (data.saasWhatsapp.welcomeTemplate) setSaasWelcomeTemplate(data.saasWhatsapp.welcomeTemplate);
+          if (typeof data.saasWhatsapp.subscriptionExpiryAlert === "boolean") setSaasExpiryAlert(data.saasWhatsapp.subscriptionExpiryAlert);
+          if (typeof data.saasWhatsapp.expiryWarningDays === "number") setSaasExpiryDays(data.saasWhatsapp.expiryWarningDays);
+          if (data.saasWhatsapp.expiryAlertTemplate) setSaasExpiryTemplate(data.saasWhatsapp.expiryAlertTemplate);
+          if (typeof data.saasWhatsapp.subscriptionRenewedAlert === "boolean") setSaasRenewedAlert(data.saasWhatsapp.subscriptionRenewedAlert);
+          if (data.saasWhatsapp.renewedTemplate) setSaasRenewedTemplate(data.saasWhatsapp.renewedTemplate);
+        }
         const aiSettings = data.vapi || data.elevenlabs;
         if (aiSettings) {
           setVapiPublicKey(aiSettings.vapiPublicKey || "");
@@ -463,6 +508,54 @@ export function SuperAdminScreen() {
       })
       .catch(() => setPricesLoaded(true));
   }, []);
+
+  const fetchSaasWaState = async () => {
+    try {
+      const res = await fetch("/api/admin/whatsapp/session");
+      if (res.ok) {
+        const data = await res.json();
+        setSaasWaStatus(data.status || "disconnected");
+        if (data.phone) setSaasWaPhone(data.phone);
+        if (data.qrCode) setSaasWaQrCode(data.qrCode);
+        if (data.settings) {
+          if (typeof data.settings.welcomeOnWaUpload === "boolean") setSaasWelcomeOnUpload(data.settings.welcomeOnWaUpload);
+          if (data.settings.welcomeTemplate) setSaasWelcomeTemplate(data.settings.welcomeTemplate);
+          if (typeof data.settings.subscriptionExpiryAlert === "boolean") setSaasExpiryAlert(data.settings.subscriptionExpiryAlert);
+          if (typeof data.settings.expiryWarningDays === "number") setSaasExpiryDays(data.settings.expiryWarningDays);
+          if (data.settings.expiryAlertTemplate) setSaasExpiryTemplate(data.settings.expiryAlertTemplate);
+          if (typeof data.settings.subscriptionRenewedAlert === "boolean") setSaasRenewedAlert(data.settings.subscriptionRenewedAlert);
+          if (data.settings.renewedTemplate) setSaasRenewedTemplate(data.settings.renewedTemplate);
+        }
+      }
+    } catch (_) {}
+  };
+
+  const fetchBroadcastData = async () => {
+    try {
+      const res = await fetch("/api/admin/whatsapp/broadcast");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.broadcasts) setBroadcastHistory(data.broadcasts);
+        if (data.stats) setBroadcastStats(data.stats);
+      }
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    if (activeTab === "whatsapp") {
+      fetchSaasWaState();
+      fetchBroadcastData();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "whatsapp" && saasWaStatus === "connecting") {
+      const timer = setInterval(() => {
+        fetchSaasWaState();
+      }, 4000);
+      return () => clearInterval(timer);
+    }
+  }, [activeTab, saasWaStatus]);
 
   /* ── Handlers ─────────────────────────────── */
   const handleMarkAsRead = async (id: string, currentStatus: string) => {
@@ -688,6 +781,103 @@ export function SuperAdminScreen() {
       toast.error("Could not reach WhatsApp Gateway. Ensure Docker container is running.");
     } finally {
       setTestingWaGateway(false);
+    }
+  };
+
+  const handleStartSaasSession = async () => {
+    setLoadingSaasWa(true);
+    try {
+      const res = await fetch("/api/admin/whatsapp/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to start SaaS WhatsApp session");
+      setSaasWaStatus("connecting");
+      if (data.qrCode) setSaasWaQrCode(data.qrCode);
+      toast.info("SaaS WhatsApp QR Code generated! Open WhatsApp on phone -> Linked Devices to scan.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to initiate session");
+    } finally {
+      setLoadingSaasWa(false);
+    }
+  };
+
+  const handleDisconnectSaasSession = async () => {
+    setLoadingSaasWa(true);
+    try {
+      const res = await fetch("/api/admin/whatsapp/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "disconnect" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to disconnect SaaS WhatsApp");
+      setSaasWaStatus("disconnected");
+      setSaasWaQrCode(null);
+      toast.success("SaaS WhatsApp disconnected.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to disconnect session");
+    } finally {
+      setLoadingSaasWa(false);
+    }
+  };
+
+  const handleSaveSaasSettings = async () => {
+    setSavingSaasSettings(true);
+    try {
+      const res = await fetch("/api/admin/whatsapp/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_settings",
+          settings: {
+            phone: saasWaPhone.trim(),
+            welcomeOnWaUpload: saasWelcomeOnUpload,
+            welcomeTemplate: saasWelcomeTemplate,
+            subscriptionExpiryAlert: saasExpiryAlert,
+            expiryWarningDays: saasExpiryDays,
+            expiryAlertTemplate: saasExpiryTemplate,
+            subscriptionRenewedAlert: saasRenewedAlert,
+            renewedTemplate: saasRenewedTemplate,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save settings");
+      toast.success("SaaS WhatsApp automation settings saved!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save settings");
+    } finally {
+      setSavingSaasSettings(false);
+    }
+  };
+
+  const handleSendBroadcast = async () => {
+    if (!broadcastMessage.trim()) {
+      toast.error("Please enter a message to broadcast.");
+      return;
+    }
+    setSendingBroadcast(true);
+    try {
+      const res = await fetch("/api/admin/whatsapp/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: broadcastMessage.trim(),
+          targetAudience: broadcastAudience,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send broadcast");
+      toast.success(data.message || `Broadcast dispatched!`);
+      setBroadcastMessage("");
+      fetchBroadcastData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Broadcast failed");
+    } finally {
+      setSendingBroadcast(false);
     }
   };
 
@@ -1474,55 +1664,591 @@ export function SuperAdminScreen() {
               </div>
             )}
 
-            {/* ───── WHATSAPP GATEWAY ───── */}
+            {/* ───── SAAS WHATSAPP & GATEWAY ───── */}
             {activeTab === "whatsapp" && (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <SectionHeader
-                  title="WhatsApp Automation Gateway"
-                  description="Configure the platform-wide Free WhatsApp Gateway (WAHA) so tenant businesses can link their WhatsApp number via QR code with zero Meta API fees (100% Free)."
+                  title="SaaS WhatsApp & Central Gateway"
+                  description="Link the platform's central WhatsApp line to send automated updates (welcome notices when businesses link WhatsApp, subscription expiry warnings, and renewal confirmations) and broadcast platform-wide announcements."
                 />
 
-                {/* Architecture Banner */}
-                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-50/50 p-5 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="size-5 text-emerald-700" />
-                    <h3 className="text-sm font-bold text-emerald-950">
-                      100% Free Self-Hosted WhatsApp Architecture
-                    </h3>
-                  </div>
-                  <p className="text-xs leading-5 text-emerald-900/80">
-                    Unlike Meta Cloud API (which charges per conversation) or Twilio, this system connects directly to the WhatsApp Multi-Device Web protocol using open-source <strong>WAHA (WhatsApp HTTP API)</strong>. Each tenant simply scans their QR code in their dashboard settings, and messages are dispatched directly from their phone number.
-                  </p>
-                  <div className="rounded-xl bg-white border border-emerald-200 p-3 space-y-1.5 font-mono text-[11px]">
-                    <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-muted-foreground block">
-                      Quick Docker Setup Command
-                    </span>
-                    <div className="text-foreground select-all bg-muted/40 p-2 rounded">
-                      docker run -d -p 3000:3000/tcp --name waha devlikeapro/waha
+                {/* ── CARD 1: OFFICIAL SAAS WHATSAPP DEVICE LINK ── */}
+                <div className="rounded-2xl border border-emerald-500/25 bg-gradient-to-b from-emerald-50/40 via-white to-white p-6 shadow-sm space-y-6">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                        <Smartphone className="size-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-heading text-base font-bold text-foreground">
+                          Qwilo Official SaaS WhatsApp Number
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          Official central account used to send system alerts, welcomes, and broadcasts to tenant businesses.
+                        </p>
+                      </div>
                     </div>
+
+                    <div className="flex items-center gap-2">
+                      {saasWaStatus === "connected" ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900">
+                          <CheckCircle2 className="size-3.5 text-emerald-600" />
+                          Connected & Active
+                        </span>
+                      ) : saasWaStatus === "connecting" ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
+                          <LoaderCircle className="size-3.5 animate-spin text-amber-600" />
+                          Waiting for Scan
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                          <AlertCircle className="size-3.5 text-slate-500" />
+                          Disconnected
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Connected State */}
+                  {saasWaStatus === "connected" && (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+                          Linked Platform Phone
+                        </span>
+                        <div className="text-xl font-mono font-bold text-emerald-950">
+                          {saasWaPhone || "+234 816 888 2014"}
+                        </div>
+                        <p className="text-xs text-emerald-900/80">
+                          Central WhatsApp session is open and active. Messages dispatch automatically via gateway.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={fetchSaasWaState}
+                          className="h-8 text-xs gap-1.5 bg-white"
+                        >
+                          <RefreshCw className="size-3.5" />
+                          Refresh Status
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={handleDisconnectSaasSession}
+                          disabled={loadingSaasWa}
+                          className="h-8 text-xs gap-1.5"
+                        >
+                          {loadingSaasWa ? <LoaderCircle className="size-3.5 animate-spin" /> : <LogOut className="size-3.5" />}
+                          Disconnect Line
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Connecting / QR Code State */}
+                  {saasWaStatus === "connecting" && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-5 space-y-4">
+                      <div className="text-center space-y-1">
+                        <h4 className="text-sm font-bold text-amber-950">
+                          Scan QR Code to Link Official SaaS WhatsApp
+                        </h4>
+                        <p className="text-xs text-amber-900/80">
+                          Open WhatsApp on your SaaS device, tap Settings or Menu &gt; Linked Devices &gt; Link a Device, and scan below.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center p-3">
+                        {saasWaQrCode ? (
+                          <div className="rounded-2xl border-2 border-emerald-500/30 bg-white p-3 shadow-md">
+                            <img
+                              src={
+                                saasWaQrCode.startsWith("data:") || saasWaQrCode.startsWith("http")
+                                  ? saasWaQrCode
+                                  : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(saasWaQrCode)}`
+                              }
+                              alt="SaaS WhatsApp QR Code"
+                              className="size-48 object-contain rounded-lg"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex size-48 flex-col items-center justify-center rounded-2xl border border-dashed border-muted-foreground/30 bg-white">
+                            <LoaderCircle className="size-8 animate-spin text-emerald-600" />
+                            <span className="mt-2 text-xs text-muted-foreground">Generating QR code…</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-center gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={fetchSaasWaState}
+                          className="text-xs gap-1.5 bg-white"
+                        >
+                          <RefreshCw className="size-3.5" />
+                          Check If Paired
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleDisconnectSaasSession}
+                          className="text-xs text-muted-foreground"
+                        >
+                          Cancel Pairing
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Disconnected State */}
+                  {saasWaStatus === "disconnected" && (
+                    <div className="space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border bg-muted/20 p-4">
+                        <div className="space-y-1">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                            QR Code Device Pairing (Recommended)
+                          </h4>
+                          <p className="text-xs text-muted-foreground">
+                            Connect your official business WhatsApp phone line in 10 seconds via WhatsApp Web pairing.
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={handleStartSaasSession}
+                          disabled={loadingSaasWa}
+                          className="bg-emerald-600 text-white hover:bg-emerald-700 h-9 text-xs gap-2 shrink-0"
+                        >
+                          {loadingSaasWa ? (
+                            <LoaderCircle className="size-4 animate-spin" />
+                          ) : (
+                            <QrCode className="size-4" />
+                          )}
+                          Scan QR Code to Link SaaS Line
+                        </Button>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="saas-wa-phone" className="text-xs font-semibold">
+                          Platform WhatsApp Number (Fallback / Display)
+                        </Label>
+                        <div className="flex max-w-md gap-2">
+                          <Input
+                            id="saas-wa-phone"
+                            placeholder="+234 816 888 2014"
+                            value={saasWaPhone}
+                            onChange={(e) => setSaasWaPhone(e.target.value)}
+                            className="font-mono text-xs"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleSaveSaasSettings}
+                            disabled={savingSaasSettings}
+                            className="text-xs shrink-0"
+                          >
+                            Save Phone
+                          </Button>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          Shown on public pages and used as the official fallback sender identity.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── CARD 2: AUTOMATED TENANT BUSINESS WHATSAPP NOTIFICATIONS ── */}
+                <div className="rounded-2xl border bg-white p-6 shadow-sm space-y-6">
+                  <div>
+                    <h3 className="font-heading text-base font-bold text-foreground flex items-center gap-2">
+                      <Bell className="size-4 text-emerald-600" />
+                      Automated Tenant Business Updates
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Configure automated messages sent from the SaaS WhatsApp number to tenant businesses upon lifecycle triggers.
+                    </p>
+                  </div>
+
+                  <div className="space-y-6 divide-y divide-border/60">
+                    {/* Trigger 1: Welcome on WhatsApp Upload */}
+                    <div className="pt-4 first:pt-0 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                              1. Welcome Tenant on WhatsApp Link
+                            </h4>
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-800 text-[10px]">
+                              Onboarding
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Automatically welcomes tenant businesses as soon as they scan QR code or upload their WhatsApp number.
+                          </p>
+                        </div>
+                        <Switch
+                          checked={saasWelcomeOnUpload}
+                          onCheckedChange={setSaasWelcomeOnUpload}
+                        />
+                      </div>
+
+                      {saasWelcomeOnUpload && (
+                        <div className="space-y-1.5 pl-1">
+                          <Label className="text-[11px] font-semibold text-muted-foreground">
+                            Welcome Message Template
+                          </Label>
+                          <Textarea
+                            rows={4}
+                            value={saasWelcomeTemplate}
+                            onChange={(e) => setSaasWelcomeTemplate(e.target.value)}
+                            className="font-mono text-xs"
+                          />
+                          <p className="text-[10px] text-muted-foreground">
+                            Available placeholders: <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;businessName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;phone&#125;</code>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Trigger 2: Subscription Expiry Warning */}
+                    <div className="pt-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                              2. Subscription Expiry Warning
+                            </h4>
+                            <Badge variant="outline" className="bg-amber-50 text-amber-800 text-[10px]">
+                              Retention
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Alerts tenant businesses on WhatsApp before their subscription expires so they renew promptly.
+                          </p>
+                        </div>
+                        <Switch
+                          checked={saasExpiryAlert}
+                          onCheckedChange={setSaasExpiryAlert}
+                        />
+                      </div>
+
+                      {saasExpiryAlert && (
+                        <div className="space-y-3 pl-1">
+                          <div className="flex items-center gap-3">
+                            <Label htmlFor="expiry-days" className="text-xs font-semibold">
+                              Days Before Expiry:
+                            </Label>
+                            <Input
+                              id="expiry-days"
+                              type="number"
+                              min={1}
+                              max={14}
+                              value={saasExpiryDays}
+                              onChange={(e) => setSaasExpiryDays(Number(e.target.value) || 3)}
+                              className="w-20 font-mono text-xs h-8"
+                            />
+                            <span className="text-xs text-muted-foreground">days ahead</span>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-[11px] font-semibold text-muted-foreground">
+                              Expiry Warning Template
+                            </Label>
+                            <Textarea
+                              rows={5}
+                              value={saasExpiryTemplate}
+                              onChange={(e) => setSaasExpiryTemplate(e.target.value)}
+                              className="font-mono text-xs"
+                            />
+                            <p className="text-[10px] text-muted-foreground">
+                              Available placeholders: <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;businessName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;planName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;daysLeft&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;expiryDate&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;renewUrl&#125;</code>
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Trigger 3: Subscription Renewed Confirmation */}
+                    <div className="pt-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                              3. Subscription Renewed Confirmation
+                            </h4>
+                            <Badge variant="outline" className="bg-sky-50 text-sky-800 text-[10px]">
+                              Billing
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Dispatched automatically when a tenant renews their plan via Paystack or auto-charge succeeds.
+                          </p>
+                        </div>
+                        <Switch
+                          checked={saasRenewedAlert}
+                          onCheckedChange={setSaasRenewedAlert}
+                        />
+                      </div>
+
+                      {saasRenewedAlert && (
+                        <div className="space-y-1.5 pl-1">
+                          <Label className="text-[11px] font-semibold text-muted-foreground">
+                            Renewal Confirmation Template
+                          </Label>
+                          <Textarea
+                            rows={4}
+                            value={saasRenewedTemplate}
+                            onChange={(e) => setSaasRenewedTemplate(e.target.value)}
+                            className="font-mono text-xs"
+                          />
+                          <p className="text-[10px] text-muted-foreground">
+                            Available placeholders: <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;businessName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;planName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;expiryDate&#125;</code>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <Button
+                      type="button"
+                      onClick={handleSaveSaasSettings}
+                      disabled={savingSaasSettings}
+                      className="gap-2 bg-primary text-primary-foreground"
+                    >
+                      {savingSaasSettings ? (
+                        <><LoaderCircle className="size-4 animate-spin" /> Saving Settings…</>
+                      ) : (
+                        <><Save className="size-4" /> Save SaaS Notification Settings</>
+                      )}
+                    </Button>
                   </div>
                 </div>
 
-                {/* Gateway Configuration Form */}
-                <form onSubmit={handleSaveWaGateway} className="space-y-5">
-                  <div className="rounded-2xl border bg-white p-5 shadow-sm space-y-5">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                          Gateway Server Status
-                        </h4>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Enable or disable automated background WhatsApp dispatch.
-                        </p>
-                      </div>
-                      <Switch
-                        checked={waGatewayEnabled}
-                        onCheckedChange={setWaGatewayEnabled}
-                      />
+                {/* ── CARD 3: BROADCAST UPDATE TO TENANT BUSINESSES ── */}
+                <div className="rounded-2xl border bg-white p-6 shadow-sm space-y-6">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="font-heading text-base font-bold text-foreground flex items-center gap-2">
+                        <Megaphone className="size-4 text-emerald-600" />
+                        Broadcast Update to Tenant Businesses
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Send an official announcement or platform update directly to tenant businesses via the SaaS WhatsApp account.
+                      </p>
                     </div>
 
-                    <Separator />
+                    <div className="text-xs text-muted-foreground bg-muted/40 px-3 py-1.5 rounded-lg border">
+                      Audience Reach: <strong className="text-foreground">{broadcastStats.tenantsWithPhone}</strong> of {broadcastStats.totalTenants} businesses reachable
+                    </div>
+                  </div>
 
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {/* Left: Compose Form */}
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="broadcast-audience" className="text-xs font-semibold">
+                          Target Audience
+                        </Label>
+                        <Select
+                          value={broadcastAudience}
+                          onValueChange={(val: any) => setBroadcastAudience(val)}
+                        >
+                          <SelectTrigger id="broadcast-audience" className="h-9 text-xs">
+                            <SelectValue placeholder="Select target businesses" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Tenant Businesses (with phone)</SelectItem>
+                            <SelectItem value="active">Active Subscriptions Only</SelectItem>
+                            <SelectItem value="expiring">Expiring Soon (within 7 days)</SelectItem>
+                            <SelectItem value="expired">Expired / Past Due Subscriptions</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Quick preset buttons */}
+                      <div className="space-y-1.5">
+                        <Label className="text-[11px] font-semibold text-muted-foreground">
+                          Quick Templates:
+                        </Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="xs"
+                            onClick={() =>
+                              setBroadcastMessage(
+                                "🚀 *New Qwilo Feature Announcement!*\n\nHello {businessName},\n\nWe have just released an exciting new update on Qwilo! You can now access automated staff WhatsApp alerts and enhanced scheduling.\n\nLog in to your dashboard to explore the new features: https://qwilo.com/app\n\n— The Qwilo Team"
+                              )
+                            }
+                            className="text-[10px] h-7 px-2"
+                          >
+                            New Feature
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="xs"
+                            onClick={() =>
+                              setBroadcastMessage(
+                                "🔧 *Scheduled Platform Maintenance Notice*\n\nHello {businessName},\n\nQwilo will undergo a brief system maintenance tonight from 2:00 AM to 2:30 AM WAT. Your automated reception services will remain intact.\n\nThank you for your patience!\n— The Qwilo Team"
+                              )
+                            }
+                            className="text-[10px] h-7 px-2"
+                          >
+                            Maintenance
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="xs"
+                            onClick={() =>
+                              setBroadcastMessage(
+                                "👋 *Important Update from Qwilo*\n\nHello {businessName},\n\nPlease ensure your business WhatsApp number and staff phone numbers are up to date in your dashboard to receive instant booking notifications without delay.\n\nHave a great business week!\n— The Qwilo Team"
+                              )
+                            }
+                            className="text-[10px] h-7 px-2"
+                          >
+                            General Update
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="broadcast-message" className="text-xs font-semibold">
+                          Broadcast Message Content
+                        </Label>
+                        <Textarea
+                          id="broadcast-message"
+                          rows={6}
+                          placeholder="Type your WhatsApp announcement message here… (supports *bold*, _italics_, and {businessName})"
+                          value={broadcastMessage}
+                          onChange={(e) => setBroadcastMessage(e.target.value)}
+                          className="font-mono text-xs"
+                        />
+                        <p className="text-[10px] text-muted-foreground">
+                          Use <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;businessName&#125;</code> to personalize for each business recipient.
+                        </p>
+                      </div>
+
+                      <Button
+                        type="button"
+                        onClick={handleSendBroadcast}
+                        disabled={sendingBroadcast || !broadcastMessage.trim()}
+                        className="w-full bg-emerald-600 text-white hover:bg-emerald-700 gap-2 h-9 text-xs"
+                      >
+                        {sendingBroadcast ? (
+                          <><LoaderCircle className="size-4 animate-spin" /> Dispatching Broadcast…</>
+                        ) : (
+                          <><Send className="size-3.5" /> Send WhatsApp Broadcast to Businesses</>
+                        )}
+                      </Button>
+                    </div>
+
+                    {/* Right: Realistic WhatsApp Preview */}
+                    <div className="space-y-3">
+                      <Label className="text-xs font-semibold text-muted-foreground">
+                        Live WhatsApp Chat Preview
+                      </Label>
+                      <div className="rounded-2xl border border-emerald-300/60 bg-[#e5ddd5]/30 p-4 shadow-inner min-h-60 flex flex-col justify-end">
+                        <div className="max-w-[85%] self-end rounded-2xl rounded-tr-none bg-[#d9fdd3] p-3 text-xs shadow-sm space-y-1 text-slate-900">
+                          <div className="text-[10px] font-bold text-emerald-900 border-b border-emerald-300/40 pb-1 flex items-center justify-between">
+                            <span>Qwilo Official Platform</span>
+                            <span className="font-normal text-[9px] text-muted-foreground">Official SaaS</span>
+                          </div>
+                          <p className="whitespace-pre-line text-[11px] leading-relaxed pt-1">
+                            {broadcastMessage.trim()
+                              ? broadcastMessage.replace(/{businessName}/g, "Acme Studio")
+                              : "Compose a message on the left to see live WhatsApp formatting preview…"}
+                          </p>
+                          <div className="text-[9px] text-right text-muted-foreground pt-1 flex items-center justify-end gap-1">
+                            <span>Just now</span>
+                            <span className="text-sky-600 font-bold">✓✓</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Broadcast History Table */}
+                  {broadcastHistory.length > 0 && (
+                    <div className="space-y-2 pt-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Recent Broadcast Logs
+                      </h4>
+                      <div className="rounded-xl border overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/40">
+                              <TableHead className="text-[10px]">Date</TableHead>
+                              <TableHead className="text-[10px]">Audience</TableHead>
+                              <TableHead className="text-[10px]">Message Snippet</TableHead>
+                              <TableHead className="text-[10px] text-right">Dispatched</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {broadcastHistory.slice(0, 5).map((b: any, idx: number) => (
+                              <TableRow key={idx}>
+                                <TableCell className="text-xs font-mono text-muted-foreground">
+                                  {new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                </TableCell>
+                                <TableCell className="text-xs capitalize">
+                                  <Badge variant="outline" className="text-[10px]">
+                                    {b.targetAudience}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-xs max-w-xs truncate text-muted-foreground">
+                                  {b.message}
+                                </TableCell>
+                                <TableCell className="text-xs font-semibold text-right text-emerald-700">
+                                  {b.sentCount} sent
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── CARD 4: FREE WAHA GATEWAY CONFIGURATION ── */}
+                <div className="rounded-2xl border bg-white p-6 shadow-sm space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-heading text-base font-bold text-foreground">
+                        WAHA Gateway Server Configuration
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Central Docker container or cloud server running WAHA (WhatsApp HTTP API) protocol for zero Meta fees.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={waGatewayEnabled}
+                      onCheckedChange={setWaGatewayEnabled}
+                    />
+                  </div>
+
+                  <div className="rounded-xl bg-muted/40 border p-3 font-mono text-[11px] space-y-1">
+                    <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-muted-foreground block">
+                      Local / VPS Docker Setup
+                    </span>
+                    <div className="text-foreground select-all bg-white p-2 rounded border">
+                      docker run -d -p 3000:3000/tcp --name waha devlikeapro/waha
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSaveWaGateway} className="space-y-4">
                     <div className="space-y-1.5">
                       <Label htmlFor="wa-server-url" className="text-xs font-semibold">
                         WAHA Gateway Server URL
@@ -1534,9 +2260,6 @@ export function SuperAdminScreen() {
                         onChange={(e) => setWaGatewayUrl(e.target.value)}
                         className="font-mono text-xs max-w-lg bg-muted/20"
                       />
-                      <p className="text-[10px] text-muted-foreground">
-                        The HTTP address where your WAHA container or Evolution API server is reachable by this server.
-                      </p>
                     </div>
 
                     <div className="space-y-1.5">
@@ -1551,9 +2274,6 @@ export function SuperAdminScreen() {
                         onChange={(e) => setWaGatewayApiKey(e.target.value)}
                         className="font-mono text-xs max-w-lg bg-muted/20"
                       />
-                      <p className="text-[10px] text-muted-foreground">
-                        Configured as <code className="text-[10px]">WAHA_API_KEY</code> on your Docker container to prevent unauthorized access.
-                      </p>
                     </div>
 
                     <div className="flex items-center gap-3 pt-2">
@@ -1571,17 +2291,16 @@ export function SuperAdminScreen() {
                         )}
                         Test Gateway Connection
                       </Button>
+                      <Button type="submit" disabled={savingWaGateway} className="h-8 text-xs gap-2">
+                        {savingWaGateway ? (
+                          <><LoaderCircle className="size-3.5 animate-spin" /> Saving…</>
+                        ) : (
+                          <><Save className="size-3.5" /> Save Gateway Settings</>
+                        )}
+                      </Button>
                     </div>
-                  </div>
-
-                  <Button type="submit" disabled={savingWaGateway} className="gap-2">
-                    {savingWaGateway ? (
-                      <><LoaderCircle className="size-4 animate-spin" /> Saving…</>
-                    ) : (
-                      <><Save className="size-4" /> Save WhatsApp Gateway Settings</>
-                    )}
-                  </Button>
-                </form>
+                  </form>
+                </div>
               </div>
             )}
 

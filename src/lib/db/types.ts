@@ -279,12 +279,14 @@ export type DbBooking = {
     priceMinor: number;
     currency: string;
   };
-  teamMemberSnapshot: { name: string; title: string };
+  teamMemberSnapshot: { name: string; title: string; phone?: string };
   customerSnapshot: {
     name: string;
     email?: string;
     phone?: string;
   };
+  staffWhatsappStatus?: "sent" | "failed" | "skipped";
+  staffWhatsappSentAt?: number;
   createdByUserId?: string;
   createdAt: number;
   updatedAt: number;

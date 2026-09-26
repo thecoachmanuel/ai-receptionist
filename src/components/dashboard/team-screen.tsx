@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
-import { CalendarCheck2, Mail, Pencil, UserRoundPlus, UsersRound } from "lucide-react";
+import { CalendarCheck2, Mail, MessageSquare, Pencil, Phone, UserRoundPlus, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -116,6 +116,7 @@ function MemberDialog({ member }: { member?: TeamMember }) {
       name: String(form.get("name") ?? "").trim(),
       title: String(form.get("title") ?? "").trim(),
       email: String(form.get("email") ?? "").trim() || undefined,
+      phone: String(form.get("phone") ?? "").trim() || undefined,
       password: passwordRaw || undefined,
       bio: String(form.get("bio") ?? "").trim() || undefined,
       imageUrl: imageUrl || undefined,
@@ -225,6 +226,21 @@ function MemberDialog({ member }: { member?: TeamMember }) {
               />
             </div>
             <div className="space-y-1.5">
+              <Label htmlFor={`member-phone-${member?._id ?? "new"}`}>
+                WhatsApp / Phone Number
+              </Label>
+              <Input
+                id={`member-phone-${member?._id ?? "new"}`}
+                name="phone"
+                type="tel"
+                defaultValue={member?.phone}
+                placeholder="+234 801 234 5678"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Automated booking updates will be sent to this WhatsApp number.
+              </p>
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor={`member-password-${member?._id ?? "new"}`}>
                 Staff Login Password {member ? "(Optional update)" : "(Optional)"}
               </Label>
@@ -405,6 +421,12 @@ export function TeamScreen() {
                     <CalendarCheck2 className="size-3" />
                     {member.acceptingBookings ? "Bookable" : "Not bookable"}
                   </Badge>
+                  {member.phone && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-800">
+                      <MessageSquare className="size-2.5 text-emerald-600" />
+                      {member.phone}
+                    </span>
+                  )}
                   <Button
                     variant="outline"
                     size="xs"
@@ -416,10 +438,17 @@ export function TeamScreen() {
                     <CalendarCheck2 className="size-3 text-emerald-600" />
                     Google Sync
                   </Button>
+                  {member.phone && (
+                    <Button asChild variant="ghost" size="icon-xs" title={`Call ${member.name}`}>
+                      <a href={`tel:${member.phone}`} aria-label={`Call ${member.name}`}>
+                        <Phone className="size-3" />
+                      </a>
+                    </Button>
+                  )}
                   {member.email && (
-                    <Button asChild variant="ghost" size="icon-xs">
+                    <Button asChild variant="ghost" size="icon-xs" title={`Email ${member.name}`}>
                       <a href={`mailto:${member.email}`} aria-label={`Email ${member.name}`}>
-                        <Mail />
+                        <Mail className="size-3" />
                       </a>
                     </Button>
                   )}

@@ -253,3 +253,293 @@ export async function sendAutomatedWhatsAppNotification(
     deliveredVia,
   };
 }
+
+export interface SendStaffWhatsAppOptions {
+  orgId: string;
+  bookingId: string;
+  type: "created" | "rescheduled" | "canceled";
+  customText?: string;
+}
+
+export interface SendStaffWhatsAppResult {
+  success: boolean;
+  staffNotifiedCount: number;
+  recipients: Array<{
+    teamMemberId?: string;
+    name: string;
+    phone: string;
+    role: "assigned" | "team";
+    success: boolean;
+  }>;
+}
+
+/**
+ * Sends automated WhatsApp notifications to staff when a booking is created,
+ * rescheduled, or canceled. Uses the business's linked WhatsApp account to
+ * dispatch updates to the assigned staff member and other business staff.
+ */
+export async function sendStaffBookingNotification(
+  options: SendStaffWhatsAppOptions,
+): Promise<SendStaffWhatsAppResult> {
+  const { orgId, bookingId, type, customText } = options;
+  const db = await getDb();
+
+  // 1. Fetch Booking
+  const bookingFilter = ObjectId.isValid(bookingId)
+    ? { _id: new ObjectId(bookingId), organizationId: orgId }
+    : { _id: bookingId as any, organizationId: orgId };
+  const booking = await db.collection<DbBooking>("bookings").findOne(bookingFilter);
+  if (!booking) {
+    return { success: false, staffNotifiedCount: 0, recipients: [] };
+  }
+
+  // 2. Fetch Organization
+  const orgFilter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
+  const organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
+  if (!organization) {
+    return { success: false, staffNotifiedCount: 0, recipients: [] };
+  }
+
+  // 3. Find assigned staff member and all active staff of this business with phone numbers
+  const allStaff = await db
+    .collection<any>("teamMembers")
+    .find({
+      organizationId: orgId,
+      active: { $ne: false },
+      phone: { $exists: true, $ne: "" },
+    })
+    .toArray();
+
+  const assignedStaffId = booking.teamMemberId ? booking.teamMemberId.toString() : null;
+  const assignedStaff = allStaff.find(
+    (s: any) => s._id?.toString() === assignedStaffId,
+  );
+
+  const assignedStaffName =
+    assignedStaff?.name ||
+    booking.teamMemberSnapshot?.name ||
+    "Team Member";
+
+  // Build target recipient list
+  const targets: Array<{
+    teamMemberId?: string;
+    name: string;
+    rawPhone: string;
+    role: "assigned" | "team";
+  }> = [];
+
+  if (assignedStaff?.phone) {
+    targets.push({
+      teamMemberId: assignedStaff._id.toString(),
+      name: assignedStaff.name,
+      rawPhone: assignedStaff.phone,
+      role: "assigned",
+    });
+  }
+
+  // Other staff of this business who also have WhatsApp numbers
+  for (const staff of allStaff) {
+    if (staff._id?.toString() !== assignedStaffId && staff.phone) {
+      targets.push({
+        teamMemberId: staff._id.toString(),
+        name: staff.name,
+        rawPhone: staff.phone,
+        role: "team",
+      });
+    }
+  }
+
+  if (targets.length === 0) {
+    return { success: true, staffNotifiedCount: 0, recipients: [] };
+  }
+
+  // 4. Format date/time
+  const timeZone = organization.timezone || "Africa/Lagos";
+  let formattedDateTime = new Date(booking.startAt).toLocaleString("en-US", {
+    timeZone,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const locationStr =
+    booking.locationSnapshot?.name
+      ? `${booking.locationSnapshot.name}${booking.locationSnapshot.address ? ` (${booking.locationSnapshot.address})` : ""}`
+      : "Main Office";
+
+  // 5. Gateway setup (using the business's linked WhatsApp session)
+  const sysSettings = await getSystemSettings().catch(() => null);
+  const gatewayUrl =
+    organization.whatsappInstance?.status === "connected" && sysSettings?.whatsappGateway?.serverUrl
+      ? sysSettings.whatsappGateway.serverUrl
+      : sysSettings?.whatsappGateway?.serverUrl ||
+        process.env.WHATSAPP_GATEWAY_URL ||
+        process.env.WAHA_SERVER_URL;
+
+  const gatewayApiKey =
+    sysSettings?.whatsappGateway?.apiKey ||
+    process.env.WHATSAPP_GATEWAY_API_KEY ||
+    process.env.WAHA_API_KEY;
+
+  const sessionName = organization.whatsappInstance?.instanceName || organization.slug;
+  const recipientsResult: SendStaffWhatsAppResult["recipients"] = [];
+  let notifiedCount = 0;
+
+  for (const target of targets) {
+    const targetPhone = normalizeWhatsAppNumber(target.rawPhone);
+    if (!targetPhone) continue;
+
+    let messageContent = customText;
+    if (!messageContent) {
+      if (type === "created") {
+        if (target.role === "assigned") {
+          messageContent = `🔔 *New Booking Assigned to You!*
+Business: *${organization.name}*
+
+Hello *${target.name}*, a new client appointment has been scheduled with you:
+📋 *Service:* ${booking.offeringSnapshot.name}
+👤 *Client:* ${booking.customerSnapshot.name}
+📞 *Client Phone:* ${booking.customerSnapshot.phone}
+🗓️ *Date & Time:* ${formattedDateTime}
+📍 *Location:* ${locationStr}
+🔖 *Confirmation Code:* ${booking.confirmationCode}
+${booking.notes ? `📝 *Notes:* ${booking.notes}\n` : ""}
+Please prepare accordingly. Have a great session!`;
+        } else {
+          messageContent = `📢 *New Team Booking Alert*
+Business: *${organization.name}*
+
+A new booking has just been scheduled:
+👤 *Assigned To:* ${assignedStaffName}
+📋 *Service:* ${booking.offeringSnapshot.name}
+👤 *Client:* ${booking.customerSnapshot.name}
+🗓️ *Date & Time:* ${formattedDateTime}
+📍 *Location:* ${locationStr}
+🔖 *Confirmation Code:* ${booking.confirmationCode}`;
+        }
+      } else if (type === "rescheduled") {
+        messageContent = `🔄 *Booking Rescheduled Alert*
+Business: *${organization.name}*
+
+Hello *${target.name}*, an appointment has been rescheduled:
+📋 *Service:* ${booking.offeringSnapshot.name}
+👤 *Client:* ${booking.customerSnapshot.name} (${booking.customerSnapshot.phone})
+🗓️ *New Date & Time:* ${formattedDateTime}
+📍 *Location:* ${locationStr}
+🔖 *Confirmation Code:* ${booking.confirmationCode}`;
+      } else if (type === "canceled") {
+        messageContent = `❌ *Booking Canceled Alert*
+Business: *${organization.name}*
+
+Hello *${target.name}*, the following booking has been canceled:
+📋 *Service:* ${booking.offeringSnapshot.name}
+👤 *Client:* ${booking.customerSnapshot.name}
+🗓️ *Original Time:* ${formattedDateTime}
+🔖 *Confirmation Code:* ${booking.confirmationCode}`;
+      }
+    }
+
+    let sent = false;
+    if (gatewayUrl && messageContent) {
+      try {
+        const cleanGateway = gatewayUrl.replace(/\/$/, "");
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+          ...(gatewayApiKey
+            ? {
+                "x-api-secret": gatewayApiKey,
+                "X-Api-Key": gatewayApiKey,
+                apikey: gatewayApiKey,
+                Authorization: `Bearer ${gatewayApiKey}`,
+              }
+            : {}),
+        };
+
+        // Send via business session
+        let res = await fetch(`${cleanGateway}/sessions/${encodeURIComponent(sessionName)}/send`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            phone: targetPhone,
+            message: messageContent,
+          }),
+        });
+
+        if (!res.ok && res.status === 404) {
+          res = await fetch(`${cleanGateway}/api/sendText`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              session: sessionName,
+              chatId: `${targetPhone}@c.us`,
+              text: messageContent,
+            }),
+          });
+        }
+
+        if (!res.ok && res.status === 404) {
+          res = await fetch(`${cleanGateway}/send`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              phone: targetPhone,
+              message: messageContent,
+            }),
+          });
+        }
+
+        if (res.ok) sent = true;
+      } catch (err) {
+        console.warn(`Could not dispatch WhatsApp message to staff member ${target.name}:`, err);
+      }
+    }
+
+    // Always log to staff notification collection
+    await db.collection("staff_whatsapp_logs").insertOne({
+      organizationId: orgId,
+      bookingId: booking._id!.toString(),
+      teamMemberId: target.teamMemberId,
+      staffName: target.name,
+      phone: targetPhone,
+      role: target.role,
+      type,
+      message: messageContent,
+      deliveredVia: sent ? "gateway" : "recorded",
+      createdAt: Date.now(),
+    }).catch(() => null);
+
+    recipientsResult.push({
+      teamMemberId: target.teamMemberId,
+      name: target.name,
+      phone: targetPhone,
+      role: target.role,
+      success: sent,
+    });
+
+    notifiedCount++;
+  }
+
+  // Update booking record with staff notification status
+  await db.collection("bookings").updateOne(
+    { _id: new ObjectId(booking._id) },
+    {
+      $set: {
+        "staffWhatsappStatus.lastSentAt": Date.now(),
+        "staffWhatsappStatus.lastType": type,
+        "staffWhatsappStatus.staffNotifiedCount": notifiedCount,
+        "staffWhatsappStatus.recipients": recipientsResult,
+        updatedAt: Date.now(),
+      },
+    },
+  ).catch(() => null);
+
+  return {
+    success: true,
+    staffNotifiedCount: notifiedCount,
+    recipients: recipientsResult,
+  };
+}
+

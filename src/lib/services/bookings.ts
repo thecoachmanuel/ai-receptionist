@@ -5,7 +5,7 @@ import { dayOfWeek, localPartsAt, zonedDateTimeToUtc } from "@/lib/time";
 import { normalizedEmail, normalizedPhone, optionalTrimmed, requiredTrimmed } from "@/lib/validation";
 import { upsertContact } from "./contacts";
 import { syncBookingToExternalCalendar } from "./calendar-sync";
-import { sendAutomatedWhatsAppNotification } from "./whatsapp";
+import { sendAutomatedWhatsAppNotification, sendStaffBookingNotification } from "./whatsapp";
 import { isSubscriptionActive } from "@/lib/billing";
 
 function generateConfirmationCode(): string {
@@ -225,6 +225,7 @@ export async function createBooking(
     teamMemberSnapshot: {
       name: teamMember!.name,
       title: teamMember!.title,
+      phone: (teamMember as any)!.phone,
     },
     customerSnapshot: {
       name: args.customer.name,
@@ -264,6 +265,15 @@ export async function createBooking(
     );
   }
 
+  // Trigger automated WhatsApp notification to assigned staff & other business staff
+  void sendStaffBookingNotification({
+    orgId,
+    bookingId: result.insertedId.toString(),
+    type: "created",
+  }).catch((err) =>
+    console.error("Staff automated WhatsApp booking notification error:", err),
+  );
+
   return {
     bookingId: result.insertedId.toString(),
     status: newBooking.status,
@@ -300,6 +310,16 @@ export async function updateBookingStatus(
   await db.collection<DbBooking>("bookings").updateOne(filter, {
     $set: { status, updatedAt: now },
   });
+
+  if (status === "canceled") {
+    void sendStaffBookingNotification({
+      orgId,
+      bookingId,
+      type: "canceled",
+    }).catch((err) =>
+      console.error("Staff WhatsApp cancellation notification error:", err),
+    );
+  }
 
   const updated = (await db.collection<DbBooking>("bookings").findOne(filter))!;
 
@@ -581,6 +601,16 @@ export async function rescheduleBooking(
   );
 
   const updatedLookup = await lookupBooking(siteSlug, confirmationCode, phone);
+
+  // Dispatch reschedule notice to staff via business WhatsApp
+  void sendStaffBookingNotification({
+    orgId: effectiveOrgId,
+    bookingId,
+    type: "rescheduled",
+  }).catch((err) =>
+    console.error("Staff WhatsApp reschedule notification error:", err),
+  );
+
   return { success: true, booking: updatedLookup.booking };
 }
 
@@ -589,11 +619,27 @@ export async function cancelBooking(siteSlug: string, confirmationCode: string, 
   if (!lookup.success || !lookup.booking) return lookup;
 
   const db = await getDb();
+  const normalizedSlug = siteSlug?.trim().toLowerCase();
+  const site = await db.collection<DbPublicSite>("publicSites").findOne({ siteSlug: normalizedSlug });
+  const effectiveOrgId = site?.organizationId || "";
+
   await db.collection<DbBooking>("bookings").updateOne(
     { _id: new ObjectId(lookup.booking.bookingId) },
     { $set: { status: "canceled", updatedAt: Date.now() } },
   );
 
   const updatedLookup = await lookupBooking(siteSlug, confirmationCode, phone);
+
+  // Dispatch cancellation notice to staff via business WhatsApp
+  if (effectiveOrgId) {
+    void sendStaffBookingNotification({
+      orgId: effectiveOrgId,
+      bookingId: lookup.booking.bookingId,
+      type: "canceled",
+    }).catch((err) =>
+      console.error("Staff WhatsApp cancellation notification error:", err),
+    );
+  }
+
   return { success: true, booking: updatedLookup.booking };
 }

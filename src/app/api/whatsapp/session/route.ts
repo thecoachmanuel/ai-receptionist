@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/mongodb";
 import { getSystemSettings } from "@/lib/services/system-settings";
+import { sendSaasWelcomeOnWhatsAppLinked } from "@/lib/services/saas-whatsapp";
 import type { DbOrganization } from "@/lib/db/types";
 
 export const runtime = "nodejs";
@@ -131,6 +132,14 @@ export async function GET(request: NextRequest) {
                 updatedAt: Date.now(),
               },
             },
+          );
+
+          // Automated SaaS update: Welcome tenant on WhatsApp linking
+          void sendSaasWelcomeOnWhatsAppLinked({
+            orgId: org._id.toString(),
+            phone: connectedPhone || org.whatsappInstance?.phone,
+          }).catch((err) =>
+            console.error("SaaS welcome WhatsApp notification error on QR scan:", err),
           );
         }
       } catch (err) {
@@ -318,6 +327,38 @@ export async function POST(request: NextRequest) {
         success: true,
         status: "disconnected",
         message: "WhatsApp number disconnected.",
+      });
+    }
+
+    if (action === "save_number") {
+      const { phone } = body;
+      const cleanPhone = typeof phone === "string" ? phone.trim() : "";
+
+      await db.collection<DbOrganization>("organizations").updateOne(
+        { _id: org._id },
+        {
+          $set: {
+            "whatsappInstance.phone": cleanPhone || null,
+            contactPhone: cleanPhone || (org as any).contactPhone,
+            updatedAt: Date.now(),
+          },
+        },
+      );
+
+      if (cleanPhone) {
+        // Trigger automated welcome notification from SaaS WhatsApp account
+        void sendSaasWelcomeOnWhatsAppLinked({
+          orgId: org._id.toString(),
+          phone: cleanPhone,
+        }).catch((err) =>
+          console.error("SaaS welcome WhatsApp notification error on number save:", err),
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "WhatsApp number saved successfully.",
+        phone: cleanPhone,
       });
     }
 
