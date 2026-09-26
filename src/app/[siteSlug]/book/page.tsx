@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import { PublicSite } from "@/components/public-site/public-site";
-import { PublicSiteUnavailable } from "@/components/public-site/public-site-states";
+import { PublicSiteSuspended, PublicSiteUnavailable } from "@/components/public-site/public-site-states";
 import { organizationHasFeature, isSubscriptionActive } from "@/lib/billing";
 import * as publicSiteService from "@/lib/services/publicSite";
 import { getVapiSettings } from "@/lib/services/settings";
@@ -44,6 +44,18 @@ export default async function PublicBookingPage({
     }
 
     const isSubscriptionExpired = !isSubscriptionActive(publishedSite.organization as any);
+
+    if (isSubscriptionExpired) {
+      const site = publishedSite.site as any;
+      const config = site?.config || site;
+      const businessName = config?.businessName || publishedSite.organization.name;
+      return (
+        <PublicSiteSuspended
+          businessName={businessName}
+          contact={config?.contact}
+        />
+      );
+    }
 
     const agentFeatures = agentSessionConfig && !isSubscriptionExpired
       ? await getAgentFeatures(agentSessionConfig.clerkOrgId || agentSessionConfig.organizationId)

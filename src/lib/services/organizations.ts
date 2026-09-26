@@ -152,12 +152,12 @@ export async function createOrganizationForUser(
   const defaultAgentId = process.env.VAPI_ASSISTANT_ID?.trim() || process.env.VAPI_DEFAULT_ASSISTANT_ID?.trim() || process.env.ELEVENLABS_DEFAULT_AGENT_ID?.trim();
 
   const settings = await getSystemSettings().catch(() => null);
-  const enforcePayment = settings?.enforcePaymentOnSignup ?? false;
-  const trialDays = settings?.trialDays ?? 14;
+  const enforcePayment = settings?.enforcePaymentOnSignup ?? true;
+  const trialDays = settings?.trialDays ?? 0;
 
-  const trialEndsAt = enforcePayment ? undefined : now + trialDays * 24 * 60 * 60 * 1000;
-  const subscriptionExpiresAt = enforcePayment ? now : trialEndsAt;
-  const planStatus = enforcePayment ? "expired" : "trialing";
+  const trialEndsAt = enforcePayment || trialDays <= 0 ? undefined : now + trialDays * 24 * 60 * 60 * 1000;
+  const subscriptionExpiresAt = enforcePayment || trialDays <= 0 ? now : trialEndsAt;
+  const planStatus = enforcePayment || trialDays <= 0 ? "unpaid" : "trialing";
 
   const preset = getBusinessPreset(businessType);
 

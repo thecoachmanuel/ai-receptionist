@@ -81,8 +81,8 @@ Thank you for your business!`;
 
 const DEFAULTS: SystemSettings = {
   googleAuthEnabled: true,
-  enforcePaymentOnSignup: false,
-  trialDays: 14,
+  enforcePaymentOnSignup: true,
+  trialDays: 0,
   planPrices: { core: 1000, engage: 5000, voice: 15000 },
   usdToNgnRate: 1500,
   baseCurrency: "NGN",
@@ -133,8 +133,8 @@ export async function getSystemSettings(): Promise<SystemSettings> {
 
     return {
       googleAuthEnabled: doc.googleAuthEnabled !== false,
-      enforcePaymentOnSignup: doc.enforcePaymentOnSignup === true,
-      trialDays: typeof doc.trialDays === "number" ? doc.trialDays : 14,
+      enforcePaymentOnSignup: doc.enforcePaymentOnSignup !== false,
+      trialDays: typeof doc.trialDays === "number" ? doc.trialDays : 0,
       planPrices: {
         core: typeof rawCore === "number" && rawCore > 0 ? rawCore : 1000,
         engage: typeof rawEngage === "number" && rawEngage > 1000 ? rawEngage : 5000,

@@ -66,7 +66,7 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleAuthEnabled, setGoogleAuthEnabled] = useState(true);
-  const [enforcePayment, setEnforcePayment] = useState(false);
+  const [enforcePayment, setEnforcePayment] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<PlanType>("free_org");
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [planPrices, setPlanPrices] = useState({ core: 1000, engage: 5000, voice: 15000 });
@@ -100,7 +100,7 @@ export default function SignUpPage() {
         if (res.ok) {
           const data = await res.json();
           setGoogleAuthEnabled(data.googleAuthEnabled !== false);
-          setEnforcePayment(data.enforcePaymentOnSignup === true);
+          setEnforcePayment(data.enforcePaymentOnSignup !== false);
           if (data.planPrices) {
             setPlanPrices({
               core: data.planPrices.core ?? 1000,

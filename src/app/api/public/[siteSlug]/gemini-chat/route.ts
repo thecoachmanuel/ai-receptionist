@@ -3,6 +3,7 @@ import { createAgentDynamicVariables } from "@/lib/agent-context";
 import * as publicSiteService from "@/lib/services/publicSite";
 import { getElevenLabsSettings } from "@/lib/services/settings";
 import { getDb } from "@/lib/db/mongodb";
+import { isSubscriptionActive } from "@/lib/billing";
 
 export const runtime = "nodejs";
 
@@ -191,6 +192,13 @@ export async function POST(
 
     if (!published) {
       return NextResponse.json({ error: "Public site not found." }, { status: 404 });
+    }
+
+    if (!isSubscriptionActive(published.organization as any)) {
+      return NextResponse.json(
+        { error: "AI assistant is temporarily offline because the business subscription is inactive." },
+        { status: 402 },
+      );
     }
 
     return NextResponse.json({

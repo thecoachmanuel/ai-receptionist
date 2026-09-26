@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
 
     // Check if compulsory payment is enabled globally by Super Admin
     const settings = await getSystemSettings().catch(() => null);
-    const isCompulsoryPayment = settings?.enforcePaymentOnSignup === true;
+    const isCompulsoryPayment = settings?.enforcePaymentOnSignup !== false;
 
     if (isCompulsoryPayment && !matchingTeamMember) {
       try {
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
             userId,
             orgSlug,
             paymentRequired: true,
-            billingUrl: `/app/${orgSlug}/billing?required=true`,
+            billingUrl: `/app/${orgSlug}/billing?required=true&signup=true`,
           }),
           sessionToken,
         );

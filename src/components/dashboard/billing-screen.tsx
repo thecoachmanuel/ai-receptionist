@@ -73,7 +73,12 @@ export function BillingScreen() {
   const subscriptionExpiresAt = (organization as any)?.subscriptionExpiresAt;
   const planStatus = (organization as any)?.planStatus as string | undefined;
   const orgBillingCycle = (organization as any)?.billingCycle;
-  const isExpired = planStatus === "expired" || planStatus === "canceled";
+  const isUnpaid = planStatus === "unpaid";
+  const isExpired =
+    isUnpaid ||
+    planStatus === "expired" ||
+    planStatus === "canceled" ||
+    (typeof subscriptionExpiresAt === "number" && subscriptionExpiresAt < Date.now());
   const daysUntilExpiry = subscriptionExpiresAt
     ? Math.max(0, Math.ceil((subscriptionExpiresAt - Date.now()) / (1000 * 60 * 60 * 24)))
     : null;
@@ -161,19 +166,22 @@ export function BillingScreen() {
         </div>
       )}
 
-      {/* Expiry / renewal alert */}
+      {/* Expiry / renewal / unpaid alert */}
       {isExpired && (
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4 rounded-xl border border-rose-300/80 bg-rose-50/90 p-4 shadow-sm text-rose-950">
           <AlertCircle className="size-5 text-rose-600 shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-semibold">Subscription Expired</p>
+            <p className="text-sm font-semibold">
+              {isUnpaid ? "Subscription Payment Required" : "Subscription Expired"}
+            </p>
             <p className="text-xs text-rose-700/90 mt-0.5">
-              Your workspace subscription has expired. Public features and AI capabilities are paused.
-              Choose a plan below to renew.
+              {isUnpaid
+                ? "Your workspace requires an active subscription to go live. Choose a plan below to activate your AI front desk and public site."
+                : "Your workspace subscription has expired. Public features and AI capabilities are paused. Choose a plan below to renew."}
             </p>
           </div>
           <Badge variant="outline" className="border-rose-300 text-rose-700 shrink-0">
-            {planStatus === "canceled" ? "Canceled" : "Expired"}
+            {isUnpaid ? "Unpaid" : planStatus === "canceled" ? "Canceled" : "Expired"}
           </Badge>
         </div>
       )}
@@ -202,11 +210,13 @@ export function BillingScreen() {
                   variant="outline"
                   className={`border-white/15 bg-white/5 text-white ${isExpired ? "border-rose-500/40 text-rose-400" : ""}`}
                 >
-                  {isExpired
-                    ? "Expired"
-                    : planStatus === "trialing"
-                      ? "Trial"
-                      : `Active · ${orgBillingCycle === "yearly" ? "Yearly" : "Monthly"}`}
+                  {isUnpaid
+                    ? "Unpaid"
+                    : isExpired
+                      ? "Expired"
+                      : planStatus === "trialing"
+                        ? "Trial"
+                        : `Active · ${orgBillingCycle === "yearly" ? "Yearly" : "Monthly"}`}
                 </Badge>
               </div>
               <p className="mt-8 text-[10px] font-semibold tracking-[0.16em] text-white/45 uppercase">

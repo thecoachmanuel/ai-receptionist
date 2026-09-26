@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/db/mongodb";
 import type { DbAgentIntegration, DbOrganization, DbPublicSite, DbRateLimit } from "@/lib/db/types";
+import { isSubscriptionActive } from "@/lib/billing";
 
 export async function getCurrentAgent(orgId: string) {
   const db = await getDb();
@@ -43,7 +44,7 @@ export async function requestPublicSession(
   const orgId = site.organizationId;
   const orgFilter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
   const organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
-  if (!organization) return null;
+  if (!organization || !isSubscriptionActive(organization)) return null;
 
   const effectiveOrgId = organization._id!.toString();
   const integration = await db.collection<DbAgentIntegration>("agentIntegrations").findOne({

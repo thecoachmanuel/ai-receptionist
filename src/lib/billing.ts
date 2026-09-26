@@ -87,8 +87,15 @@ export function isSubscriptionActive(org?: {
   if (
     org.planStatus === "expired" ||
     org.planStatus === "past_due" ||
-    org.planStatus === "canceled"
+    org.planStatus === "canceled" ||
+    org.planStatus === "unpaid"
   ) {
+    return false;
+  }
+  if (!org.planStatus || org.planStatus === "trialing") {
+    if (typeof org.subscriptionExpiresAt === "number") {
+      return org.subscriptionExpiresAt > Date.now();
+    }
     return false;
   }
   if (

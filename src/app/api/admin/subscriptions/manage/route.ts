@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid plan type specified." }, { status: 400 });
     }
 
-    const validStatuses = ["active", "trialing", "canceled", "past_due", "expired"];
+    const validStatuses = ["active", "trialing", "canceled", "past_due", "expired", "unpaid"];
     if (planStatus && !validStatuses.includes(planStatus)) {
       return NextResponse.json({ error: "Invalid plan status." }, { status: 400 });
     }

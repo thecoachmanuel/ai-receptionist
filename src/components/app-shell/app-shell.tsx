@@ -350,6 +350,8 @@ function ShellChrome({
         <main className="min-h-[calc(100svh-3.5rem)] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <div className="mx-auto w-full max-w-[1440px]">
             {(organization?.planStatus === "expired" ||
+              organization?.planStatus === "unpaid" ||
+              organization?.planStatus === "canceled" ||
               (typeof organization?.subscriptionExpiresAt === "number" &&
                 organization.subscriptionExpiresAt < Date.now())) &&
               !pathname?.endsWith("/billing") && (
@@ -359,15 +361,22 @@ function ShellChrome({
                       <CreditCard className="size-4 text-rose-700" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold tracking-tight">Workspace Subscription Expired</h4>
+                      <h4 className="text-sm font-semibold tracking-tight">
+                        {organization?.planStatus === "unpaid"
+                          ? "Payment Required to Activate Workspace"
+                          : "Workspace Subscription Expired"}
+                      </h4>
                       <p className="text-xs text-rose-700/90 mt-0.5">
-                        Your monthly SaaS plan has expired. Please renew your subscription to continue taking online bookings and sending automated client notifications.
+                        {organization?.planStatus === "unpaid"
+                          ? "Your workspace requires an active subscription. Online bookings, AI reception, and your live public site are offline until payment is complete."
+                          : "Your SaaS subscription has expired. Your public site and online bookings are currently offline. Please renew now to restore live access."}
                       </p>
                     </div>
                   </div>
                   <Button asChild size="sm" className="bg-rose-600 hover:bg-rose-700 text-white shrink-0 gap-1.5 shadow-none self-start sm:self-auto">
-                    <Link href={`/app/${orgSlug}/billing`}>
-                      Renew Subscription <ChevronRight className="size-3.5" />
+                    <Link href={`/app/${orgSlug}/billing?required=true`}>
+                      {organization?.planStatus === "unpaid" ? "Complete Payment" : "Renew Subscription"}{" "}
+                      <ChevronRight className="size-3.5" />
                     </Link>
                   </Button>
                 </div>

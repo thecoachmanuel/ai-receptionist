@@ -5,6 +5,7 @@ import { ArrowRight, Building2, Sparkles } from "lucide-react";
 import { OrganizationList } from "@/components/auth/org-switcher";
 import { Brand } from "@/components/brand";
 import { getSession } from "@/lib/auth/session";
+import { isSubscriptionActive } from "@/lib/billing";
 
 export default async function AppIndexPage() {
   const session = await getSession();
@@ -17,6 +18,12 @@ export default async function AppIndexPage() {
     if (session.role === "member" || session.role === "operator") {
       redirect(`/${session.organization.slug}/staff-portal`);
     }
+
+    const isPaid = isSubscriptionActive(session.organization as any);
+    if (!isPaid && (session.role === "admin" || !session.role)) {
+      redirect(`/app/${session.organization.slug}/billing?required=true`);
+    }
+
     redirect(`/app/${session.organization.slug}`);
   }
 

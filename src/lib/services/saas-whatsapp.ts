@@ -388,7 +388,7 @@ export async function broadcastSaasWhatsAppUpdate(options: {
     filter.planStatus = "active";
     filter.subscriptionExpiresAt = { $gt: now, $lt: now + sevenDaysMs };
   } else if (targetAudience === "expired") {
-    filter.planStatus = "expired";
+    filter.planStatus = { $in: ["expired", "unpaid"] };
   }
 
   const organizations = await db

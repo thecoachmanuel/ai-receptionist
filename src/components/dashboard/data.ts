@@ -30,7 +30,7 @@ export type Organization = {
   currency: string;
   terminology: BackendTerminology;
   plan?: "free_org" | "engage" | "voice";
-  planStatus?: "active" | "trialing" | "canceled" | "past_due" | "expired";
+  planStatus?: "active" | "trialing" | "canceled" | "past_due" | "expired" | "unpaid";
   subscriptionExpiresAt?: number;
   paystack?: {
     reference?: string;

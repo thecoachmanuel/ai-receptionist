@@ -361,8 +361,8 @@ export function SuperAdminScreen() {
   const [clientPageUrl, setClientPageUrl] = useState("");
   const [isWaitlistActive, setIsWaitlistActive] = useState(false);
   const [googleAuthEnabled, setGoogleAuthEnabled] = useState(true);
-  const [enforcePaymentOnSignup, setEnforcePaymentOnSignup] = useState(false);
-  const [trialDays, setTrialDays] = useState(14);
+  const [enforcePaymentOnSignup, setEnforcePaymentOnSignup] = useState(true);
+  const [trialDays, setTrialDays] = useState(0);
   const [savingContact, setSavingContact] = useState(false);
 
   // Subscriptions state

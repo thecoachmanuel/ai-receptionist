@@ -4,6 +4,7 @@ import type { DbAgentIntegration, DbKnowledgeItem, DbLocation, DbOffering, DbOrg
 import { DEFAULT_TERMINOLOGY, defaultSiteConfig, slugify } from "@/lib/defaults";
 import { sanitizeSiteConfig } from "@/lib/siteConfig";
 import { requiredTrimmed } from "@/lib/validation";
+import { isSubscriptionActive } from "@/lib/billing";
 
 export async function getPublishedBySlug(siteSlug: string) {
   const db = await getDb();
@@ -114,12 +115,17 @@ export async function getPublishedBySlug(siteSlug: string) {
       publishedAt: site.publishedAt,
     },
     organization: {
+      _id: organization._id ? organization._id.toString() : "",
       clerkOrgId: organization.clerkOrgId,
       name: organization.name || "Business",
       slug: organization.slug || normalizedSlug,
       timezone: organization.timezone || "Africa/Lagos",
       currency: organization.currency || "NGN",
       locale: organization.locale || "en-NG",
+      plan: organization.plan || "free_org",
+      planStatus: organization.planStatus || "unpaid",
+      subscriptionExpiresAt: organization.subscriptionExpiresAt,
+      trialEndsAt: organization.trialEndsAt,
       terminology: {
         ...DEFAULT_TERMINOLOGY,
         ...(organization.terminology || {}),
@@ -188,7 +194,7 @@ export async function getAgentSessionConfig(siteSlug: string) {
   const orgId = site.organizationId;
   const orgFilter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
   const organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
-  if (!organization) return null;
+  if (!organization || !isSubscriptionActive(organization)) return null;
 
   const effectiveOrgId = organization._id ? organization._id.toString() : (organization.clerkOrgId || slug);
   const integration = await db.collection<DbAgentIntegration>("agentIntegrations").findOne({

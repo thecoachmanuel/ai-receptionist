@@ -1,4 +1,4 @@
-import { CalendarX2, Home } from "lucide-react";
+import { CalendarX2, Clock3, Home, MessageCircle, Phone } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,79 @@ export function PublicSiteUnavailable() {
             Return home
           </Link>
         </Button>
+      </div>
+    </main>
+  );
+}
+
+export function PublicSiteSuspended({
+  businessName,
+  contact,
+}: {
+  businessName?: string;
+  contact?: {
+    phone?: string;
+    whatsapp?: string;
+    email?: string;
+  };
+}) {
+  const cleanPhone = contact?.phone ? contact.phone.replace(/[^0-9+]/g, "") : "";
+  const cleanWa = contact?.whatsapp ? contact.whatsapp.replace(/[^0-9+]/g, "") : cleanPhone;
+
+  return (
+    <main className="grid min-h-screen place-items-center bg-[#fafafa] px-5 py-16 text-foreground">
+      <div className="w-full max-w-lg text-center">
+        <div className="mx-auto mb-6 grid size-16 place-items-center rounded-full border border-amber-500/20 bg-amber-50 shadow-xs">
+          <Clock3 className="size-7 text-amber-600" aria-hidden="true" />
+        </div>
+
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 mb-4 text-xs font-semibold text-amber-800">
+          <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
+          Site Temporarily Inactive
+        </div>
+
+        <h1 className="font-heading text-4xl tracking-[-0.04em] sm:text-5xl font-medium text-foreground">
+          {businessName ? `${businessName} is offline` : "This business page is offline"}
+        </h1>
+
+        <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-muted-foreground">
+          Online bookings, AI front desk, and scheduling services for{" "}
+          <strong className="text-foreground">{businessName || "this business"}</strong> are currently paused.
+          Please reach out to the business directly through their direct contact channels:
+        </p>
+
+        {/* Direct Contact Buttons if available */}
+        {(cleanWa || cleanPhone || contact?.email) && (
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            {cleanWa && (
+              <Button asChild size="lg" className="h-11 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-none gap-2">
+                <a
+                  href={`https://wa.me/${cleanWa.replace(/\+/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="size-4" /> Message on WhatsApp
+                </a>
+              </Button>
+            )}
+            {cleanPhone && (
+              <Button asChild variant="outline" size="lg" className="h-11 rounded-full border-border/80 shadow-none gap-2">
+                <a href={`tel:${cleanPhone}`}>
+                  <Phone className="size-4" /> Call {contact?.phone || cleanPhone}
+                </a>
+              </Button>
+            )}
+          </div>
+        )}
+
+        <div className="mt-12 border-t border-border/60 pt-6">
+          <p className="text-xs text-muted-foreground">
+            Are you the business owner?{" "}
+            <Link href="/sign-in" className="font-semibold text-primary hover:underline">
+              Sign in to activate or renew subscription →
+            </Link>
+          </p>
+        </div>
       </div>
     </main>
   );

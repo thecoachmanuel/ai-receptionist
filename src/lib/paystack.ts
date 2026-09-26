@@ -348,7 +348,7 @@ export async function chargeAuthorizationForOrg(
 export interface ManualSubscriptionUpdateOptions {
   orgId: string;
   plan: PlanType;
-  planStatus: "active" | "trialing" | "canceled" | "past_due" | "expired";
+  planStatus: "active" | "trialing" | "canceled" | "past_due" | "expired" | "unpaid";
   billingCycle?: BillingCycle;
   durationMonths?: number;
   customExpiresAt?: number;

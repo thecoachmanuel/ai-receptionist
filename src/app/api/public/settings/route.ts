@@ -8,16 +8,16 @@ export async function GET() {
     const settings = await getSystemSettings();
     return NextResponse.json({
       googleAuthEnabled: settings.googleAuthEnabled,
-      enforcePaymentOnSignup: settings.enforcePaymentOnSignup ?? false,
-      trialDays: settings.trialDays ?? 14,
+      enforcePaymentOnSignup: settings.enforcePaymentOnSignup ?? true,
+      trialDays: settings.trialDays ?? 0,
       planPrices: settings.planPrices,
     });
   } catch (err) {
     return NextResponse.json(
       {
         googleAuthEnabled: true,
-        enforcePaymentOnSignup: false,
-        trialDays: 14,
+        enforcePaymentOnSignup: true,
+        trialDays: 0,
         planPrices: { core: 1000, engage: 5000, voice: 15000 },
       },
       { status: 200 }
