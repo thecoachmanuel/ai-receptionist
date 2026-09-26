@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Plan = {
@@ -18,11 +18,15 @@ export function PricingSection({ plans }: { plans: Plan[] }) {
   const [cycle, setCycle] = useState<"monthly" | "yearly">("monthly");
   const sym = "₦";
 
-  const yearlyPrice = (p: number) => p * 10; // 2 months free
+  // Yearly = 10× monthly (pay for 10, get 12 — 2 months free)
+  const toYearly = (p: number) => p * 10;
+  const displayed = (p: number) => (cycle === "yearly" ? toYearly(p) : p);
 
   return (
     <section id="pricing" className="mx-auto max-w-[1400px] px-5 py-24 sm:px-8 lg:px-12 lg:py-32">
-      <div className="mb-10 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+
+      {/* Header row */}
+      <div className="mb-12 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
             Feature-based plans
@@ -32,95 +36,140 @@ export function PricingSection({ plans }: { plans: Plan[] }) {
           </h2>
         </div>
 
-        {/* Monthly / Yearly toggle */}
-        <div className="flex flex-col items-start gap-2 sm:items-end">
-          <div className="inline-flex items-center rounded-lg border border-border/70 bg-muted/40 p-1">
+        {/* Billing cycle pill toggle */}
+        <div className="flex flex-col items-start gap-3 sm:items-end">
+          <div className="relative inline-flex items-center rounded-full border border-border bg-muted/60 p-1 gap-1">
+            {/* sliding indicator handled via button active classes */}
             <button
+              type="button"
               onClick={() => setCycle("monthly")}
-              className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
+              className={`relative rounded-full px-5 py-2 text-sm font-semibold transition-all duration-200 ${
                 cycle === "monthly"
-                  ? "bg-background text-foreground shadow-sm"
+                  ? "bg-white text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Monthly
             </button>
             <button
+              type="button"
               onClick={() => setCycle("yearly")}
-              className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
+              className={`relative flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all duration-200 ${
                 cycle === "yearly"
-                  ? "bg-background text-foreground shadow-sm"
+                  ? "bg-white text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Yearly
-              <span className="ml-1.5 inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-emerald-700">
-                2 months free
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
+                <Zap className="size-2.5" />2 free
               </span>
             </button>
           </div>
+          {cycle === "yearly" && (
+            <p className="text-[11px] font-medium text-emerald-700">
+              🎉 You save 2 months on every plan!
+            </p>
+          )}
           <Link
             href="/pricing"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
           >
-            Compare plans <span aria-hidden>›</span>
+            Full plan comparison →
           </Link>
         </div>
       </div>
 
-      <div className="grid border-l border-t lg:grid-cols-3">
+      {/* Plan cards */}
+      <div className="grid gap-0 border-l border-t lg:grid-cols-3">
         {plans.map((plan) => {
-          const displayPrice =
-            cycle === "yearly" ? yearlyPrice(plan.monthlyPrice) : plan.monthlyPrice;
-          const signUpUrl = `/sign-up?plan=${plan.planKey === "free_org" ? "core" : plan.planKey}&cycle=${cycle}`;
+          const monthlyAmt = plan.monthlyPrice;
+          const shownAmt = displayed(monthlyAmt);
+          const fullYearlyAmt = monthlyAmt * 12;
+          const signUpUrl = `/sign-up?plan=${
+            plan.planKey === "free_org" ? "core" : plan.planKey
+          }&cycle=${cycle}`;
 
           return (
             <article
               key={plan.name}
-              className={`relative flex min-h-[430px] flex-col border-b border-r p-7 sm:p-9 ${
-                plan.featured ? "bg-primary text-primary-foreground" : "bg-card"
+              className={`relative flex min-h-[460px] flex-col border-b border-r p-7 transition-all sm:p-9 ${
+                plan.featured
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card hover:bg-muted/20"
               }`}
             >
               {plan.featured && (
-                <span className="absolute right-5 top-5 font-mono text-[9px] uppercase tracking-[0.15em] text-primary-foreground/65">
+                <span className="absolute right-5 top-5 font-mono text-[9px] uppercase tracking-[0.15em] text-primary-foreground/60">
                   Most popular
                 </span>
               )}
+
+              {/* Plan name */}
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-55">
                 {plan.name}
               </p>
-              <p className="mt-8 font-heading text-6xl font-medium tracking-[-0.06em]">
-                {sym}{displayPrice.toLocaleString()}
-                <span className="ml-1 font-sans text-xs font-normal tracking-normal opacity-60">
-                  /{cycle === "yearly" ? "yr" : "mo"}
-                </span>
-              </p>
-              {cycle === "yearly" && (
-                <p className="mt-1 font-mono text-[10px] opacity-65 line-through">
-                  {sym}{(plan.monthlyPrice * 12).toLocaleString()}/yr
+
+              {/* Price */}
+              <div className="mt-8">
+                <p className="font-heading text-6xl font-medium tracking-[-0.06em] leading-none">
+                  {sym}{shownAmt.toLocaleString()}
+                  <span className="ml-1 font-sans text-sm font-normal tracking-normal opacity-60">
+                    /{cycle === "yearly" ? "yr" : "mo"}
+                  </span>
                 </p>
-              )}
-              <p className="mt-4 max-w-xs text-sm leading-6 opacity-65">{plan.copy}</p>
-              <div className="mt-9 space-y-3 border-t border-current/15 pt-6">
+
+                {/* Yearly savings callout */}
+                {cycle === "yearly" ? (
+                  <p className={`mt-2 text-[11px] font-medium ${plan.featured ? "text-primary-foreground/60" : "text-emerald-700"}`}>
+                    <span className="line-through opacity-50">
+                      {sym}{fullYearlyAmt.toLocaleString()}/yr
+                    </span>
+                    {" "}— you save {sym}{(fullYearlyAmt - shownAmt).toLocaleString()}
+                  </p>
+                ) : (
+                  <p className={`mt-2 text-[11px] ${plan.featured ? "text-primary-foreground/55" : "text-muted-foreground"}`}>
+                    or {sym}{toYearly(monthlyAmt).toLocaleString()}/yr{" "}
+                    <span className={`font-semibold ${plan.featured ? "text-primary-foreground/80" : "text-emerald-700"}`}>
+                      (save 2 months)
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              {/* Description */}
+              <p className="mt-5 text-sm leading-6 opacity-65">{plan.copy}</p>
+
+              {/* Features */}
+              <div className="mt-8 space-y-3 border-t border-current/15 pt-6 flex-1">
                 {plan.features.map((feature) => (
                   <p key={feature} className="flex items-center gap-2 text-sm">
-                    <Check className="size-3.5" /> {feature}
+                    <Check className="size-3.5 shrink-0 opacity-80" /> {feature}
                   </p>
                 ))}
               </div>
+
+              {/* CTA */}
               <Button
                 asChild
                 variant={plan.featured ? "secondary" : "outline"}
-                className="mt-auto h-11 justify-between rounded-md shadow-none"
+                className="mt-8 h-11 justify-between rounded-md shadow-none"
               >
                 <Link href={signUpUrl}>
-                  Choose {plan.name} <ArrowRight className="size-4" />
+                  Choose {plan.name}
+                  <ArrowRight className="size-4" />
                 </Link>
               </Button>
             </article>
           );
         })}
       </div>
+
+      {/* Footer note */}
+      <p className="mt-5 text-center text-xs text-muted-foreground">
+        All plans billed in Nigerian Naira (₦) via Paystack.
+        {cycle === "yearly" ? " Yearly billing charged as a single payment." : " Switch to yearly anytime to save 2 months."}
+      </p>
     </section>
   );
 }

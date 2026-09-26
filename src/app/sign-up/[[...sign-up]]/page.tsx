@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -22,6 +22,7 @@ import {
   SlidersHorizontal,
   Smile,
   Sparkles,
+  Zap,
 } from "lucide-react";
 import type { PlanType } from "@/lib/db/types";
 import {
@@ -339,14 +340,14 @@ export default function SignUpPage() {
               </div>
 
               {/* Billing cycle toggle */}
-              <div className="inline-flex items-center rounded-md border border-border/70 bg-muted/40 p-0.5 text-xs">
+              <div className="inline-flex items-center rounded-full border border-border bg-muted/60 p-1 gap-1">
                 <button
                   type="button"
                   onClick={() => setBillingCycle("monthly")}
-                  className={`rounded px-3 py-1.5 font-medium transition-all ${
+                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
                     billingCycle === "monthly"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground"
+                      ? "bg-white text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Monthly
@@ -354,15 +355,15 @@ export default function SignUpPage() {
                 <button
                   type="button"
                   onClick={() => setBillingCycle("yearly")}
-                  className={`flex items-center gap-1.5 rounded px-3 py-1.5 font-medium transition-all ${
+                  className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
                     billingCycle === "yearly"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground"
+                      ? "bg-white text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Yearly
-                  <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[8px] font-bold text-emerald-700">
-                    2 FREE
+                  <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[8px] font-bold uppercase text-white">
+                    <Zap className="size-2" />2 FREE
                   </span>
                 </button>
               </div>
