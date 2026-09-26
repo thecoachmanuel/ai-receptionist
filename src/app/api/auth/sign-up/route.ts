@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
         undefined,
         selectedPlan,
         businessType,
+        selectedCycle,
       );
       orgId = createdOrg._id.toString();
       orgSlug = createdOrg.slug;

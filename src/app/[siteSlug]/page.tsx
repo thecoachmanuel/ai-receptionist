@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { PublicSite } from "@/components/public-site/public-site";
 import { PublicSiteUnavailable } from "@/components/public-site/public-site-states";
-import { organizationHasFeature } from "@/lib/billing";
+import { organizationHasFeature, isSubscriptionActive } from "@/lib/billing";
 import * as publicSiteService from "@/lib/services/publicSite";
 import { getVapiSettings } from "@/lib/services/settings";
 
@@ -97,7 +97,9 @@ export default async function PublicSitePage({
       return <PublicSiteUnavailable />;
     }
 
-    const agentFeatures = agentSessionConfig
+    const isSubscriptionExpired = !isSubscriptionActive(publishedSite.organization as any);
+
+    const agentFeatures = agentSessionConfig && !isSubscriptionExpired
       ? await getAgentFeatures(agentSessionConfig.clerkOrgId || agentSessionConfig.organizationId)
       : { text: false, voice: false };
 
@@ -107,6 +109,7 @@ export default async function PublicSitePage({
         publishedSite={publishedSite as any}
         textAgentEnabled={agentFeatures.text}
         voiceAgentEnabled={agentFeatures.voice}
+        isSubscriptionExpired={isSubscriptionExpired}
       />
     );
   } catch (error) {

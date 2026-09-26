@@ -360,6 +360,10 @@ export async function getPublicAvailableSlots(
   const organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
   if (!organization) throw new Error("Organization not found");
 
+  if (!isSubscriptionActive(organization)) {
+    return [];
+  }
+
   const effectiveOrgId = organization._id!.toString();
   const timezone = organization.timezone || "Africa/Lagos";
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { updateOrgPlanFromPaystack, verifyPaystackSignature } from "@/lib/paystack";
+import { sendSaasSubscriptionRenewedAlert } from "@/lib/services/saas-whatsapp";
 import type { BillingCycle } from "@/lib/db/types";
 
 export async function POST(request: Request) {
@@ -59,6 +60,25 @@ export async function POST(request: Request) {
           },
           billingCycle,
         );
+
+        const planName =
+          metadata.planId === "voice"
+            ? "Voice Agent"
+            : metadata.planId === "engage"
+              ? "Engage"
+              : "Core Receptionist";
+        const durationDays = billingCycle === "yearly" ? 365 : 30;
+        const expiryDateStr = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toLocaleDateString("en-NG", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+
+        void sendSaasSubscriptionRenewedAlert({
+          orgId: metadata.orgId,
+          planName,
+          expiryDateStr,
+        }).catch((err) => console.error("Webhook renewal WhatsApp notification error:", err));
       }
     } else if (
       event.event === "subscription.disable" ||

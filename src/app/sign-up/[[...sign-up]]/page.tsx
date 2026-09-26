@@ -188,6 +188,14 @@ export default function SignUpPage() {
     setError("");
     setGoogleLoading(true);
     try {
+      if (typeof document !== "undefined") {
+        document.cookie = `qwilo_chosen_plan=${selectedPlan}; path=/; max-age=3600; SameSite=Lax`;
+        document.cookie = `qwilo_chosen_cycle=${billingCycle}; path=/; max-age=3600; SameSite=Lax`;
+        document.cookie = `qwilo_business_type=${businessType}; path=/; max-age=3600; SameSite=Lax`;
+        if (organizationName.trim()) {
+          document.cookie = `qwilo_org_name=${encodeURIComponent(organizationName.trim())}; path=/; max-age=3600; SameSite=Lax`;
+        }
+      }
       await signIn("google", { callbackUrl: "/app" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Google Sign-Up failed");
@@ -329,88 +337,86 @@ export default function SignUpPage() {
             />
           </div>
 
-          {enforcePayment && (
-            <div className="space-y-3 pt-1">
-              {/* Plan selector */}
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold text-foreground">Select Subscription Plan</Label>
-                <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
-                  Compulsory on signup
-                </span>
-              </div>
-
-              {/* Billing cycle toggle */}
-              <div className="inline-flex items-center rounded-full border border-border bg-muted/60 p-1 gap-1">
-                <button
-                  type="button"
-                  onClick={() => setBillingCycle("monthly")}
-                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
-                    billingCycle === "monthly"
-                      ? "bg-white text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Monthly
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBillingCycle("yearly")}
-                  className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
-                    billingCycle === "yearly"
-                      ? "bg-white text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Yearly
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[8px] font-bold uppercase text-white">
-                    <Zap className="size-2" />2 FREE
-                  </span>
-                </button>
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-3">
-                {[
-                  { id: "free_org" as const, name: "Core", price: planPrices.core, desc: "Bookings & public site" },
-                  { id: "engage" as const, name: "Engage", price: planPrices.engage, desc: "AI text assistant" },
-                  { id: "voice" as const, name: "Voice", price: planPrices.voice, desc: "Live browser audio" },
-                ].map((p) => {
-                  const isSelected = selectedPlan === p.id;
-                  const shown = displayPrice(p.price);
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setSelectedPlan(p.id)}
-                      className={`flex flex-col items-start p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                        isSelected
-                          ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs"
-                          : "border-border/70 bg-card hover:border-border hover:bg-muted/30"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <span className="font-semibold text-xs text-foreground">{p.name}</span>
-                        {isSelected && <Check className="size-3.5 text-primary" />}
-                      </div>
-                      <span className="font-heading text-sm font-bold text-foreground mt-1">
-                        ₦{shown.toLocaleString()}
-                        <span className="text-[10px] font-normal text-muted-foreground">
-                          /{billingCycle === "yearly" ? "yr" : "mo"}
-                        </span>
-                      </span>
-                      {billingCycle === "yearly" && (
-                        <span className="text-[9px] text-emerald-700 font-medium">2 months free</span>
-                      )}
-                      <span className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{p.desc}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 pt-0.5">
-                <ShieldCheck className="size-3.5 text-emerald-600 shrink-0" />
-                Paystack secured Nigerian Naira (₦) checkout.
-              </p>
+          <div className="space-y-3 pt-1">
+            {/* Plan selector */}
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold text-foreground">Select Subscription Plan</Label>
+              <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
+                {enforcePayment ? "Compulsory on signup" : "14-day free trial on selected plan"}
+              </span>
             </div>
-          )}
+
+            {/* Billing cycle toggle */}
+            <div className="inline-flex items-center rounded-full border border-border bg-muted/60 p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => setBillingCycle("monthly")}
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                  billingCycle === "monthly"
+                    ? "bg-white text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingCycle("yearly")}
+                className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                  billingCycle === "yearly"
+                    ? "bg-white text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Yearly
+                <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[8px] font-bold uppercase text-white">
+                  <Zap className="size-2" />2 FREE
+                </span>
+              </button>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-3">
+              {[
+                { id: "free_org" as const, name: "Core", price: planPrices.core, desc: "Bookings & public site" },
+                { id: "engage" as const, name: "Engage", price: planPrices.engage, desc: "AI text assistant" },
+                { id: "voice" as const, name: "Voice", price: planPrices.voice, desc: "Live browser audio" },
+              ].map((p) => {
+                const isSelected = selectedPlan === p.id;
+                const shown = displayPrice(p.price);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setSelectedPlan(p.id)}
+                    className={`flex flex-col items-start p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      isSelected
+                        ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs"
+                        : "border-border/70 bg-card hover:border-border hover:bg-muted/30"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-semibold text-xs text-foreground">{p.name}</span>
+                      {isSelected && <Check className="size-3.5 text-primary" />}
+                    </div>
+                    <span className="font-heading text-sm font-bold text-foreground mt-1">
+                      ₦{shown.toLocaleString()}
+                      <span className="text-[10px] font-normal text-muted-foreground">
+                        /{billingCycle === "yearly" ? "yr" : "mo"}
+                      </span>
+                    </span>
+                    {billingCycle === "yearly" && (
+                      <span className="text-[9px] text-emerald-700 font-medium">2 months free</span>
+                    )}
+                    <span className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{p.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 pt-0.5">
+              <ShieldCheck className="size-3.5 text-emerald-600 shrink-0" />
+              Paystack secured Nigerian Naira (₦) checkout.
+            </p>
+          </div>
 
           <Button
             type="submit"
@@ -420,10 +426,10 @@ export default function SignUpPage() {
             {loading
               ? enforcePayment
                 ? "Connecting to Paystack..."
-                : "Creating account..."
+                : "Creating workspace..."
               : enforcePayment
                 ? `Pay ₦${displayPrice(currentPrice).toLocaleString()}/${billingCycle === "yearly" ? "yr" : "mo"} with Paystack`
-                : "Create workspace"}
+                : `Get Started with ${selectedPlan === "voice" ? "Voice" : selectedPlan === "engage" ? "Engage" : "Core"} (₦${displayPrice(currentPrice).toLocaleString()}/${billingCycle === "yearly" ? "yr" : "mo"})`}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
             Already have an account?{" "}

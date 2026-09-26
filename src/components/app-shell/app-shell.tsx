@@ -148,7 +148,7 @@ function WorkspaceNavigation({
     <>
       {navigation.map((section) => (
         <SidebarGroup key={section.label} className="px-3 py-2">
-          <SidebarGroupLabel className="px-2 text-[10px] font-semibold tracking-[0.18em] text-sidebar-foreground/45 uppercase">
+          <SidebarGroupLabel className="px-2 text-[10px] font-semibold tracking-[0.18em] text-white/45 uppercase">
             {section.label}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -169,9 +169,9 @@ function WorkspaceNavigation({
                       isActive={isActive}
                       tooltip={item.label}
                       className={cn(
-                        "h-9 rounded-md px-2.5 text-[13px] transition-colors",
+                        "h-9 rounded-md px-2.5 text-[13px] text-white/75 hover:text-white hover:bg-white/10 transition-colors font-medium",
                         isActive &&
-                          "bg-foreground text-background hover:bg-foreground hover:text-background",
+                          "bg-white text-[#12151e] font-semibold hover:bg-white hover:text-[#12151e] shadow-xs",
                       )}
                     >
                       <Link href={href}>
@@ -191,8 +191,8 @@ function WorkspaceNavigation({
       ))}
 
       {isSuperAdmin && (
-        <SidebarGroup className="px-3 py-2 border-t border-black/10 mt-2">
-          <SidebarGroupLabel className="px-2 text-[10px] font-semibold tracking-[0.18em] text-primary uppercase">
+        <SidebarGroup className="px-3 py-2 border-t border-white/10 mt-2">
+          <SidebarGroupLabel className="px-2 text-[10px] font-semibold tracking-[0.18em] text-blue-300 uppercase">
             Platform Super Admin
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -201,7 +201,7 @@ function WorkspaceNavigation({
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === "/app/admin" || pathname === "/admin"}
-                  className="h-9 rounded-md px-2.5 text-[13px] font-medium bg-primary/10 text-primary hover:bg-primary/20"
+                  className="h-9 rounded-md px-2.5 text-[13px] font-medium bg-primary/20 text-blue-300 hover:bg-primary/30 border border-primary/30"
                 >
                   <Link href="/app/admin">
                     <Building2 className="size-4" />
@@ -248,28 +248,28 @@ function ShellChrome({
     >
       <Sidebar
         collapsible="offcanvas"
-        className="border-r border-black/10 bg-[#f2f0e9]"
+        className="border-r border-white/10 bg-[#12151e] text-white [&_[data-sidebar=sidebar]]:bg-[#12151e] [&_[data-sidebar=header]]:bg-[#12151e] [&_[data-sidebar=content]]:bg-[#12151e] [&_[data-sidebar=footer]]:bg-[#12151e]"
       >
         <SidebarHeader className="gap-4 px-4 pt-4 pb-3">
           <div className="flex flex-col gap-0.5">
-            <Brand href={`/app/${orgSlug}`} />
-            <span className="pl-0.5 text-[9px] font-semibold tracking-[0.18em] text-sidebar-foreground/45 uppercase">
+            <Brand inverted href={`/app/${orgSlug}`} />
+            <span className="pl-0.5 text-[9px] font-semibold tracking-[0.18em] text-white/45 uppercase">
               Operations desk
             </span>
           </div>
 
           {userRole === "member" || userRole === "operator" ? (
-            <div className="flex items-center justify-between rounded-lg border border-black/10 bg-white/70 px-3 py-2 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+            <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 shadow-xs">
               <div className="space-y-0.5 truncate">
-                <p className="text-xs font-semibold text-foreground truncate">{organizationName}</p>
-                <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Staff Operating Portal</p>
+                <p className="text-xs font-semibold text-white truncate">{organizationName}</p>
+                <p className="text-[10px] text-white/50 font-mono uppercase tracking-wider">Staff Operating Portal</p>
               </div>
-              <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 shrink-0 bg-primary/10 text-primary border-primary/20">
+              <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 shrink-0 bg-primary/20 text-blue-300 border-primary/30">
                 Staff
               </Badge>
             </div>
           ) : (
-            <div className="rounded-lg border border-black/10 bg-white/70 px-2 py-1 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+            <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 shadow-xs [&_button]:text-white [&_p]:text-white [&_span]:text-white/70">
               <OrganizationSwitcher
                 hidePersonal
                 afterCreateOrganizationUrl="/app/:slug"
@@ -278,11 +278,11 @@ function ShellChrome({
                   elements: {
                     rootBox: "w-full",
                     organizationSwitcherTrigger:
-                      "w-full justify-between border-0 bg-transparent px-1 py-1 shadow-none",
+                      "w-full justify-between border-0 bg-transparent px-1 py-1 shadow-none text-white",
                     organizationPreviewMainIdentifier:
-                      "text-xs font-medium text-foreground",
+                      "text-xs font-medium text-white",
                     organizationPreviewSecondaryIdentifier:
-                      "text-[10px] text-muted-foreground",
+                      "text-[10px] text-white/60",
                   },
                 }}
               />
@@ -290,23 +290,23 @@ function ShellChrome({
           )}
         </SidebarHeader>
 
-        <Separator className="bg-black/10" />
+        <Separator className="bg-white/10" />
         <SidebarContent className="py-2">
           <WorkspaceNavigation navigation={navigation} orgSlug={orgSlug} />
         </SidebarContent>
 
         <SidebarFooter className="p-3">
-          <div className="rounded-lg border border-black/10 bg-white/55 p-3">
+          <div className="rounded-lg border border-white/10 bg-white/5 p-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-[10px] font-semibold tracking-[0.14em] text-sidebar-foreground/50 uppercase">
+              <p className="text-[10px] font-semibold tracking-[0.14em] text-white/50 uppercase">
                 Live workspace
               </p>
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700">
-                <span className="size-1.5 rounded-full bg-emerald-500" />
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400">
+                <span className="size-1.5 rounded-full bg-emerald-400" />
                 Synced
               </span>
             </div>
-            <p className="mt-2 truncate text-xs font-medium">
+            <p className="mt-2 truncate text-xs font-medium text-white/90">
               {isBootstrapping ? "Preparing workspace…" : organizationName}
             </p>
           </div>

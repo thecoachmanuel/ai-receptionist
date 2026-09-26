@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { updateOrgPlanFromPaystack, verifyPaystackTransaction } from "@/lib/paystack";
+import { sendSaasSubscriptionRenewedAlert } from "@/lib/services/saas-whatsapp";
 import type { BillingCycle } from "@/lib/db/types";
 
 export async function GET(request: Request) {
@@ -34,6 +35,25 @@ export async function GET(request: Request) {
         },
         billingCycle,
       );
+
+      const planName =
+        data.metadata.planId === "voice"
+          ? "Voice Agent"
+          : data.metadata.planId === "engage"
+            ? "Engage"
+            : "Core Receptionist";
+      const durationDays = billingCycle === "yearly" ? 365 : 30;
+      const expiryDateStr = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toLocaleDateString("en-NG", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+
+      void sendSaasSubscriptionRenewedAlert({
+        orgId: data.metadata.orgId,
+        planName,
+        expiryDateStr,
+      }).catch((err) => console.error("Verify renewal WhatsApp notification error:", err));
 
       const targetSlug = orgSlug || data.metadata.orgId;
       return NextResponse.redirect(

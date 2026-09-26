@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { comparePassword, hashPassword } from "@/lib/auth/password";
 import { getDb } from "@/lib/db/mongodb";
-import type { DbUser } from "@/lib/db/types";
+import type { DbUser, BillingCycle, PlanType } from "@/lib/db/types";
 import { createOrganizationForUser, isUserAuthorizedForOrg } from "@/lib/services/organizations";
 import { getSystemSettings } from "@/lib/services/system-settings";
 import { ObjectId } from "mongodb";
@@ -350,7 +350,40 @@ export const authOptions: NextAuthOptions = {
           } as any);
 
           const userId = insertResult.insertedId.toString();
-          const org = await createOrganizationForUser(userId, `${profile?.name || "My"} Organization`);
+
+          let chosenPlan: PlanType = "free_org";
+          let chosenCycle: BillingCycle = "monthly";
+          let chosenBusinessType = "barber";
+          let chosenOrgName = `${profile?.name || "My"} Organization`;
+
+          try {
+            const { cookies } = await import("next/headers");
+            const cookieStore = await cookies();
+            const planCookie = cookieStore.get("qwilo_chosen_plan")?.value;
+            const cycleCookie = cookieStore.get("qwilo_chosen_cycle")?.value;
+            const bTypeCookie = cookieStore.get("qwilo_business_type")?.value;
+            const orgNameCookie = cookieStore.get("qwilo_org_name")?.value;
+
+            if (planCookie === "voice" || planCookie === "engage" || planCookie === "free_org") {
+              chosenPlan = planCookie as PlanType;
+            }
+            if (cycleCookie === "yearly" || cycleCookie === "monthly") {
+              chosenCycle = cycleCookie as BillingCycle;
+            }
+            if (bTypeCookie) chosenBusinessType = bTypeCookie;
+            if (orgNameCookie) chosenOrgName = decodeURIComponent(orgNameCookie);
+          } catch {}
+
+          const org = await createOrganizationForUser(
+            userId,
+            chosenOrgName,
+            undefined,
+            undefined,
+            undefined,
+            chosenPlan,
+            chosenBusinessType,
+            chosenCycle,
+          );
           const activeOrgId = org._id.toString();
 
           await db.collection<DbUser>("users").updateOne(

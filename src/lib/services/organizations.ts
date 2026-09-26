@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/db/mongodb";
-import type { DbAgentIntegration, DbOrgMember, DbOrganization, DbPublicSite, DbOffering, PlanType } from "@/lib/db/types";
+import type { DbAgentIntegration, DbOrgMember, DbOrganization, DbPublicSite, DbOffering, PlanType, BillingCycle } from "@/lib/db/types";
 import { DEFAULT_TERMINOLOGY, defaultSiteConfig, slugify } from "@/lib/defaults";
 import { getBusinessPreset } from "@/lib/business-presets";
 import { assertIanaTimezone } from "@/lib/time";
@@ -124,6 +124,7 @@ export async function createOrganizationForUser(
   rawLocale?: string,
   initialPlan?: PlanType,
   businessType?: string,
+  billingCycle?: BillingCycle,
 ) {
   const db = await getDb();
   const name = requiredTrimmed(rawName, "name", 120);
@@ -172,6 +173,7 @@ export async function createOrganizationForUser(
     terminology: preset.terminology,
     plan: initialPlan || "free_org",
     planStatus,
+    billingCycle: billingCycle || "monthly",
     trialEndsAt,
     subscriptionExpiresAt,
     createdAt: now,

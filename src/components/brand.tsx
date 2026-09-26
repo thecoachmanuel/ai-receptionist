@@ -13,18 +13,37 @@ export function BrandIcon({
   inverted?: boolean;
   className?: string;
 }) {
+  if (inverted) {
+    return (
+      <span className={cn("inline-flex items-center", className)} aria-hidden="true">
+        <Image
+          src="/images/brand/qwilo-mark-white.png"
+          alt="Qwilo"
+          width={32}
+          height={32}
+          className="h-8 w-auto"
+          priority
+        />
+      </span>
+    );
+  }
+
   return (
     <span className={cn("inline-flex items-center", className)} aria-hidden="true">
       <Image
-        src={
-          inverted
-            ? "/images/brand/qwilo-mark-white.png"
-            : "/images/brand/qwilo-mark.png"
-        }
+        src="/images/brand/qwilo-mark.png"
         alt="Qwilo"
         width={32}
         height={32}
-        className="h-8 w-auto"
+        className="h-8 w-auto dark:hidden"
+        priority
+      />
+      <Image
+        src="/images/brand/qwilo-mark-white.png"
+        alt="Qwilo"
+        width={32}
+        height={32}
+        className="hidden h-8 w-auto dark:inline-block"
         priority
       />
     </span>
@@ -45,6 +64,25 @@ export function Brand({
   inverted?: boolean;
   className?: string;
 }) {
+  if (inverted) {
+    return (
+      <Link
+        href={href}
+        className={cn("group inline-flex items-center", className)}
+        aria-label="Qwilo home"
+      >
+        <Image
+          src="/images/brand/qwilo-logo-white.png"
+          alt="Qwilo"
+          width={120}
+          height={40}
+          className="h-8 w-auto transition-opacity group-hover:opacity-80"
+          priority
+        />
+      </Link>
+    );
+  }
+
   return (
     <Link
       href={href}
@@ -52,15 +90,19 @@ export function Brand({
       aria-label="Qwilo home"
     >
       <Image
-        src={
-          inverted
-            ? "/images/brand/qwilo-logo-white.png"
-            : "/images/brand/qwilo-logo.png"
-        }
+        src="/images/brand/qwilo-logo.png"
         alt="Qwilo"
         width={120}
         height={40}
-        className="h-8 w-auto transition-opacity group-hover:opacity-80"
+        className="h-8 w-auto transition-opacity group-hover:opacity-80 dark:hidden"
+        priority
+      />
+      <Image
+        src="/images/brand/qwilo-logo-white.png"
+        alt="Qwilo"
+        width={120}
+        height={40}
+        className="hidden h-8 w-auto transition-opacity group-hover:opacity-80 dark:inline-block"
         priority
       />
     </Link>

@@ -216,12 +216,14 @@ export function PublicSite({
   textAgentEnabled,
   voiceAgentEnabled,
   voiceGender = "female",
+  isSubscriptionExpired = false,
 }: {
   siteSlug: string;
   publishedSite: PublishedSite;
   textAgentEnabled: boolean;
   voiceAgentEnabled: boolean;
   voiceGender?: "female" | "male";
+  isSubscriptionExpired?: boolean;
 }) {
   const { organization, site, locations, offerings, teamMembers, knowledgeItems } =
     publishedSite;
@@ -234,11 +236,11 @@ export function PublicSite({
   const bookingIsVisible =
     config.booking?.enabled && config.sections?.includes("booking");
   const textAgentIsVisible =
-    textAgentEnabled && config.agent?.showWebChat;
+    !isSubscriptionExpired && textAgentEnabled && config.agent?.showWebChat;
   const voiceAgentIsVisible =
-    voiceAgentEnabled && config.agent?.showVoiceChat;
+    !isSubscriptionExpired && voiceAgentEnabled && config.agent?.showVoiceChat;
   const vapiWidgetIsVisible =
-    voiceAgentEnabled && ((config.agent as any)?.showVapiWidget || (config.agent as any)?.showElevenLabsWidget);
+    !isSubscriptionExpired && voiceAgentEnabled && ((config.agent as any)?.showVapiWidget || (config.agent as any)?.showElevenLabsWidget);
   const agentIsVisible = textAgentIsVisible || voiceAgentIsVisible;
   const sectionSet = new Set(config.sections || []);
 
@@ -523,25 +525,63 @@ export function PublicSite({
       <SectionShell id="book" className="bg-muted/35">
         <SectionHeading
           eyebrow={`Online ${terminology.bookingSingular.toLowerCase()}`}
-          title="Choose a time, your way"
-          description={`A few simple steps and your time with ${config.businessName} is reserved.`}
+          title={isSubscriptionExpired ? "Booking notice" : "Choose a time, your way"}
+          description={
+            isSubscriptionExpired
+              ? `${config.businessName} is currently accepting bookings directly. Please contact them via phone or WhatsApp.`
+              : `A few simple steps and your time with ${config.businessName} is reserved.`
+          }
           align="center"
         />
         <div className="mt-12">
-          <BookingFlow
-            siteSlug={siteSlug}
-            businessName={config.businessName}
-            locations={locations}
-            offerings={offerings}
-            teamMembers={teamMembers}
-            terminology={terminology}
-            locale={organization.locale}
-            currency={organization.currency}
-            timezone={organization.timezone}
-            maximumAdvanceDays={config.booking.maximumAdvanceDays}
-            depositConfig={config.booking?.deposit}
-            businessWhatsapp={config.contact?.whatsapp || config.contact?.phone}
-          />
+          {isSubscriptionExpired ? (
+            <div className="mx-auto max-w-lg rounded-2xl border border-border/80 bg-card p-8 text-center shadow-xs">
+              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+                <Clock3 className="size-6" />
+              </div>
+              <h3 className="font-heading text-xl font-semibold text-foreground">
+                Online Booking Temporarily Unavailable
+              </h3>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                {config.businessName} is currently accepting appointments directly. Please message or call them using the contact options below.
+              </p>
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                {config.contact?.whatsapp && (
+                  <Button asChild size="sm" className="gap-2">
+                    <a
+                      href={`https://wa.me/${config.contact.whatsapp.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <MessageCircle className="size-4" /> Message on WhatsApp
+                    </a>
+                  </Button>
+                )}
+                {config.contact?.phone && (
+                  <Button asChild variant="outline" size="sm" className="gap-2">
+                    <a href={`tel:${config.contact.phone}`}>
+                      <Phone className="size-4" /> Call {config.contact.phone}
+                    </a>
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <BookingFlow
+              siteSlug={siteSlug}
+              businessName={config.businessName}
+              locations={locations}
+              offerings={offerings}
+              teamMembers={teamMembers}
+              terminology={terminology}
+              locale={organization.locale}
+              currency={organization.currency}
+              timezone={organization.timezone}
+              maximumAdvanceDays={config.booking.maximumAdvanceDays}
+              depositConfig={config.booking?.deposit}
+              businessWhatsapp={config.contact?.whatsapp || config.contact?.phone}
+            />
+          )}
         </div>
       </SectionShell>
     );
