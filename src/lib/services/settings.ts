@@ -2,9 +2,9 @@ import { getDb } from "@/lib/db/mongodb";
 import { getSystemSettings, updateSystemSettings } from "@/lib/services/system-settings";
 
 export type PlanPrices = {
-  core: number;   // NGN (defaults to 5000)
-  engage: number; // NGN (defaults to 25000)
-  voice: number;  // NGN (defaults to 75000)
+  core: number;   // NGN (defaults to 1000)
+  engage: number; // NGN (defaults to 5000)
+  voice: number;  // NGN (defaults to 15000)
 };
 
 export type PlatformSettings = {
@@ -32,7 +32,7 @@ export type ElevenLabsSettings = VapiSettings;
 
 const DEFAULTS: PlatformSettings = {
   baseCurrency: "NGN",
-  planPrices: { core: 5000, engage: 25000, voice: 75000 },
+  planPrices: { core: 1000, engage: 5000, voice: 15000 },
   usdToNgnRate: 1500,
   contactPhone: "+2348168882014",
   contactEmail: "qwilong@gmail.com",

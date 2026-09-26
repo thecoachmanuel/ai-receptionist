@@ -1,6 +1,11 @@
+import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+/**
+ * BrandIcon — renders just the Qwilo logo mark (square icon only).
+ * Kept for backwards-compat with any callers that use BrandIcon directly.
+ */
 export function BrandIcon({
   inverted = false,
   className,
@@ -9,24 +14,28 @@ export function BrandIcon({
   className?: string;
 }) {
   return (
-    <span
-      className={cn(
-        "relative grid size-8 grid-cols-2 gap-0.5 rounded-[7px] border p-1 transition-transform group-hover:-rotate-3",
-        inverted
-          ? "border-white/20 bg-white text-slate-950"
-          : "border-foreground/15 bg-foreground text-background",
-        className,
-      )}
-      aria-hidden="true"
-    >
-      <span className="rounded-[2px] bg-current opacity-90" />
-      <span className="rounded-[2px] border border-current opacity-45" />
-      <span className="rounded-[2px] border border-current opacity-45" />
-      <span className="rounded-[2px] bg-current opacity-90" />
+    <span className={cn("inline-flex items-center", className)} aria-hidden="true">
+      <Image
+        src={
+          inverted
+            ? "/images/brand/qwilo-mark-white.png"
+            : "/images/brand/qwilo-mark.png"
+        }
+        alt="Qwilo"
+        width={32}
+        height={32}
+        className="h-8 w-auto"
+        priority
+      />
     </span>
   );
 }
 
+/**
+ * Brand — full Qwilo logo (wordmark).
+ * - Light / white backgrounds  → dark navy logo  (qwilo-logo.png)
+ * - Dark / inverted backgrounds → all-white logo (qwilo-logo-white.png)
+ */
 export function Brand({
   href = "/",
   inverted = false,
@@ -39,18 +48,21 @@ export function Brand({
   return (
     <Link
       href={href}
-      className={cn("group inline-flex items-center gap-2.5", className)}
+      className={cn("group inline-flex items-center", className)}
       aria-label="Qwilo home"
     >
-      <BrandIcon inverted={inverted} />
-      <span
-        className={cn(
-          "font-heading text-[1.4rem] font-semibold tracking-[-0.035em]",
-          inverted && "text-white",
-        )}
-      >
-        Qwilo
-      </span>
+      <Image
+        src={
+          inverted
+            ? "/images/brand/qwilo-logo-white.png"
+            : "/images/brand/qwilo-logo.png"
+        }
+        alt="Qwilo"
+        width={120}
+        height={40}
+        className="h-8 w-auto transition-opacity group-hover:opacity-80"
+        priority
+      />
     </Link>
   );
 }

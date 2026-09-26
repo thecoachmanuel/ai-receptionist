@@ -427,9 +427,9 @@ export function SuperAdminScreen() {
       .then((data) => {
         if (data.settings) {
           setPrices({
-            core: data.settings.planPrices?.core ?? 5000,
-            engage: data.settings.planPrices?.engage ?? 25000,
-            voice: data.settings.planPrices?.voice ?? 75000,
+            core: data.settings.planPrices?.core ?? 1000,
+            engage: data.settings.planPrices?.engage ?? 5000,
+            voice: data.settings.planPrices?.voice ?? 15000,
           });
           setContactPhone(data.settings.contactPhone || "+2348168882014");
           setContactEmail(data.settings.contactEmail || "qwilong@gmail.com");

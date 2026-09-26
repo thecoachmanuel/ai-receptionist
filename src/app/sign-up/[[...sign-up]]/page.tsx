@@ -65,7 +65,7 @@ export default function SignUpPage() {
   const [googleAuthEnabled, setGoogleAuthEnabled] = useState(true);
   const [enforcePayment, setEnforcePayment] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanType>("free_org");
-  const [planPrices, setPlanPrices] = useState({ core: 5000, engage: 25000, voice: 75000 });
+  const [planPrices, setPlanPrices] = useState({ core: 1000, engage: 5000, voice: 15000 });
 
   const activePreset = getBusinessPreset(businessType);
 
@@ -94,9 +94,9 @@ export default function SignUpPage() {
           setEnforcePayment(data.enforcePaymentOnSignup === true);
           if (data.planPrices) {
             setPlanPrices({
-              core: data.planPrices.core ?? 5000,
-              engage: data.planPrices.engage ?? 25000,
-              voice: data.planPrices.voice ?? 75000,
+              core: data.planPrices.core ?? 1000,
+              engage: data.planPrices.engage ?? 5000,
+              voice: data.planPrices.voice ?? 15000,
             });
           }
         }

@@ -29,7 +29,7 @@ export async function GET() {
     console.error("Public settings GET error", error);
     return NextResponse.json(
       {
-        planPrices: { core: 5000, engage: 25000, voice: 75000 },
+        planPrices: { core: 1000, engage: 5000, voice: 15000 },
         usdToNgnRate: 1500,
         baseCurrency: "NGN",
         contactPhone: "+2348168882014",

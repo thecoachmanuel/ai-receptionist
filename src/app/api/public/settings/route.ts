@@ -18,7 +18,7 @@ export async function GET() {
         googleAuthEnabled: true,
         enforcePaymentOnSignup: false,
         trialDays: 14,
-        planPrices: { core: 5000, engage: 25000, voice: 75000 },
+        planPrices: { core: 1000, engage: 5000, voice: 15000 },
       },
       { status: 200 }
     );

@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { BrandIcon } from "@/components/brand";
+import { Brand } from "@/components/brand";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -251,20 +251,12 @@ function ShellChrome({
         className="border-r border-black/10 bg-[#f2f0e9]"
       >
         <SidebarHeader className="gap-4 px-4 pt-4 pb-3">
-          <Link
-            href={`/app/${orgSlug}`}
-            className="group flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <BrandIcon />
-            <span>
-              <span className="block font-heading text-[17px] leading-none font-semibold tracking-[-0.02em]">
-                Qwilo
-              </span>
-              <span className="mt-1 block text-[9px] font-semibold tracking-[0.18em] text-sidebar-foreground/45 uppercase">
-                Operations desk
-              </span>
+          <div className="flex flex-col gap-0.5">
+            <Brand href={`/app/${orgSlug}`} />
+            <span className="pl-0.5 text-[9px] font-semibold tracking-[0.18em] text-sidebar-foreground/45 uppercase">
+              Operations desk
             </span>
-          </Link>
+          </div>
 
           {userRole === "member" || userRole === "operator" ? (
             <div className="flex items-center justify-between rounded-lg border border-black/10 bg-white/70 px-3 py-2 shadow-[0_1px_0_rgba(0,0,0,0.05)]">

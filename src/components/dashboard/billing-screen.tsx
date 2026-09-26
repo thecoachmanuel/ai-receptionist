@@ -15,7 +15,7 @@ import { useWorkspace } from "@/components/dashboard/workspace-context";
 type PlanPrices = { core: number; engage: number; voice: number };
 type PriceState = { prices: PlanPrices; loaded: boolean };
 
-const PRICE_DEFAULTS: PlanPrices = { core: 5000, engage: 25000, voice: 75000 };
+const PRICE_DEFAULTS: PlanPrices = { core: 1000, engage: 5000, voice: 15000 };
 
 function PriceSkeleton() {
   return (
@@ -53,9 +53,9 @@ export function BillingScreen() {
   const { prices, loaded } = priceState;
   const sym = "₦";
 
-  const corePrice = prices.core ?? 5000;
-  const engagePrice = prices.engage ?? 25000;
-  const voicePrice = prices.voice ?? 75000;
+  const corePrice = prices.core ?? 1000;
+  const engagePrice = prices.engage ?? 5000;
+  const voicePrice = prices.voice ?? 15000;
 
   const dashboardPlans = [
     {
