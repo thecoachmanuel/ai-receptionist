@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
 import { FolderTree, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -237,6 +238,7 @@ function CollectionRow({ collection }: { collection: Collection }) {
 
 export function CollectionsScreen() {
   const { organization } = useWorkspace();
+  const isServicesOnly = (organization as any)?.businessModel === "services";
 
   const collections = useQuery<Collection[]>(
     dashboardApi.commerce.listCollections,
@@ -254,6 +256,17 @@ export function CollectionsScreen() {
         description="Group your products into collections and categories that appear on your storefront."
         action={<CollectionDialog />}
       />
+
+      {isServicesOnly && (
+        <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4 text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between">
+          <p>
+            Your business model is currently set to <strong>Services Suite</strong>. Product collections and storefront grouping are inactive unless you switch to <strong>Commerce Suite</strong> or <strong>Hybrid Suite</strong> in Settings.
+          </p>
+          <Button variant="outline" size="sm" asChild className="h-7 text-xs shrink-0 ml-4">
+            <Link href="/dashboard/settings">Switch Suite</Link>
+          </Button>
+        </div>
+      )}
 
       {isLoading ? (
         <LoadingPanel />

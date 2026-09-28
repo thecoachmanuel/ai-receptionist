@@ -344,23 +344,64 @@ function ShellChrome({
               </Badge>
             </div>
           ) : (
-            <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 shadow-xs [&_button]:text-white [&_p]:text-white [&_span]:text-white/70">
-              <OrganizationSwitcher
-                hidePersonal
-                afterCreateOrganizationUrl="/app/:slug"
-                afterSelectOrganizationUrl="/app/:slug"
-                appearance={{
-                  elements: {
-                    rootBox: "w-full",
-                    organizationSwitcherTrigger:
-                      "w-full justify-between border-0 bg-transparent px-1 py-1 shadow-none text-white",
-                    organizationPreviewMainIdentifier:
-                      "text-xs font-medium text-white",
-                    organizationPreviewSecondaryIdentifier:
-                      "text-2xs text-white/60",
-                  },
-                }}
-              />
+            <div className="space-y-1.5">
+              <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 shadow-xs [&_button]:text-white [&_p]:text-white [&_span]:text-white/70">
+                <OrganizationSwitcher
+                  hidePersonal
+                  afterCreateOrganizationUrl="/app/:slug"
+                  afterSelectOrganizationUrl="/app/:slug"
+                  appearance={{
+                    elements: {
+                      rootBox: "w-full",
+                      organizationSwitcherTrigger:
+                        "w-full justify-between border-0 bg-transparent px-1 py-1 shadow-none text-white",
+                      organizationPreviewMainIdentifier:
+                        "text-xs font-medium text-white",
+                      organizationPreviewSecondaryIdentifier:
+                        "text-2xs text-white/60",
+                    },
+                  }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between px-1">
+                <Link
+                  href={`/app/${orgSlug}/settings`}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-2xs font-semibold tracking-wide transition-all",
+                    businessModel === "ecommerce"
+                      ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25"
+                      : businessModel === "hybrid"
+                      ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25"
+                      : "bg-sky-500/15 text-sky-300 border border-sky-500/30 hover:bg-sky-500/25",
+                  )}
+                  title="Click to configure business suite in settings"
+                >
+                  {businessModel === "ecommerce" ? (
+                    <>
+                      <ShoppingBag className="size-2.5" />
+                      <span>Commerce Suite</span>
+                    </>
+                  ) : businessModel === "hybrid" ? (
+                    <>
+                      <Layers3 className="size-2.5" />
+                      <span>Hybrid Suite</span>
+                    </>
+                  ) : (
+                    <>
+                      <CalendarDays className="size-2.5" />
+                      <span>Services Suite</span>
+                    </>
+                  )}
+                </Link>
+                <Link
+                  href={`/app/${orgSlug}/settings`}
+                  className="text-3xs text-white/40 hover:text-white/80 transition-colors"
+                  title="Change suite in Settings"
+                >
+                  Switch
+                </Link>
+              </div>
             </div>
           )}
         </SidebarHeader>

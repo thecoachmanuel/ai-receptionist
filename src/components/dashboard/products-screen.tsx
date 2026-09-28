@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, type FormEvent } from "react";
+import Link from "next/link";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
 import {
   AlertTriangle,
@@ -784,6 +785,22 @@ export function ProductsScreen() {
           />
         }
       />
+
+      {organization?.businessModel === "services" && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sky-500/30 bg-sky-500/10 p-3.5 text-xs text-sky-950 dark:text-sky-200">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">Services Suite Mode:</span>
+            <span>
+              Your business is currently in Services Suite mode. You can switch to <strong>Commerce Suite</strong> or <strong>Hybrid Suite</strong> in Settings to display the online store & orders in your main navigation.
+            </span>
+          </div>
+          <Button asChild size="sm" variant="outline" className="h-7 text-xs bg-white text-sky-700 hover:bg-sky-50 border-sky-300">
+            <Link href={`/app/${organization.slug}/settings`}>
+              Open Suite Settings →
+            </Link>
+          </Button>
+        </div>
+      )}
 
       {/* Quota bar */}
       <Card>

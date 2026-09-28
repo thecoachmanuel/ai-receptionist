@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
 import {
   ArrowRight,
@@ -437,6 +438,8 @@ export function OrdersScreen() {
     (o) => o.status === "pending" || o.status === "confirmed",
   ).length;
 
+  const isServicesOnly = (organization as any)?.businessModel === "services";
+
   return (
     <div className="space-y-6">
       <ScreenHeader
@@ -444,6 +447,17 @@ export function OrdersScreen() {
         title="Orders"
         description="Manage customer orders across the fulfillment pipeline. Update status and notify customers via WhatsApp."
       />
+
+      {isServicesOnly && (
+        <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4 text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between">
+          <p>
+            Your business model is currently set to <strong>Services Suite</strong>. Order fulfillment and commerce tracking are inactive unless you switch to <strong>Commerce Suite</strong> or <strong>Hybrid Suite</strong> in Settings.
+          </p>
+          <Button variant="outline" size="sm" asChild className="h-7 text-xs shrink-0 ml-4">
+            <Link href="/dashboard/settings">Switch Suite</Link>
+          </Button>
+        </div>
+      )}
 
       {/* Stats row */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

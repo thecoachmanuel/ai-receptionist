@@ -33,6 +33,17 @@ export async function viewOrganization(org: DbOrganization, role: string = "admi
     subscriptionExpiresAt: org.subscriptionExpiresAt,
     paystack: org.paystack,
     role: role || "admin",
+    businessType: org.businessType || "",
+    businessModel: org.businessModel || "services",
+    features: org.features || {
+      bookingsEnabled: (org.businessModel || "services") !== "ecommerce",
+      commerceEnabled: (org.businessModel || "services") !== "services",
+      voiceAgentEnabled: true,
+      whatsappCommerceEnabled: (org.businessModel || "services") !== "services",
+    },
+    customProductLimit: org.customProductLimit ?? null,
+    featureOverrides: org.featureOverrides ?? {},
+    whatsappInstance: org.whatsappInstance,
     createdAt: org.createdAt,
     updatedAt: org.updatedAt,
   };
@@ -307,6 +318,8 @@ export async function updateOrganization(
     currency?: string;
     locale?: string;
     terminology?: any;
+    businessModel?: "services" | "ecommerce" | "hybrid";
+    businessType?: string;
   },
 ) {
   const db = await getDb();
@@ -342,6 +355,20 @@ export async function updateOrganization(
   }
   if (updates.terminology !== undefined) {
     $set.terminology = updates.terminology;
+  }
+  if (updates.businessModel !== undefined) {
+    if (["services", "ecommerce", "hybrid"].includes(updates.businessModel)) {
+      $set.businessModel = updates.businessModel;
+      $set.features = {
+        bookingsEnabled: updates.businessModel === "services" || updates.businessModel === "hybrid",
+        commerceEnabled: updates.businessModel === "ecommerce" || updates.businessModel === "hybrid",
+        voiceAgentEnabled: true,
+        whatsappCommerceEnabled: updates.businessModel === "ecommerce" || updates.businessModel === "hybrid",
+      };
+    }
+  }
+  if (updates.businessType !== undefined) {
+    $set.businessType = String(updates.businessType).trim();
   }
 
   await db.collection<DbOrganization>("organizations").updateOne(filter, { $set });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
 import { Clock3, Layers3, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -239,6 +240,7 @@ function OfferingDialog({ offering }: { offering?: Offering }) {
 export function OfferingsScreen() {
   const { organization, terminology, userRole } = useWorkspace();
   const canEdit = userRole === "admin";
+  const isEcommerceOnly = (organization as any)?.businessModel === "ecommerce";
   const offerings = useQuery<any>(
     dashboardApi.catalog.listOfferings,
     organization ? { includeInactive: true } : "skip",
@@ -252,6 +254,17 @@ export function OfferingsScreen() {
         description={`Define the bookable or requestable work your organization provides. ${terminology.offeringPlural} can carry time, price, or simply act as a service category.`}
         action={canEdit ? <OfferingDialog /> : undefined}
       />
+
+      {isEcommerceOnly && (
+        <div className="mb-6 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4 text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between">
+          <p>
+            Your business model is currently set to <strong>Commerce Suite</strong>. Service offerings and appointment scheduling are inactive unless you switch to <strong>Services Suite</strong> or <strong>Hybrid Suite</strong> in Settings.
+          </p>
+          <Button variant="outline" size="sm" asChild className="h-7 text-xs shrink-0 ml-4">
+            <Link href="/dashboard/settings">Switch Suite</Link>
+          </Button>
+        </div>
+      )}
 
       {!offerings ? (
         <LoadingPanel rows={5} />

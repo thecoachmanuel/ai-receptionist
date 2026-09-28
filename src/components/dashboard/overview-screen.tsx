@@ -7,8 +7,10 @@ import {
   AudioLines,
   ArrowRight,
   CalendarClock,
+  CalendarDays,
   CalendarPlus,
   MessageSquareText,
+  ShoppingBag,
   UsersRound,
 } from "lucide-react";
 
@@ -64,9 +66,36 @@ function BookingRow({ booking }: { booking: Booking }) {
 
 export function OverviewScreen() {
   const { organization, terminology, orgSlug } = useWorkspace();
+  const [hybridTab, setHybridTab] = useState<"appointments" | "commerce">("appointments");
 
   if (organization?.businessModel === "ecommerce") {
     return <CommerceOverviewScreen />;
+  }
+
+  if (organization?.businessModel === "hybrid" && hybridTab === "commerce") {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 rounded-xl bg-muted/60 p-1 border w-fit">
+          <button
+            type="button"
+            onClick={() => setHybridTab("appointments")}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all"
+          >
+            <CalendarDays className="size-3.5" />
+            <span>{terminology.bookingPlural} & Schedule</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setHybridTab("commerce")}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold bg-white text-foreground shadow-xs transition-all"
+          >
+            <ShoppingBag className="size-3.5 text-emerald-600" />
+            <span>Store Sales & Orders</span>
+          </button>
+        </div>
+        <CommerceOverviewScreen />
+      </div>
+    );
   }
 
   const [referenceTime] = useState(() => Date.now());
@@ -78,6 +107,26 @@ export function OverviewScreen() {
   if (!overview) {
     return (
       <>
+        {organization?.businessModel === "hybrid" && (
+          <div className="flex items-center gap-2 rounded-xl bg-muted/60 p-1 border w-fit mb-4">
+            <button
+              type="button"
+              onClick={() => setHybridTab("appointments")}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold bg-white text-foreground shadow-xs transition-all"
+            >
+              <CalendarDays className="size-3.5 text-primary" />
+              <span>{terminology.bookingPlural} & Schedule</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setHybridTab("commerce")}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all"
+            >
+              <ShoppingBag className="size-3.5 text-emerald-600" />
+              <span>Store Sales & Orders</span>
+            </button>
+          </div>
+        )}
         <ScreenHeader
           eyebrow="Live operations"
           title="Your day, at a glance."
@@ -130,6 +179,26 @@ export function OverviewScreen() {
 
   return (
     <>
+      {organization?.businessModel === "hybrid" && (
+        <div className="flex items-center gap-2 rounded-xl bg-muted/60 p-1 border w-fit mb-4">
+          <button
+            type="button"
+            onClick={() => setHybridTab("appointments")}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold bg-white text-foreground shadow-xs transition-all"
+          >
+            <CalendarDays className="size-3.5 text-primary" />
+            <span>{terminology.bookingPlural} & Schedule</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setHybridTab("commerce")}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all"
+          >
+            <ShoppingBag className="size-3.5 text-emerald-600" />
+            <span>Store Sales & Orders</span>
+          </button>
+        </div>
+      )}
       <ScreenHeader
         eyebrow="Live operations"
         title={`Good day, ${overview.organization.name}.`}

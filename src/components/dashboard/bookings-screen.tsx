@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
 import {
   Bell,
@@ -534,6 +535,22 @@ export function BookingsScreen() {
         description={`Create, search, and manage every ${terminology.booking.toLowerCase()} across your public page, AI agent, and team.`}
         action={<CreateBookingDialog />}
       />
+
+      {organization?.businessModel === "ecommerce" && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-950 dark:text-emerald-200 mb-4">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">Commerce Suite Mode:</span>
+            <span>
+              Your business is currently operating in Commerce Suite mode. You can switch to <strong>Hybrid Suite</strong> in Settings to enable both appointments and product sales on your dashboard.
+            </span>
+          </div>
+          <Button asChild size="sm" variant="outline" className="h-7 text-xs bg-white text-emerald-700 hover:bg-emerald-50 border-emerald-300">
+            <Link href={`/app/${organization.slug}/settings`}>
+              Open Suite Settings →
+            </Link>
+          </Button>
+        </div>
+      )}
 
       <Card className="bg-white">
         <CardContent className="space-y-4 pt-0">

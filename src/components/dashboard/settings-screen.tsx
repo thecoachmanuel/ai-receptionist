@@ -4,17 +4,20 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
 import {
   Building2,
+  CalendarDays,
   CheckCircle2,
   Clock3,
   Coins,
   Globe2,
   Landmark,
   Languages,
+  Layers,
   LoaderCircle,
   MessageCircle,
   QrCode,
   RefreshCw,
   ShieldCheck,
+  ShoppingBag,
   Smartphone,
   Unlink,
   Users,
@@ -76,6 +79,182 @@ function CurrencySettingsCard({ organization }: { organization: any }) {
         <div className="rounded-lg bg-muted/40 p-3 text-xs-plus leading-4 text-muted-foreground">
           Current pricing mode: <span className="font-semibold text-foreground">₦ (Naira)</span>. All public services and bookings are priced directly in Naira.
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function BusinessModelSettingsCard({ organization }: { organization: any }) {
+  const updateCurrent = useMutation(dashboardApi.organizations.updateCurrent);
+  const currentModel = organization?.businessModel || "services";
+  const [selectedModel, setSelectedModel] = useState<"services" | "ecommerce" | "hybrid">(currentModel);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setSelectedModel(organization?.businessModel || "services");
+  }, [organization?.businessModel]);
+
+  async function handleModelChange(newModel: "services" | "ecommerce" | "hybrid") {
+    if (newModel === selectedModel) return;
+    setSaving(true);
+    try {
+      await updateCurrent({ businessModel: newModel } as any);
+      setSelectedModel(newModel);
+      toast.success(
+        newModel === "ecommerce"
+          ? "Switched to Commerce Suite (Online Store & Orders)"
+          : newModel === "hybrid"
+          ? "Switched to Hybrid Suite (Appointments & Online Store)"
+          : "Switched to Services Suite (Appointments & Bookings)"
+      );
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update business model");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const SUITES = [
+    {
+      id: "services" as const,
+      label: "Services Suite",
+      badge: "Appointments & Bookings",
+      description: "Optimized for salons, clinics, spas, barbers, and appointment-based services.",
+      features: [
+        "Calendar & time-slot bookings",
+        "Staff & team member rosters",
+        "Services & treatments catalog",
+        "Voice receptionist & booking site",
+      ],
+      icon: CalendarDays,
+      badgeColor: "text-sky-700 bg-sky-50 border-sky-200",
+    },
+    {
+      id: "ecommerce" as const,
+      label: "Commerce Suite",
+      badge: "Online Store & Orders",
+      description: "Optimized for retail brands, boutiques, and merchants selling physical/digital items.",
+      features: [
+        "Product catalog & variant matrix",
+        "Automated WhatsApp checkout & alerts",
+        "Order fulfillment pipeline",
+        "Public storefront & cart drawer",
+      ],
+      icon: ShoppingBag,
+      badgeColor: "text-emerald-700 bg-emerald-50 border-emerald-200",
+    },
+    {
+      id: "hybrid" as const,
+      label: "Hybrid Suite",
+      badge: "Unified Platform",
+      description: "Unified operating system for businesses providing services AND selling products.",
+      features: [
+        "Full Services Suite features",
+        "Full Commerce Suite features",
+        "Unified sidebar with both suites active",
+        "Single dashboard for bookings & orders",
+      ],
+      icon: Layers,
+      badgeColor: "text-indigo-700 bg-indigo-50 border-indigo-200",
+    },
+  ];
+
+  return (
+    <Card className="h-fit bg-white">
+      <CardHeader className="border-b border-black/8 pb-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Layers className="size-4 text-primary" />
+            <CardTitle className="font-heading text-xl tracking-tight">
+              Business Suite & Model
+            </CardTitle>
+          </div>
+          <Badge
+            variant="outline"
+            className={cn(
+              "text-2xs font-semibold uppercase",
+              selectedModel === "ecommerce"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : selectedModel === "hybrid"
+                ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                : "bg-sky-50 text-sky-700 border-sky-200"
+            )}
+          >
+            {selectedModel === "ecommerce" ? "Commerce" : selectedModel === "hybrid" ? "Hybrid" : "Services"}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4 pt-4">
+        <p className="text-xs leading-5 text-muted-foreground">
+          Tailor your sidebar navigation, pages, and client experience to your exact business model. You can switch between suites anytime.
+        </p>
+
+        <div className="space-y-3">
+          {SUITES.map((suite) => {
+            const isSelected = selectedModel === suite.id;
+            const Icon = suite.icon;
+
+            return (
+              <div
+                key={suite.id}
+                onClick={() => !saving && handleModelChange(suite.id)}
+                className={cn(
+                  "relative flex flex-col gap-2 rounded-xl border p-3.5 cursor-pointer transition-all",
+                  isSelected
+                    ? "border-primary bg-primary/5 ring-1 ring-primary/20 shadow-xs"
+                    : "border-border/60 hover:border-border hover:bg-muted/20"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={cn(
+                        "flex size-7 items-center justify-center rounded-lg",
+                        isSelected ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                      )}
+                    >
+                      <Icon className="size-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-foreground">{suite.label}</span>
+                  </div>
+                  <Badge variant="outline" className={cn("text-2xs font-normal", suite.badgeColor)}>
+                    {suite.badge}
+                  </Badge>
+                </div>
+
+                <p className="text-2xs text-muted-foreground leading-relaxed">
+                  {suite.description}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-1 border-t border-border/40 text-2xs text-muted-foreground">
+                  {suite.features.map((f, i) => (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <CheckCircle2 className="size-2.5 text-primary shrink-0" />
+                      <span className="truncate">{f}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {isSelected && (
+                  <div className="pt-1 flex items-center justify-end">
+                    <span className="text-2xs font-semibold text-primary flex items-center gap-1">
+                      <CheckCircle2 className="size-3" /> Active Operating Suite
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {saving && (
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
+            <LoaderCircle className="size-3.5 animate-spin text-primary" /> Updating workspace suite…
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -778,6 +957,7 @@ export function SettingsScreen() {
           </Card>
 
           {organization && <NameSettingsCard organization={organization} />}
+          {organization && <BusinessModelSettingsCard organization={organization} />}
           {organization && <CurrencySettingsCard organization={organization} />}
           {organization && <TimezoneSettingsCard organization={organization} />}
           {publicSite && <DepositSettingsCard publicSite={publicSite} />}
