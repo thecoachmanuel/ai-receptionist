@@ -438,7 +438,7 @@ export function OrdersScreen() {
     (o) => o.status === "pending" || o.status === "confirmed",
   ).length;
 
-  const isServicesOnly = (organization as any)?.businessModel === "services";
+  const isServicesOnly = (organization?.businessModel ?? "services") === "services";
 
   return (
     <div className="space-y-6">

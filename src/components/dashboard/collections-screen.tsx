@@ -238,7 +238,7 @@ function CollectionRow({ collection }: { collection: Collection }) {
 
 export function CollectionsScreen() {
   const { organization } = useWorkspace();
-  const isServicesOnly = (organization as any)?.businessModel === "services";
+  const isServicesOnly = (organization?.businessModel ?? "services") === "services";
 
   const collections = useQuery<Collection[]>(
     dashboardApi.commerce.listCollections,

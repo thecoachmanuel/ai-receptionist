@@ -240,7 +240,7 @@ function OfferingDialog({ offering }: { offering?: Offering }) {
 export function OfferingsScreen() {
   const { organization, terminology, userRole } = useWorkspace();
   const canEdit = userRole === "admin";
-  const isEcommerceOnly = (organization as any)?.businessModel === "ecommerce";
+  const isEcommerceOnly = (organization?.businessModel ?? "services") === "ecommerce";
   const offerings = useQuery<any>(
     dashboardApi.catalog.listOfferings,
     organization ? { includeInactive: true } : "skip",

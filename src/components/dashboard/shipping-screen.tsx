@@ -201,7 +201,7 @@ function ZoneDialog({
 
 export function ShippingScreen() {
   const { organization } = useWorkspace();
-  const isServicesOnly = (organization as any)?.businessModel === "services";
+  const isServicesOnly = (organization?.businessModel ?? "services") === "services";
   const currency = organization?.currency ?? "NGN";
 
   const zones = useQuery<ShippingZone[]>(

@@ -301,7 +301,7 @@ function ShellChrome({
     dashboardApi.publicSite.getCurrentDraft,
     organization ? {} : "skip",
   );
-  const businessModel = (organization as any)?.businessModel || "services";
+  const businessModel = organization?.businessModel || "services";
   const navigation = useMemo(
     () => navigationFor(terminology, userRole, businessModel),
     [terminology, userRole, businessModel]
