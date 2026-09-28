@@ -343,6 +343,14 @@ export function SuperAdminScreen() {
 
   // Pricing state
   const [prices, setPrices] = useState<PlatformPrices>({ core: 5000, engage: 25000, voice: 75000 });
+  const [paystackPlanCodes, setPaystackPlanCodes] = useState({
+    coreMonthly: "",
+    engageMonthly: "",
+    voiceMonthly: "",
+    coreYearly: "",
+    engageYearly: "",
+    voiceYearly: "",
+  });
   const [pricesLoaded, setPricesLoaded] = useState(false);
   const [savingPrices, setSavingPrices] = useState(false);
   const priceFormRef = useRef<HTMLFormElement>(null);
@@ -464,6 +472,16 @@ export function SuperAdminScreen() {
             engage: data.settings.planPrices?.engage ?? 5000,
             voice: data.settings.planPrices?.voice ?? 15000,
           });
+          if (data.settings.paystackPlanCodes) {
+            setPaystackPlanCodes({
+              coreMonthly: data.settings.paystackPlanCodes.coreMonthly || "",
+              engageMonthly: data.settings.paystackPlanCodes.engageMonthly || "",
+              voiceMonthly: data.settings.paystackPlanCodes.voiceMonthly || "",
+              coreYearly: data.settings.paystackPlanCodes.coreYearly || "",
+              engageYearly: data.settings.paystackPlanCodes.engageYearly || "",
+              voiceYearly: data.settings.paystackPlanCodes.voiceYearly || "",
+            });
+          }
           setContactPhone(data.settings.contactPhone || "+2348168882014");
           setContactEmail(data.settings.contactEmail || "qwilong@gmail.com");
           setClientPageUrl(data.settings.clientPageUrl || "");
@@ -645,9 +663,9 @@ export function SuperAdminScreen() {
       await fetch("/api/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ baseCurrency: "NGN" }),
+        body: JSON.stringify({ baseCurrency: "NGN", paystackPlanCodes }),
       });
-      toast.success("Naira pricing configuration saved.");
+      toast.success("Naira pricing and Paystack plan configuration saved.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save pricing.");
     } finally {
@@ -1552,6 +1570,63 @@ export function SuperAdminScreen() {
                           <p className="mt-1 text-[11px] text-muted-foreground">{sub}</p>
                         </div>
                       ))}
+                    </div>
+
+                    <div className="rounded-2xl border bg-white p-5 shadow-sm space-y-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-primary">
+                            Paystack Dashboard Plan Codes (Optional)
+                          </h3>
+                          <Badge variant="outline" className="text-[10px] border-emerald-300 bg-emerald-50 text-emerald-800">
+                            Auto-sync supported
+                          </Badge>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                          Link existing plan codes from your <strong>Paystack Dashboard → Plans</strong> (e.g. <code className="text-[10px] font-mono bg-muted/60 px-1 py-0.5 rounded">PLN_xxxxxxxx</code>). If left blank, Qwilo automatically creates and synchronizes recurring plans on your Paystack account whenever customers check out. Customers can check out via Card, Bank Transfer, USSD, etc. When paying with Card, their authorization is automatically registered for recurring auto-debit.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="plan-code-core" className="text-xs font-semibold">
+                            Core Plan Code (Monthly)
+                          </Label>
+                          <Input
+                            id="plan-code-core"
+                            placeholder="e.g. PLN_core123"
+                            value={paystackPlanCodes.coreMonthly}
+                            onChange={(e) => setPaystackPlanCodes((prev) => ({ ...prev, coreMonthly: e.target.value.trim() }))}
+                            className="font-mono text-xs bg-muted/10"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label htmlFor="plan-code-engage" className="text-xs font-semibold">
+                            Engage Plan Code (Monthly)
+                          </Label>
+                          <Input
+                            id="plan-code-engage"
+                            placeholder="e.g. PLN_engage123"
+                            value={paystackPlanCodes.engageMonthly}
+                            onChange={(e) => setPaystackPlanCodes((prev) => ({ ...prev, engageMonthly: e.target.value.trim() }))}
+                            className="font-mono text-xs bg-muted/10"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label htmlFor="plan-code-voice" className="text-xs font-semibold">
+                            Voice Plan Code (Monthly)
+                          </Label>
+                          <Input
+                            id="plan-code-voice"
+                            placeholder="e.g. PLN_voice123"
+                            value={paystackPlanCodes.voiceMonthly}
+                            onChange={(e) => setPaystackPlanCodes((prev) => ({ ...prev, voiceMonthly: e.target.value.trim() }))}
+                            className="font-mono text-xs bg-muted/10"
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     <div className="rounded-2xl border border-emerald-200/60 bg-emerald-50/40 p-4 text-xs text-emerald-900 flex items-center gap-2">

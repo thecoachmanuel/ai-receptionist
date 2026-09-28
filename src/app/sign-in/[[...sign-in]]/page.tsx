@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect") || searchParams.get("redirect_url");
+  const redirectUrl = searchParams?.get("redirect") || searchParams?.get("redirect_url");
   const { isAuthenticated, isLoaded } = useAuth();
 
   const [email, setEmail] = useState("");

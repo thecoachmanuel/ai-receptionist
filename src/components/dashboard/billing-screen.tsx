@@ -35,7 +35,7 @@ const yearlyPrice = (p: number) => p * 10;
 
 export function BillingScreen() {
   const searchParams = useSearchParams();
-  const isSuccess = searchParams.get("success") === "true";
+  const isSuccess = searchParams?.get("success") === "true";
   const { has, isLoaded, organization: authOrg, updatePlan } = useAuth();
   const { organization } = useWorkspace();
   const [updating, setUpdating] = useState<string | null>(null);
@@ -55,7 +55,7 @@ export function BillingScreen() {
         });
       })
       .catch(() => {
-        setPriceState((prev) => ({ ...prev, loaded: true }));
+        setPriceState((prev: PriceState) => ({ ...prev, loaded: true }));
       });
   }, []);
 
@@ -244,7 +244,10 @@ export function BillingScreen() {
                 <ShieldCheck className="size-3.5 text-emerald-400" /> Paystack Secured Billing
               </p>
               <p className="flex items-center gap-2">
-                <RefreshCw className="size-3.5 text-sky-400" /> Auto-renewal with saved card
+                <CreditCard className="size-3.5 text-sky-400" /> Card, Bank Transfer & USSD supported
+              </p>
+              <p className="flex items-center gap-2">
+                <RefreshCw className="size-3.5 text-sky-400" /> Auto-debit with card or manual renewal
               </p>
               <p className="flex items-center gap-2">
                 <UsersRound className="size-3.5 text-sky-400" /> Real-time feature entitlements

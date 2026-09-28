@@ -6,11 +6,21 @@ export interface PlanPrices {
   voice: number;
 }
 
+export interface PaystackPlanCodes {
+  coreMonthly?: string;
+  engageMonthly?: string;
+  voiceMonthly?: string;
+  coreYearly?: string;
+  engageYearly?: string;
+  voiceYearly?: string;
+}
+
 export interface SystemSettings {
   googleAuthEnabled: boolean;
   enforcePaymentOnSignup: boolean;
   trialDays: number;
   planPrices: PlanPrices;
+  paystackPlanCodes?: PaystackPlanCodes;
   usdToNgnRate: number;
   baseCurrency: "USD" | "NGN";
   contactPhone: string;
@@ -84,6 +94,14 @@ const DEFAULTS: SystemSettings = {
   enforcePaymentOnSignup: true,
   trialDays: 0,
   planPrices: { core: 1000, engage: 5000, voice: 15000 },
+  paystackPlanCodes: {
+    coreMonthly: "",
+    engageMonthly: "",
+    voiceMonthly: "",
+    coreYearly: "",
+    engageYearly: "",
+    voiceYearly: "",
+  },
   usdToNgnRate: 1500,
   baseCurrency: "NGN",
   contactPhone: "+2348168882014",
@@ -140,6 +158,14 @@ export async function getSystemSettings(): Promise<SystemSettings> {
         engage: typeof rawEngage === "number" && rawEngage > 1000 ? rawEngage : 5000,
         voice: typeof rawVoice === "number" && rawVoice > 1000 ? rawVoice : 15000,
       },
+      paystackPlanCodes: {
+        coreMonthly: doc.paystackPlanCodes?.coreMonthly || "",
+        engageMonthly: doc.paystackPlanCodes?.engageMonthly || "",
+        voiceMonthly: doc.paystackPlanCodes?.voiceMonthly || "",
+        coreYearly: doc.paystackPlanCodes?.coreYearly || "",
+        engageYearly: doc.paystackPlanCodes?.engageYearly || "",
+        voiceYearly: doc.paystackPlanCodes?.voiceYearly || "",
+      },
       usdToNgnRate: doc.usdToNgnRate ?? 1500,
       baseCurrency: doc.baseCurrency ?? "NGN",
       contactPhone: doc.contactPhone ?? "+2348168882014",
@@ -195,6 +221,10 @@ export async function updateSystemSettings(
     planPrices: updates.planPrices
       ? { ...current.planPrices, ...updates.planPrices }
       : current.planPrices,
+    // Merge nested paystackPlanCodes object
+    paystackPlanCodes: updates.paystackPlanCodes
+      ? { ...(current.paystackPlanCodes || {}), ...updates.paystackPlanCodes }
+      : current.paystackPlanCodes,
     // Merge nested vapi object
     vapi: updates.vapi
       ? { ...current.vapi, ...updates.vapi }

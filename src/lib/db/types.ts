@@ -96,7 +96,12 @@ export type DbOrganization = {
     subscriptionCode?: string;
     planCode?: string;
     customerCode?: string;
+    customerEmail?: string;
     authorizationCode?: string;
+    cardBrand?: string;
+    cardLast4?: string;
+    reusable?: boolean;
+    paymentMethod?: string;
     lastPaymentDate?: number;
     nextBillingDate?: number;
     amount?: number;

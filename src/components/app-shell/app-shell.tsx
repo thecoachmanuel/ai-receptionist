@@ -141,7 +141,7 @@ function WorkspaceNavigation({
   navigation: Array<{ label: string; items: NavItem[] }>;
   orgSlug: string;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const { isSuperAdmin } = useAuth();
 
   return (
@@ -224,7 +224,7 @@ function ShellChrome({
   children: ReactNode;
   orgSlug: string;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const { organization, isBootstrapping, terminology, userRole } = useWorkspace();
   const publicSite = useQuery<any>(
     dashboardApi.publicSite.getCurrentDraft,

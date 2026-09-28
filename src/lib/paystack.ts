@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db/mongodb";
 import type { BillingCycle, DbOrganization, PlanType } from "@/lib/db/types";
 import { ObjectId } from "mongodb";
 import { getPlatformSettings } from "@/lib/services/settings";
+import { getSystemSettings, type PaystackPlanCodes } from "@/lib/services/system-settings";
 
 /** Compile-time defaults in NGN — live values come from getPlatformSettings() at runtime. */
 export const PAYSTACK_PLANS: Record<
@@ -78,14 +79,16 @@ export async function initializePaystackTransaction({
   const ngnAmount = getPriceForCycle(monthlyAmount, billingCycle);
   const amountInKobo = Math.round(ngnAmount * 100);
 
-  // Try to create/fetch a recurring Paystack plan code for monthly subscriptions
+  // Try to create/fetch a recurring Paystack plan code for this plan & cycle
   let planCode: string | null = null;
-  if (billingCycle === "monthly") {
-    try {
-      planCode = await getOrCreatePaystackPlan(planId, monthlyAmount, "monthly");
-    } catch (planErr) {
-      console.warn("Could not create/fetch Paystack recurring plan, falling back to standard checkout:", planErr);
-    }
+  try {
+    planCode = await getOrCreatePaystackPlan(
+      planId,
+      monthlyAmount,
+      billingCycle === "yearly" ? "annually" : "monthly",
+    );
+  } catch (planErr) {
+    console.warn("Could not resolve Paystack plan code, continuing with standard checkout:", planErr);
   }
 
   const cycleLabel = billingCycle === "yearly"
@@ -97,6 +100,8 @@ export async function initializePaystackTransaction({
     amount: amountInKobo,
     currency: "NGN",
     callback_url: callbackUrl,
+    // Explicitly allow all channels: Card, Bank Transfer, USSD, etc.
+    channels: ["card", "bank", "ussd", "qr", "mobile_money", "bank_transfer"],
     metadata: {
       orgId,
       planId,
@@ -124,9 +129,11 @@ export async function initializePaystackTransaction({
     },
   };
 
-  if (planCode) {
-    payload.plan = planCode;
-  }
+  // NOTE: We intentionally do NOT assign payload.plan = planCode here.
+  // Passing payload.plan forces Paystack to restrict checkout to card-only, which completely
+  // disables Bank Transfer, USSD, etc. Instead, all channels remain available at checkout.
+  // When a card payment succeeds with a reusable authorization, the system subscribes the customer
+  // to the Paystack Plan via Paystack's Subscription API (POST https://api.paystack.co/subscription).
 
   const response = await fetch("https://api.paystack.co/transaction/initialize", {
     method: "POST",
@@ -153,6 +160,64 @@ export async function initializePaystackTransaction({
   };
 }
 
+/**
+ * Subscribes a customer to a recurring Paystack plan using their saved authorization code.
+ * Passes start_date of next billing cycle so the customer is NOT double-charged for period already paid.
+ */
+export async function subscribeCustomerToPaystackPlan({
+  customer,
+  planCode,
+  authorization,
+  startDate,
+}: {
+  customer: string;
+  planCode: string;
+  authorization: string;
+  startDate?: string;
+}): Promise<{ success: boolean; subscriptionCode?: string; message?: string }> {
+  const secretKey = getPaystackSecretKey();
+  if (!secretKey) return { success: false, message: "Paystack secret key is not configured" };
+
+  try {
+    const payload: Record<string, unknown> = {
+      customer,
+      plan: planCode,
+      authorization,
+    };
+    if (startDate) {
+      payload.start_date = startDate;
+    }
+
+    const res = await fetch("https://api.paystack.co/subscription", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (res.ok && data.status) {
+      return {
+        success: true,
+        subscriptionCode: data.data?.subscription_code as string | undefined,
+        message: "Customer successfully subscribed to Paystack plan",
+      };
+    }
+
+    return {
+      success: false,
+      message: data.message || "Failed to create Paystack subscription",
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : "Paystack subscription error",
+    };
+  }
+}
+
 /** Cache for Paystack plan codes to avoid redundant API calls */
 const planCodeCache = new Map<string, string>();
 
@@ -166,6 +231,24 @@ export async function getOrCreatePaystackPlan(
 
   const planInfo = PAYSTACK_PLANS[planId];
   if (!planInfo) return null;
+
+  // 1. Check if super admin explicitly configured a Paystack plan code in system settings
+  try {
+    const sys = await getSystemSettings();
+    const planPrefix = planId === "free_org" ? "core" : planId;
+    const intervalSuffix = interval === "annually" ? "Yearly" : "Monthly";
+    const settingsKey = `${planPrefix}${intervalSuffix}` as keyof PaystackPlanCodes;
+    const configuredCode = sys.paystackPlanCodes?.[settingsKey]?.trim();
+    if (configuredCode) {
+      return configuredCode;
+    }
+  } catch (_) {}
+
+  // 2. Check environment variable override
+  const envKey = `PAYSTACK_PLAN_${(planId === "free_org" ? "CORE" : planId).toUpperCase()}_${interval.toUpperCase()}`;
+  if (process.env[envKey]?.trim()) {
+    return process.env[envKey]!.trim();
+  }
 
   const cacheKey = `${planId}_${ngnAmount}_${interval}`;
   if (planCodeCache.has(cacheKey)) return planCodeCache.get(cacheKey)!;
@@ -183,7 +266,8 @@ export async function getOrCreatePaystackPlan(
         (p: any) =>
           p.amount === amountInKobo &&
           p.interval === interval &&
-          p.currency === "NGN",
+          p.currency === "NGN" &&
+          p.is_deleted !== true,
       );
       if (existing?.plan_code) {
         planCodeCache.set(cacheKey, existing.plan_code);
@@ -240,7 +324,8 @@ export async function verifyPaystackTransaction(reference: string) {
     reference: string;
     amount: number;
     currency: string;
-    customer: { email: string; customer_code?: string };
+    channel?: string;
+    customer: { email: string; customer_code?: string; id?: number };
     metadata?: {
       orgId?: string;
       planId?: PlanType;
@@ -279,6 +364,51 @@ export async function updateOrgPlanFromPaystack(
   const subscriptionExpiresAt = now + durationMs;
   const nextBillingDate = subscriptionExpiresAt;
 
+  // Resolve planCode if not provided
+  let planCode = (paystackDetails.planCode as string) || undefined;
+  if (!planCode) {
+    try {
+      const settings = await getPlatformSettings();
+      const priceKey = planId === "free_org" ? "core" : planId;
+      const monthlyAmount = settings.planPrices[priceKey] ?? PAYSTACK_PLANS[planId]?.ngnPrice ?? 1000;
+      planCode = (await getOrCreatePaystackPlan(
+        planId,
+        monthlyAmount,
+        billingCycle === "yearly" ? "annually" : "monthly",
+      )) || undefined;
+    } catch (_) {}
+  }
+
+  // If customer paid with Card and authorization is reusable, sync to Paystack Subscriptions
+  let subscriptionCode = (paystackDetails.subscriptionCode as string) || undefined;
+  const authCode = (paystackDetails.authorizationCode as string) || undefined;
+  const isReusable = paystackDetails.reusable === true;
+  const customerIdent =
+    (paystackDetails.customerCode as string) ||
+    (paystackDetails.customerEmail as string) ||
+    undefined;
+
+  if (!subscriptionCode && planCode && authCode && isReusable && customerIdent) {
+    try {
+      const subResult = await subscribeCustomerToPaystackPlan({
+        customer: customerIdent,
+        planCode,
+        authorization: authCode,
+        startDate: new Date(nextBillingDate).toISOString(),
+      });
+      if (subResult.success && subResult.subscriptionCode) {
+        subscriptionCode = subResult.subscriptionCode;
+      }
+    } catch (subErr) {
+      console.warn("Paystack subscription sync notice:", subErr);
+    }
+  }
+
+  const paymentMethod =
+    (paystackDetails.paymentMethod as string) ||
+    (paystackDetails.channel as string) ||
+    (authCode ? "card" : "bank_transfer");
+
   await db.collection<DbOrganization>("organizations").updateOne(filter, {
     $set: {
       plan: planId,
@@ -287,7 +417,10 @@ export async function updateOrgPlanFromPaystack(
       subscriptionExpiresAt,
       paystack: {
         ...paystackDetails,
+        planCode,
+        subscriptionCode: subscriptionCode || (paystackDetails.subscriptionCode as string | undefined),
         channel: "paystack",
+        paymentMethod,
         lastPaymentDate: now,
         nextBillingDate,
         billingCycle,

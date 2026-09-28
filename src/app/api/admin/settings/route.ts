@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
       googleAuthEnabled: settings.googleAuthEnabled,
       settings: {
         planPrices: settings.planPrices,
+        paystackPlanCodes: settings.paystackPlanCodes,
         usdToNgnRate: settings.usdToNgnRate,
         baseCurrency: settings.baseCurrency,
         contactPhone: settings.contactPhone,
@@ -58,6 +59,15 @@ export async function PATCH(request: NextRequest) {
       updates.planPrices = {
         ...current.planPrices,
         [body.plan]: Number(body.price ?? body.usdPrice),
+      };
+    }
+
+    // ── Paystack Plan Codes (Optional custom codes from Paystack Dashboard) ──
+    if (body.paystackPlanCodes && typeof body.paystackPlanCodes === "object") {
+      const current = await getSystemSettings();
+      updates.paystackPlanCodes = {
+        ...(current.paystackPlanCodes || {}),
+        ...body.paystackPlanCodes,
       };
     }
 

@@ -30,11 +30,11 @@ export function PricingTogglePage({
     <>
       {/* Billing cycle toggle */}
       <div className="mb-10 flex flex-col items-center gap-3">
-        <div className="inline-flex items-center rounded-full border border-border bg-muted/60 p-1 gap-1">
+        <div className="inline-flex max-w-full items-center rounded-full border border-border bg-muted/60 p-1 gap-1">
           <button
             type="button"
             onClick={() => setCycle("monthly")}
-            className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-200 ${
+            className={`rounded-full px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold transition-all duration-200 ${
               cycle === "monthly"
                 ? "bg-white text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -45,20 +45,20 @@ export function PricingTogglePage({
           <button
             type="button"
             onClick={() => setCycle("yearly")}
-            className={`flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-1.5 sm:gap-2 rounded-full px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold transition-all duration-200 ${
               cycle === "yearly"
                 ? "bg-white text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Yearly
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
-              <Zap className="size-3" />2 months free
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-bold uppercase tracking-wide text-white">
+              <Zap className="size-2.5 sm:size-3" />2 months free
             </span>
           </button>
         </div>
         {cycle === "yearly" && (
-          <p className="text-sm font-medium text-emerald-700">
+          <p className="text-xs sm:text-sm font-medium text-emerald-700 text-center">
             🎉 Pay for 10 months, get 12 — you save 2 months on every plan!
           </p>
         )}
@@ -78,7 +78,7 @@ export function PricingTogglePage({
           return (
             <article
               key={plan.name}
-              className={`flex min-h-[500px] flex-col border-b border-r p-8 transition-all ${
+              className={`flex min-h-[460px] sm:min-h-[500px] flex-col border-b border-r p-6 sm:p-8 transition-all ${
                 plan.featured ? "bg-primary text-primary-foreground" : "bg-card hover:bg-muted/20"
               }`}
             >
@@ -86,10 +86,10 @@ export function PricingTogglePage({
                 {plan.name}
               </p>
 
-              <div className="mt-8">
-                <p className="font-heading text-6xl tracking-[-0.06em] leading-none">
+              <div className="mt-6 sm:mt-8">
+                <p className="font-heading text-4xl sm:text-5xl lg:text-6xl tracking-[-0.06em] leading-none">
                   {sym}{shownAmt.toLocaleString()}
-                  <span className="ml-1 font-sans text-sm tracking-normal opacity-70">
+                  <span className="ml-1 font-sans text-xs sm:text-sm tracking-normal opacity-70">
                     /{cycle === "yearly" ? "yr" : "mo"}
                   </span>
                 </p>

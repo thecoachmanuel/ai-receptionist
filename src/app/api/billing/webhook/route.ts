@@ -19,11 +19,15 @@ export async function POST(request: Request) {
         amount: number;
         currency: string;
         paid_at?: string;
+        channel?: string;
+        subscription_code?: string;
+        plan?: { plan_code?: string };
         customer: { email?: string; customer_code?: string };
         metadata?: {
           orgId?: string;
           planId?: "free_org" | "engage" | "voice";
           billingCycle?: BillingCycle;
+          planCode?: string;
         };
         authorization?: {
           authorization_code?: string;
@@ -36,15 +40,37 @@ export async function POST(request: Request) {
     };
 
     if (event.event === "charge.success") {
-      const { metadata, reference, amount, currency, paid_at, customer, authorization } =
+      const { metadata, reference, amount, currency, paid_at, customer, authorization, channel } =
         event.data;
 
-      if (metadata?.orgId && metadata?.planId) {
-        const billingCycle: BillingCycle = metadata.billingCycle === "yearly" ? "yearly" : "monthly";
+      let targetOrgId = metadata?.orgId;
+      let targetPlanId = metadata?.planId;
+      let billingCycle: BillingCycle = metadata?.billingCycle === "yearly" ? "yearly" : "monthly";
 
+      // If orgId wasn't in metadata (common in automatic Paystack plan renewals),
+      // look up the org by subscription code, customer code, or customer email
+      if (!targetOrgId && (event.data.subscription_code || customer?.email || customer?.customer_code)) {
+        const { getDb } = await import("@/lib/db/mongodb");
+        const db = await getDb();
+        const queryOr: Record<string, unknown>[] = [];
+        if (event.data.subscription_code) queryOr.push({ "paystack.subscriptionCode": event.data.subscription_code });
+        if (customer?.customer_code) queryOr.push({ "paystack.customerCode": customer.customer_code });
+        if (customer?.email) queryOr.push({ "paystack.customerEmail": customer.email });
+
+        if (queryOr.length > 0) {
+          const foundOrg = await db.collection("organizations").findOne({ $or: queryOr });
+          if (foundOrg) {
+            targetOrgId = foundOrg._id.toString();
+            targetPlanId = (foundOrg.plan as any) || "free_org";
+            billingCycle = foundOrg.billingCycle || "monthly";
+          }
+        }
+      }
+
+      if (targetOrgId && targetPlanId) {
         await updateOrgPlanFromPaystack(
-          metadata.orgId,
-          metadata.planId,
+          targetOrgId,
+          targetPlanId,
           {
             reference,
             amount,
@@ -52,6 +78,9 @@ export async function POST(request: Request) {
             paidAt: paid_at,
             customerCode: customer?.customer_code,
             customerEmail: customer?.email,
+            paymentMethod: channel || (authorization?.authorization_code ? "card" : "bank_transfer"),
+            planCode: event.data.plan?.plan_code || metadata?.planCode,
+            subscriptionCode: event.data.subscription_code,
             // Store authorization code for future auto-charges
             authorizationCode: authorization?.authorization_code,
             cardBrand: authorization?.brand,
@@ -62,9 +91,9 @@ export async function POST(request: Request) {
         );
 
         const planName =
-          metadata.planId === "voice"
+          targetPlanId === "voice"
             ? "Voice Agent"
-            : metadata.planId === "engage"
+            : targetPlanId === "engage"
               ? "Engage"
               : "Core Receptionist";
         const durationDays = billingCycle === "yearly" ? 365 : 30;
@@ -75,23 +104,65 @@ export async function POST(request: Request) {
         });
 
         void sendSaasSubscriptionRenewedAlert({
-          orgId: metadata.orgId,
+          orgId: targetOrgId,
           planName,
           expiryDateStr,
         }).catch((err) => console.error("Webhook renewal WhatsApp notification error:", err));
+      }
+    } else if (event.event === "invoice.update" && (event.data as any)?.status === "success") {
+      const invData = event.data as any;
+      const subCode = invData.subscription?.subscription_code || invData.subscription_code;
+      const customerEmail = invData.customer?.email;
+
+      if (subCode || customerEmail) {
+        const { getDb } = await import("@/lib/db/mongodb");
+        const db = await getDb();
+        const queryOr: Record<string, unknown>[] = [];
+        if (subCode) queryOr.push({ "paystack.subscriptionCode": subCode });
+        if (customerEmail) queryOr.push({ "paystack.customerEmail": customerEmail });
+
+        const org = await db.collection("organizations").findOne({ $or: queryOr });
+        if (org) {
+          const billingCycle: BillingCycle = org.billingCycle || "monthly";
+          const durationDays = billingCycle === "yearly" ? 365 : 30;
+          const newExpiry = Date.now() + durationDays * 24 * 60 * 60 * 1000;
+
+          await db.collection("organizations").updateOne(
+            { _id: org._id },
+            {
+              $set: {
+                planStatus: "active",
+                subscriptionExpiresAt: newExpiry,
+                "paystack.lastPaymentDate": Date.now(),
+                "paystack.nextBillingDate": newExpiry,
+                updatedAt: Date.now(),
+              },
+            },
+          );
+        }
       }
     } else if (
       event.event === "subscription.disable" ||
       event.event === "invoice.payment_failed"
     ) {
       const orgId = event.data?.metadata?.orgId;
+      const subCode = (event.data as any)?.subscription_code;
+      const customerEmail = event.data?.customer?.email;
+
+      const { getDb } = await import("@/lib/db/mongodb");
+      const { ObjectId } = await import("mongodb");
+      const db = await getDb();
+
+      let filter: Record<string, unknown> | null = null;
       if (orgId) {
-        const { getDb } = await import("@/lib/db/mongodb");
-        const { ObjectId } = await import("mongodb");
-        const db = await getDb();
-        const filter = ObjectId.isValid(orgId)
-          ? { _id: new ObjectId(orgId) }
-          : { clerkOrgId: orgId };
+        filter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
+      } else if (subCode) {
+        filter = { "paystack.subscriptionCode": subCode };
+      } else if (customerEmail) {
+        filter = { "paystack.customerEmail": customerEmail };
+      }
+
+      if (filter) {
         await db.collection("organizations").updateOne(filter, {
           $set: {
             planStatus:

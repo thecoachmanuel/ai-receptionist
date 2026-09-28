@@ -49,7 +49,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${plexSans.variable} ${plexMono.variable} ${newsreader.variable}`}
     >
-      <body className="min-h-dvh bg-background text-foreground antialiased">
+      <body className="min-h-dvh bg-background text-foreground antialiased overflow-x-hidden">
         <Providers>{children}</Providers>
       </body>
     </html>
