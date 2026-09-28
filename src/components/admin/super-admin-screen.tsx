@@ -132,6 +132,9 @@ type AdminOrgStat = {
     connectedAt?: number;
   };
   businessType?: string;
+  businessModel?: "services" | "ecommerce" | "hybrid";
+  customProductLimit?: number | null;
+  featureOverrides?: Record<string, boolean>;
   createdAt: number;
   updatedAt: number;
   owner?: {
@@ -153,6 +156,8 @@ type AdminOrgStat = {
     bookingsCount: number;
     conversationsCount: number;
     knowledgeCount: number;
+    productsCount?: number;
+    ordersCount?: number;
   };
 };
 
@@ -351,9 +356,28 @@ export function SuperAdminScreen() {
     engageYearly: "",
     voiceYearly: "",
   });
+  const [ecommercePrices, setEcommercePrices] = useState({
+    base: 1000,
+    starter: 5000,
+    pro: 15000,
+    scale: 30000,
+  });
+  const [ecommerceLimits, setEcommerceLimits] = useState({
+    base: 15,
+    starter: 50,
+    pro: 250,
+    scale: -1,
+  });
   const [pricesLoaded, setPricesLoaded] = useState(false);
   const [savingPrices, setSavingPrices] = useState(false);
   const priceFormRef = useRef<HTMLFormElement>(null);
+
+  // Manage Features & Quota State
+  const [manageFeaturesOrg, setManageFeaturesOrg] = useState<AdminOrgStat | null>(null);
+  const [editProductLimitMode, setEditProductLimitMode] = useState<"plan" | "custom" | "unlimited">("plan");
+  const [editCustomLimitValue, setEditCustomLimitValue] = useState<number>(50);
+  const [editFeatureOverrides, setEditFeatureOverrides] = useState<Record<string, boolean>>({});
+  const [savingFeatureOverrides, setSavingFeatureOverrides] = useState(false);
 
   // AI engine state
   const [activeProvider, setActiveProvider] = useState<"vapi">("vapi");
@@ -494,6 +518,22 @@ export function SuperAdminScreen() {
           }
           if (typeof data.settings.trialDays === "number") {
             setTrialDays(data.settings.trialDays);
+          }
+          if (data.settings.ecommercePlanPrices) {
+            setEcommercePrices({
+              base: data.settings.ecommercePlanPrices.base ?? 1000,
+              starter: data.settings.ecommercePlanPrices.starter ?? 5000,
+              pro: data.settings.ecommercePlanPrices.pro ?? 15000,
+              scale: data.settings.ecommercePlanPrices.scale ?? 30000,
+            });
+          }
+          if (data.settings.ecommercePlanLimits) {
+            setEcommerceLimits({
+              base: data.settings.ecommercePlanLimits.base ?? 15,
+              starter: data.settings.ecommercePlanLimits.starter ?? 50,
+              pro: data.settings.ecommercePlanLimits.pro ?? 250,
+              scale: data.settings.ecommercePlanLimits.scale ?? -1,
+            });
           }
         }
         if (typeof data.googleAuthEnabled === "boolean") {
@@ -663,9 +703,14 @@ export function SuperAdminScreen() {
       await fetch("/api/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ baseCurrency: "NGN", paystackPlanCodes }),
+        body: JSON.stringify({
+          baseCurrency: "NGN",
+          paystackPlanCodes,
+          ecommercePlanPrices: ecommercePrices,
+          ecommercePlanLimits: ecommerceLimits,
+        }),
       });
-      toast.success("Naira pricing and Paystack plan configuration saved.");
+      toast.success("Naira pricing (Services & Ecommerce) and limits saved.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save pricing.");
     } finally {

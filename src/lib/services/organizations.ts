@@ -320,13 +320,15 @@ export async function getAllOrganizationsWithStats() {
   const results = await Promise.all(
     orgs.map(async (org: any) => {
       const orgIdStr = org._id!.toString();
-      const [offeringsCount, teamMembersCount, bookingsCount, conversationsCount, knowledgeCount, ownerDoc, publicSiteDoc] =
+      const [offeringsCount, teamMembersCount, bookingsCount, conversationsCount, knowledgeCount, productsCount, ordersCount, ownerDoc, publicSiteDoc] =
         await Promise.all([
           db.collection("offerings").countDocuments({ organizationId: orgIdStr }),
           db.collection("teamMembers").countDocuments({ organizationId: orgIdStr }),
           db.collection("bookings").countDocuments({ organizationId: orgIdStr }),
           db.collection("conversations").countDocuments({ organizationId: orgIdStr }),
           db.collection("knowledgeItems").countDocuments({ organizationId: orgIdStr }),
+          db.collection("products").countDocuments({ organizationId: orgIdStr }),
+          db.collection("orders").countDocuments({ organizationId: orgIdStr }),
           (async () => {
             if (org.createdBy) {
               const u = await db.collection("users").findOne({
@@ -372,6 +374,9 @@ export async function getAllOrganizationsWithStats() {
         paystack: org.paystack,
         whatsappInstance: org.whatsappInstance,
         businessType: org.businessType || "",
+        businessModel: org.businessModel || "services",
+        customProductLimit: org.customProductLimit ?? null,
+        featureOverrides: org.featureOverrides ?? {},
         createdAt: org.createdAt,
         updatedAt: org.updatedAt,
         owner: ownerDoc
@@ -397,6 +402,8 @@ export async function getAllOrganizationsWithStats() {
           bookingsCount,
           conversationsCount,
           knowledgeCount,
+          productsCount,
+          ordersCount,
         },
       };
     }),

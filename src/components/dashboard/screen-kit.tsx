@@ -203,17 +203,20 @@ export function formatTime(value: number, timezone?: string) {
 export function SubmitButton({
   pending,
   children,
+  className,
 }: {
   pending: boolean;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending} className={className}>
       {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
       {children}
     </Button>
   );
 }
+
 
 export const EMPTY_ICONS = {
   calendar: CalendarX2,

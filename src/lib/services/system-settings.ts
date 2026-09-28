@@ -21,6 +21,18 @@ export interface SystemSettings {
   trialDays: number;
   planPrices: PlanPrices;
   paystackPlanCodes?: PaystackPlanCodes;
+  ecommercePlanPrices?: {
+    base: number;
+    starter: number;
+    pro: number;
+    scale: number;
+  };
+  ecommercePlanLimits?: {
+    base: number;
+    starter: number;
+    pro: number;
+    scale: number;
+  };
   usdToNgnRate: number;
   baseCurrency: "USD" | "NGN";
   contactPhone: string;
@@ -101,6 +113,18 @@ const DEFAULTS: SystemSettings = {
     coreYearly: "",
     engageYearly: "",
     voiceYearly: "",
+  },
+  ecommercePlanPrices: {
+    base: 1000,
+    starter: 5000,
+    pro: 15000,
+    scale: 30000,
+  },
+  ecommercePlanLimits: {
+    base: 15,
+    starter: 50,
+    pro: 250,
+    scale: -1,
   },
   usdToNgnRate: 1500,
   baseCurrency: "NGN",

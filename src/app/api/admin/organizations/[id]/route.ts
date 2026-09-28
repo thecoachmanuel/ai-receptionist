@@ -19,13 +19,34 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { plan } = body;
+    const { plan, customProductLimit, featureOverrides, businessModel } = body;
 
-    if (plan !== "free_org" && plan !== "engage" && plan !== "voice") {
-      return NextResponse.json({ error: "Invalid plan specified." }, { status: 400 });
+    const db = await (await import("@/lib/db/mongodb")).getDb();
+    const { ObjectId } = await import("mongodb");
+    const orgFilter = {
+      $or: [
+        ...(id.length === 24 ? [{ _id: new ObjectId(id) }] : []),
+        { clerkOrgId: id },
+        { slug: id },
+      ],
+    };
+
+    const updates: Record<string, any> = { updatedAt: Date.now() };
+
+    if (plan && (plan === "free_org" || plan === "engage" || plan === "voice")) {
+      updates.plan = plan;
+    }
+    if (customProductLimit !== undefined) {
+      updates.customProductLimit = customProductLimit === null ? null : Number(customProductLimit);
+    }
+    if (featureOverrides !== undefined && typeof featureOverrides === "object") {
+      updates.featureOverrides = featureOverrides;
+    }
+    if (businessModel && (businessModel === "services" || businessModel === "ecommerce" || businessModel === "hybrid")) {
+      updates.businessModel = businessModel;
     }
 
-    await updateOrganizationPlan(id, plan);
+    await db.collection("organizations").updateOne(orgFilter, { $set: updates });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Admin update organization error", error);

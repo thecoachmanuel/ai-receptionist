@@ -14,12 +14,17 @@ import {
   ChevronRight,
   Clock3,
   CreditCard,
+  FolderTree,
   Layers3,
   LayoutDashboard,
+  Package,
   PanelsTopLeft,
   Settings2,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
+  Store,
+  Truck,
   UsersRound,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -63,6 +68,7 @@ type NavItem = {
 function navigationFor(
   terminology: Terminology,
   userRole: "admin" | "operator" | "member" | "viewer" = "admin",
+  businessModel: "services" | "ecommerce" | "hybrid" = "services",
 ): Array<{ label: string; items: NavItem[] }> {
   const isAdmin = userRole === "admin";
   const isStaff = userRole === "member" || userRole === "operator";
@@ -96,6 +102,73 @@ function navigationFor(
     ];
   }
 
+  // 🛍️ DEDICATED ECOMMERCE SUITE
+  if (businessModel === "ecommerce") {
+    const commerceItems: NavItem[] = [
+      { label: "Overview", segment: "", icon: LayoutDashboard },
+      { label: "Products", segment: "products", icon: ShoppingBag },
+      { label: "Collections", segment: "collections", icon: FolderTree },
+      { label: "Orders", segment: "orders", icon: Package },
+      { label: "Customers", segment: "customers", icon: UsersRound },
+      { label: "Shipping & Delivery", segment: "shipping", icon: Truck },
+    ];
+
+    const experienceItems: NavItem[] = [
+      { label: "Online Storefront", segment: "storefront", icon: Store },
+      { label: "WhatsApp Agent", segment: "voice-agent", icon: Bot },
+    ];
+
+    const workspaceItems: NavItem[] = [
+      { label: "Billing", segment: "billing", icon: CreditCard },
+      { label: "Settings", segment: "settings", icon: Settings2 },
+    ];
+
+    return [
+      { label: "Store", items: commerceItems },
+      { label: "Channels", items: experienceItems },
+      { label: "Workspace", items: workspaceItems },
+    ];
+  }
+
+  // ⚡ HYBRID SUITE (Both active)
+  if (businessModel === "hybrid") {
+    const serviceItems: NavItem[] = [
+      { label: "Overview", segment: "", icon: LayoutDashboard },
+      { label: terminology.bookingPlural, segment: "bookings", icon: CalendarDays },
+      { label: terminology.offeringPlural, segment: "offerings", icon: Layers3 },
+      { label: terminology.teamMemberPlural, segment: "team", icon: UsersRound },
+      { label: "Branches", segment: "locations", icon: Building2 },
+      { label: "Availability", segment: "availability", icon: Clock3 },
+    ];
+
+    const storeItems: NavItem[] = [
+      { label: "Products", segment: "products", icon: ShoppingBag },
+      { label: "Collections", segment: "collections", icon: FolderTree },
+      { label: "Orders", segment: "orders", icon: Package },
+      { label: "Customers", segment: "customers", icon: UsersRound },
+      { label: "Shipping", segment: "shipping", icon: Truck },
+    ];
+
+    const channelItems: NavItem[] = [
+      { label: "AI Receptionist", segment: "voice-agent", icon: Bot },
+      { label: "Public Booking Site", segment: "public-site", icon: PanelsTopLeft },
+      { label: "Online Storefront", segment: "storefront", icon: Store },
+    ];
+
+    const workspaceItems: NavItem[] = [
+      { label: "Billing", segment: "billing", icon: CreditCard },
+      { label: "Settings", segment: "settings", icon: Settings2 },
+    ];
+
+    return [
+      { label: "Appointments", items: serviceItems },
+      { label: "Online Store", items: storeItems },
+      { label: "Channels & AI", items: channelItems },
+      { label: "Workspace", items: workspaceItems },
+    ];
+  }
+
+  // 📅 STANDARD SERVICES SUITE (Default - 100% backward compatible)
   const operateItems: NavItem[] = [
     { label: "Overview", segment: "", icon: LayoutDashboard },
     {
@@ -230,7 +303,11 @@ function ShellChrome({
     dashboardApi.publicSite.getCurrentDraft,
     organization ? {} : "skip",
   );
-  const navigation = useMemo(() => navigationFor(terminology, userRole), [terminology, userRole]);
+  const businessModel = (organization as any)?.businessModel || "services";
+  const navigation = useMemo(
+    () => navigationFor(terminology, userRole, businessModel),
+    [terminology, userRole, businessModel]
+  );
   const routeLabels = Object.fromEntries(
     navigation.flatMap((section) =>
       section.items.map((item) => [item.segment, item.label]),

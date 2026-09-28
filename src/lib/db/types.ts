@@ -86,6 +86,24 @@ export type DbOrganization = {
   locale: string;
   terminology: BackendTerminology;
   businessType?: string;
+  businessModel?: "services" | "ecommerce" | "hybrid";
+  features?: {
+    bookingsEnabled: boolean;
+    commerceEnabled: boolean;
+    voiceAgentEnabled: boolean;
+    whatsappCommerceEnabled: boolean;
+  };
+  customProductLimit?: number | null;
+  featureOverrides?: {
+    whatsappCheckout?: boolean;
+    whatsappAlerts?: boolean;
+    bankTransfer?: boolean;
+    aiShoppingAssistant?: boolean;
+    customerReviews?: boolean;
+    abandonedCartRecovery?: boolean;
+    storefrontActive?: boolean;
+    promoCodes?: boolean;
+  };
   plan: PlanType;
   planStatus: "active" | "trialing" | "canceled" | "past_due" | "expired" | "unpaid";
   billingCycle?: BillingCycle;
@@ -365,4 +383,114 @@ export type DbWaitlistEntry = {
   name: string;
   email: string;
   createdAt: number;
+};
+
+/* ─────────────────────────────────────────────
+   Ecommerce Models (Zero collision with Services)
+───────────────────────────────────────────── */
+export type DbProductVariant = {
+  id: string;
+  label: string; // e.g. "Size 42 / Black"
+  sku: string;
+  priceMinor: number;
+  comparePriceMinor?: number;
+  stock: number;
+  lowStockThreshold: number;
+};
+
+export type DbProduct = {
+  _id?: ObjectId | string;
+  organizationId: string;
+  name: string;
+  slug: string;
+  description: string;
+  images: string[];
+  category: string;
+  collectionIds: string[];
+  tags: string[];
+  variants: DbProductVariant[];
+  currency: string;
+  active: boolean;
+  featured: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type DbCollection = {
+  _id?: ObjectId | string;
+  organizationId: string;
+  name: string;
+  slug: string;
+  description?: string;
+  imageUrl?: string;
+  sortOrder: number;
+  active: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type DbOrderItem = {
+  productId: string;
+  productName: string;
+  variantLabel: string;
+  sku: string;
+  imageUrl: string;
+  quantity: number;
+  unitPriceMinor: number;
+  lineTotalMinor: number;
+};
+
+export type DbOrder = {
+  _id?: ObjectId | string;
+  organizationId: string;
+  orderNumber: string; // ORD-00042
+  contactId?: string;
+  items: DbOrderItem[];
+  subtotalMinor: number;
+  deliveryFeeMinor: number;
+  discountMinor: number;
+  totalMinor: number;
+  currency: string;
+  status: "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
+  paymentStatus: "unpaid" | "paid" | "refunded";
+  paymentMethod: "whatsapp_paystack" | "whatsapp_bank_transfer" | "card" | "cash_on_delivery";
+  deliveryAddress: {
+    fullName: string;
+    phone: string;
+    street: string;
+    city: string;
+    state: string;
+  };
+  courierName?: string;
+  trackingNumber?: string;
+  channel: "storefront" | "whatsapp" | "manual";
+  whatsappChatId?: string;
+  proofImageUrl?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type DbShippingZone = {
+  _id?: ObjectId | string;
+  organizationId: string;
+  name: string;
+  rateMinor: number;
+  estimatedDeliveryDays: string;
+  active: boolean;
+  createdAt: number;
+};
+
+export type DbCart = {
+  _id?: ObjectId | string;
+  organizationId: string;
+  sessionId: string;
+  contactId?: string;
+  items: Array<{
+    productId: string;
+    variantLabel: string;
+    quantity: number;
+    priceMinor: number;
+  }>;
+  promoCode?: string;
+  updatedAt: number;
 };

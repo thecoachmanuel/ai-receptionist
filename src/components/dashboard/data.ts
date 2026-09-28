@@ -29,6 +29,24 @@ export type Organization = {
   locale: string;
   currency: string;
   terminology: BackendTerminology;
+  businessModel?: "services" | "ecommerce" | "hybrid";
+  features?: {
+    bookingsEnabled: boolean;
+    commerceEnabled: boolean;
+    voiceAgentEnabled: boolean;
+    whatsappCommerceEnabled: boolean;
+  };
+  customProductLimit?: number | null;
+  featureOverrides?: {
+    whatsappCheckout?: boolean;
+    whatsappAlerts?: boolean;
+    bankTransfer?: boolean;
+    aiShoppingAssistant?: boolean;
+    customerReviews?: boolean;
+    abandonedCartRecovery?: boolean;
+    storefrontActive?: boolean;
+    promoCodes?: boolean;
+  };
   plan?: "free_org" | "engage" | "voice";
   planStatus?: "active" | "trialing" | "canceled" | "past_due" | "expired" | "unpaid";
   subscriptionExpiresAt?: number;
@@ -269,6 +287,103 @@ export type Overview = {
   recentConversations: Conversation[];
 };
 
+// ─── Commerce Types ──────────────────────────────────────────────────────────
+
+export type ProductVariant = {
+  id: string;
+  label: string;
+  sku: string;
+  priceMinor: number;
+  comparePriceMinor?: number;
+  stock: number;
+  lowStockThreshold: number;
+};
+
+export type Product = {
+  _id: string;
+  organizationId: string;
+  name: string;
+  slug: string;
+  description: string;
+  images: string[];
+  category: string;
+  collectionIds: string[];
+  tags: string[];
+  variants: ProductVariant[];
+  currency: string;
+  active: boolean;
+  featured: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type Collection = {
+  _id: string;
+  organizationId: string;
+  name: string;
+  slug: string;
+  description?: string;
+  imageUrl?: string;
+  sortOrder: number;
+  active: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type OrderItem = {
+  productId: string;
+  productName: string;
+  variantLabel: string;
+  sku: string;
+  imageUrl: string;
+  quantity: number;
+  unitPriceMinor: number;
+  lineTotalMinor: number;
+};
+
+export type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
+export type PaymentStatus = "unpaid" | "paid" | "refunded";
+
+export type Order = {
+  _id: string;
+  organizationId: string;
+  orderNumber: string;
+  contactId?: string;
+  items: OrderItem[];
+  subtotalMinor: number;
+  deliveryFeeMinor: number;
+  discountMinor: number;
+  totalMinor: number;
+  currency: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  paymentMethod: "whatsapp_paystack" | "whatsapp_bank_transfer" | "card" | "cash_on_delivery";
+  deliveryAddress: {
+    fullName: string;
+    phone: string;
+    street: string;
+    city: string;
+    state: string;
+  };
+  courierName?: string;
+  trackingNumber?: string;
+  channel: "storefront" | "whatsapp" | "manual";
+  whatsappChatId?: string;
+  proofImageUrl?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type ShippingZone = {
+  _id: string;
+  organizationId: string;
+  name: string;
+  rateMinor: number;
+  estimatedDeliveryDays: string;
+  active: boolean;
+  createdAt: number;
+};
+
 export const dashboardApi = {
   organizations: {
     current: "organizations/current" as any,
@@ -322,6 +437,24 @@ export const dashboardApi = {
     listIntegrations: "calendar/listIntegrations" as any,
     saveIntegration: "calendar/saveIntegration" as any,
     removeIntegration: "calendar/removeIntegration" as any,
+  },
+  commerce: {
+    listProducts: "commerce/listProducts" as any,
+    createProduct: "commerce/createProduct" as any,
+    updateProduct: "commerce/updateProduct" as any,
+    deleteProduct: "commerce/deleteProduct" as any,
+    countProducts: "commerce/countProducts" as any,
+    listCollections: "commerce/listCollections" as any,
+    createCollection: "commerce/createCollection" as any,
+    updateCollection: "commerce/updateCollection" as any,
+    deleteCollection: "commerce/deleteCollection" as any,
+    listOrders: "commerce/listOrders" as any,
+    createOrder: "commerce/createOrder" as any,
+    updateOrderStatus: "commerce/updateOrderStatus" as any,
+    getOrderStats: "commerce/getOrderStats" as any,
+    listShippingZones: "commerce/listShippingZones" as any,
+    createShippingZone: "commerce/createShippingZone" as any,
+    updateShippingZone: "commerce/updateShippingZone" as any,
   },
 };
 

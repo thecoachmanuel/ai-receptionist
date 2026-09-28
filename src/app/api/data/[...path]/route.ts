@@ -14,6 +14,7 @@ import * as calendarSyncService from "@/lib/services/calendar-sync";
 import * as organizationsService from "@/lib/services/organizations";
 import * as publicSiteService from "@/lib/services/publicSite";
 import * as teamService from "@/lib/services/team";
+import * as commerceService from "@/lib/services/commerce";
 
 export async function POST(
   request: Request,
@@ -262,6 +263,89 @@ export async function POST(
       }
       case "calendar/removeIntegration": {
         const data = await calendarSyncService.removeGoogleCalendarIntegration(orgId, body.teamMemberId);
+        return NextResponse.json(data);
+      }
+      // ─── Commerce: Products ──────────────────────────────────────────────
+      case "commerce/listProducts": {
+        const data = await commerceService.listProducts(orgId, {
+          includeInactive: body.includeInactive,
+          collectionId: body.collectionId,
+          limit: body.limit,
+        });
+        return NextResponse.json(data);
+      }
+      case "commerce/createProduct": {
+        const data = await commerceService.createProduct(orgId, body as any);
+        return NextResponse.json(data);
+      }
+      case "commerce/updateProduct": {
+        const data = await commerceService.updateProduct(orgId, body.productId, body as any);
+        return NextResponse.json(data);
+      }
+      case "commerce/deleteProduct": {
+        const data = await commerceService.deleteProduct(orgId, body.productId);
+        return NextResponse.json({ success: data });
+      }
+      case "commerce/countProducts": {
+        const data = await commerceService.countProducts(orgId);
+        return NextResponse.json({ count: data });
+      }
+      // ─── Commerce: Collections ───────────────────────────────────────────
+      case "commerce/listCollections": {
+        const data = await commerceService.listCollections(orgId, body.includeInactive);
+        return NextResponse.json(data);
+      }
+      case "commerce/createCollection": {
+        const data = await commerceService.createCollection(orgId, body as any);
+        return NextResponse.json(data);
+      }
+      case "commerce/updateCollection": {
+        const data = await commerceService.updateCollection(orgId, body.collectionId, body as any);
+        return NextResponse.json(data);
+      }
+      case "commerce/deleteCollection": {
+        const data = await commerceService.deleteCollection(orgId, body.collectionId);
+        return NextResponse.json({ success: data });
+      }
+      // ─── Commerce: Orders ────────────────────────────────────────────────
+      case "commerce/listOrders": {
+        const data = await commerceService.listOrders(orgId, {
+          status: body.status,
+          paymentStatus: body.paymentStatus,
+          limit: body.limit,
+          skip: body.skip,
+        });
+        return NextResponse.json(data);
+      }
+      case "commerce/createOrder": {
+        const data = await commerceService.createOrder(orgId, body as any);
+        return NextResponse.json(data);
+      }
+      case "commerce/updateOrderStatus": {
+        const data = await commerceService.updateOrderStatus(
+          orgId,
+          body.orderId,
+          body.status,
+          body.paymentStatus,
+          body.extra,
+        );
+        return NextResponse.json(data);
+      }
+      case "commerce/getOrderStats": {
+        const data = await commerceService.getOrderStats(orgId);
+        return NextResponse.json(data);
+      }
+      // ─── Commerce: Shipping Zones ────────────────────────────────────────
+      case "commerce/listShippingZones": {
+        const data = await commerceService.listShippingZones(orgId);
+        return NextResponse.json(data);
+      }
+      case "commerce/createShippingZone": {
+        const data = await commerceService.createShippingZone(orgId, body as any);
+        return NextResponse.json(data);
+      }
+      case "commerce/updateShippingZone": {
+        const data = await commerceService.updateShippingZone(orgId, body.zoneId, body as any);
         return NextResponse.json(data);
       }
       default:

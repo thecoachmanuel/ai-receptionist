@@ -18,6 +18,8 @@ export async function GET(request: NextRequest) {
       settings: {
         planPrices: settings.planPrices,
         paystackPlanCodes: settings.paystackPlanCodes,
+        ecommercePlanPrices: settings.ecommercePlanPrices,
+        ecommercePlanLimits: settings.ecommercePlanLimits,
         usdToNgnRate: settings.usdToNgnRate,
         baseCurrency: settings.baseCurrency,
         contactPhone: settings.contactPhone,
@@ -68,6 +70,22 @@ export async function PATCH(request: NextRequest) {
       updates.paystackPlanCodes = {
         ...(current.paystackPlanCodes || {}),
         ...body.paystackPlanCodes,
+      };
+    }
+
+    // ── Ecommerce Suite Pricing & Limits ─────────────────────
+    if (body.ecommercePlanPrices && typeof body.ecommercePlanPrices === "object") {
+      const current = await getSystemSettings();
+      updates.ecommercePlanPrices = {
+        ...(current.ecommercePlanPrices || { base: 1000, starter: 5000, pro: 15000, scale: 30000 }),
+        ...body.ecommercePlanPrices,
+      };
+    }
+    if (body.ecommercePlanLimits && typeof body.ecommercePlanLimits === "object") {
+      const current = await getSystemSettings();
+      updates.ecommercePlanLimits = {
+        ...(current.ecommercePlanLimits || { base: 15, starter: 50, pro: 250, scale: -1 }),
+        ...body.ecommercePlanLimits,
       };
     }
 
