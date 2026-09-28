@@ -155,7 +155,7 @@ function WebAgentSession() {
               <Mic /> {connecting ? "Connecting…" : "Start voice test"}
             </Button>
           )}
-          <span className="inline-flex items-center gap-1.5 text-[11px] text-white/40">
+          <span className="inline-flex items-center gap-1.5 text-xs-plus text-white/40">
             <Headphones className="size-3.5" /> Headphones recommended
           </span>
         </div>
@@ -252,7 +252,7 @@ export function VoiceAgentScreen() {
           <Card className="bg-white">
             <CardHeader className="border-b border-black/8 pb-4">
               <div>
-                <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+                <p className="text-2xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
                   Current agent
                 </p>
                 <CardTitle className="mt-1 font-heading text-xl tracking-tight">
@@ -282,7 +282,7 @@ export function VoiceAgentScreen() {
           <Card className="bg-white">
             <CardHeader>
               <div>
-                <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+                <p className="text-2xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
                   First message
                 </p>
                 <CardTitle className="sr-only">Agent opening line</CardTitle>
@@ -303,7 +303,7 @@ export function VoiceAgentScreen() {
       <Card className="mt-6 bg-white">
         <CardHeader className="border-b border-black/8 pb-4">
           <div>
-            <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+            <p className="text-2xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
               Conversation log
             </p>
             <CardTitle className="mt-1 font-heading text-xl tracking-tight">
@@ -311,7 +311,7 @@ export function VoiceAgentScreen() {
             </CardTitle>
           </div>
           <CardAction>
-            <Badge variant="outline" className="bg-white font-mono text-[10px]">
+            <Badge variant="outline" className="bg-white font-mono text-2xs">
               Workspace records
             </Badge>
           </CardAction>
@@ -329,10 +329,10 @@ export function VoiceAgentScreen() {
                     className="grid gap-3 py-4 sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:items-center"
                   >
                     <div>
-                      <p className="font-mono text-[11px] font-medium">
+                      <p className="font-mono text-xs-plus font-medium">
                         {formatDateTime(createdAt, organization?.timezone)}
                       </p>
-                      <p className="mt-1 inline-flex items-center gap-1 text-[10px] tracking-wide text-muted-foreground uppercase">
+                      <p className="mt-1 inline-flex items-center gap-1 text-2xs tracking-wide text-muted-foreground uppercase">
                         <MessageSquareText className="size-3" />
                         Web
                       </p>
@@ -347,7 +347,7 @@ export function VoiceAgentScreen() {
                     </div>
                     <div className="flex items-center gap-2 sm:justify-end">
                       {conversation.durationSeconds !== undefined && (
-                        <span className="inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
+                        <span className="inline-flex items-center gap-1 font-mono text-2xs text-muted-foreground">
                           <Clock3 className="size-3" />
                           {Math.max(1, Math.round(conversation.durationSeconds / 60))}m
                         </span>

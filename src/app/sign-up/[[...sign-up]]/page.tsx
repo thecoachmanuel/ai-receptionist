@@ -227,7 +227,7 @@ export default function SignUpPage() {
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-border/60" />
               </div>
-              <span className="relative bg-background px-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <span className="relative bg-background px-2 font-mono text-2xs uppercase tracking-widest text-muted-foreground">
                 Or create credentials
               </span>
             </div>
@@ -369,7 +369,7 @@ export default function SignUpPage() {
                 }`}
               >
                 Yearly
-                <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] sm:text-xs font-bold uppercase text-white">
+                <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-2 py-0.5 text-2xs sm:text-xs font-bold uppercase text-white">
                   <Zap className="size-2.5" />2 FREE
                 </span>
               </button>

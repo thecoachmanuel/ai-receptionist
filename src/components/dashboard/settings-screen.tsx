@@ -57,7 +57,7 @@ function CurrencySettingsCard({ organization }: { organization: any }) {
               Business currency
             </CardTitle>
           </div>
-          <Badge variant="outline" className="border-emerald-600/30 bg-emerald-50 text-emerald-700 text-[10px] font-semibold">
+          <Badge variant="outline" className="border-emerald-600/30 bg-emerald-50 text-emerald-700 text-2xs font-semibold">
             Purely Naira (₦)
           </Badge>
         </div>
@@ -70,10 +70,10 @@ function CurrencySettingsCard({ organization }: { organization: any }) {
           <label className="text-xs font-semibold text-foreground">Active Currency</label>
           <div className="flex items-center justify-between rounded-lg border bg-muted/20 px-3 py-2 text-xs">
             <span className="font-semibold text-foreground">Nigerian Naira (NGN · ₦)</span>
-            <span className="text-[11px] font-mono text-muted-foreground">₦ NGN</span>
+            <span className="text-xs-plus font-mono text-muted-foreground">₦ NGN</span>
           </div>
         </div>
-        <div className="rounded-lg bg-muted/40 p-3 text-[11px] leading-4 text-muted-foreground">
+        <div className="rounded-lg bg-muted/40 p-3 text-xs-plus leading-4 text-muted-foreground">
           Current pricing mode: <span className="font-semibold text-foreground">₦ (Naira)</span>. All public services and bookings are priced directly in Naira.
         </div>
       </CardContent>
@@ -272,7 +272,7 @@ function DepositSettingsCard({ publicSite }: { publicSite: any }) {
               <label className="text-xs font-semibold text-foreground block">
                 Require Booking Deposit
               </label>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-xs-plus text-muted-foreground">
                 Clients must pay upfront to secure their slot.
               </span>
             </div>
@@ -525,7 +525,7 @@ function WhatsAppSettingsCard({
           </div>
           <Badge
             variant="outline"
-            className="border-emerald-600/30 bg-emerald-50 text-emerald-700 text-[11px] font-medium"
+            className="border-emerald-600/30 bg-emerald-50 text-emerald-700 text-xs-plus font-medium"
           >
             100% Free · No Meta Fees
           </Badge>
@@ -546,15 +546,15 @@ function WhatsAppSettingsCard({
               </span>
             </div>
             {waStatus === "connected" ? (
-              <Badge className="bg-emerald-600 text-white gap-1 text-[10px] hover:bg-emerald-600">
+              <Badge className="bg-emerald-600 text-white gap-1 text-2xs hover:bg-emerald-600">
                 <CheckCircle2 className="size-3" /> Connected
               </Badge>
             ) : waStatus === "connecting" ? (
-              <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-800 gap-1 text-[10px]">
+              <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-800 gap-1 text-2xs">
                 <LoaderCircle className="size-3 animate-spin" /> Waiting for Scan
               </Badge>
             ) : (
-              <Badge variant="outline" className="border-slate-300 bg-white text-slate-600 text-[10px]">
+              <Badge variant="outline" className="border-slate-300 bg-white text-slate-600 text-2xs">
                 Disconnected
               </Badge>
             )}
@@ -570,7 +570,7 @@ function WhatsAppSettingsCard({
                     {connectedPhone || whatsapp || "Business Phone"}
                   </span>
                 </div>
-                <p className="mt-1 text-[11px] text-muted-foreground">
+                <p className="mt-1 text-xs-plus text-muted-foreground">
                   Automated booking messages will dispatch directly from this WhatsApp account to your customers.
                 </p>
               </div>
@@ -608,7 +608,7 @@ function WhatsAppSettingsCard({
                 )}
               </div>
 
-              <div className="mt-3 max-w-xs space-y-1 text-left text-[11px] leading-tight text-muted-foreground">
+              <div className="mt-3 max-w-xs space-y-1 text-left text-xs-plus leading-tight text-muted-foreground">
                 <p className="font-semibold text-foreground">How to link your WhatsApp:</p>
                 <ol className="list-decimal list-inside space-y-0.5">
                   <li>Open <strong>WhatsApp</strong> on your phone</li>
@@ -646,7 +646,7 @@ function WhatsAppSettingsCard({
           {/* Disconnected State */}
           {waStatus === "disconnected" && (
             <div className="mt-3 space-y-2">
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs-plus text-muted-foreground">
                 No Meta developer account, credit card, or paid subscription required. Simply click below and scan the multi-device QR code with your business phone.
               </p>
               <Button
@@ -680,7 +680,7 @@ function WhatsAppSettingsCard({
               disabled={saving}
               className="h-8 text-xs bg-muted/20"
             />
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-2xs text-muted-foreground">
               Displayed on public booking confirmation receipts for direct client communication.
             </p>
           </div>
@@ -698,20 +698,20 @@ function WhatsAppSettingsCard({
                 <SelectItem value="luxury">Luxury & Exclusive</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-2xs text-muted-foreground">
               Free AI crafts each WhatsApp confirmation, invoice, and reminder using this tone.
             </p>
           </div>
 
           <div className="rounded-lg border bg-muted/10 p-3 space-y-2.5">
-            <span className="text-[11px] font-semibold text-foreground block">
+            <span className="text-xs-plus font-semibold text-foreground block">
               Automated Notification Triggers (Free)
             </span>
 
             <div className="flex items-center justify-between text-xs">
               <div>
                 <span className="font-medium text-foreground block">Instant Booking Confirmation</span>
-                <span className="text-[10px] text-muted-foreground">Sends booking code, service name, and time.</span>
+                <span className="text-2xs text-muted-foreground">Sends booking code, service name, and time.</span>
               </div>
               <Switch checked={autoConfirm} onCheckedChange={setAutoConfirm} disabled={saving} />
             </div>
@@ -721,7 +721,7 @@ function WhatsAppSettingsCard({
             <div className="flex items-center justify-between text-xs">
               <div>
                 <span className="font-medium text-foreground block">Invoice & Bank Deposit Details</span>
-                <span className="text-[10px] text-muted-foreground">Sends required deposit amount and your bank details.</span>
+                <span className="text-2xs text-muted-foreground">Sends required deposit amount and your bank details.</span>
               </div>
               <Switch checked={autoInvoice} onCheckedChange={setAutoInvoice} disabled={saving} />
             </div>
@@ -731,7 +731,7 @@ function WhatsAppSettingsCard({
             <div className="flex items-center justify-between text-xs">
               <div>
                 <span className="font-medium text-foreground block">Appointment Reminders</span>
-                <span className="text-[10px] text-muted-foreground">Sends upcoming reminders before client appointments.</span>
+                <span className="text-2xs text-muted-foreground">Sends upcoming reminders before client appointments.</span>
               </div>
               <Switch checked={autoReminder} onCheckedChange={setAutoReminder} disabled={saving} />
             </div>
@@ -770,7 +770,7 @@ export function SettingsScreen() {
                 <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Globe2 className="size-3.5" /> Public slug
                 </span>
-                <span className="font-mono text-[10px] font-medium">
+                <span className="font-mono text-2xs font-medium">
                   /{publicSite?.site?.siteSlug ?? "—"}
                 </span>
               </div>

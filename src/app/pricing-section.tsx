@@ -28,7 +28,7 @@ export function PricingSection({ plans }: { plans: Plan[] }) {
       {/* Header row */}
       <div className="mb-10 flex flex-col gap-6 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
+          <p className="font-mono text-2xs font-semibold uppercase tracking-[0.2em] text-primary">
             Feature-based plans
           </p>
           <h2 className="mt-4 font-heading text-5xl font-medium leading-[0.96] tracking-[-0.05em] sm:text-6xl">
@@ -61,13 +61,13 @@ export function PricingSection({ plans }: { plans: Plan[] }) {
               }`}
             >
               Yearly
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-2 py-0.5 text-3xs font-bold uppercase tracking-wide text-white">
                 <Zap className="size-2.5" />2 free
               </span>
             </button>
           </div>
           {cycle === "yearly" && (
-            <p className="text-[11px] font-medium text-emerald-700">
+            <p className="text-xs-plus font-medium text-emerald-700">
               🎉 You save 2 months on every plan!
             </p>
           )}
@@ -100,13 +100,13 @@ export function PricingSection({ plans }: { plans: Plan[] }) {
               }`}
             >
               {plan.featured && (
-                <span className="absolute right-5 top-5 font-mono text-[9px] uppercase tracking-[0.15em] text-primary-foreground/60">
+                <span className="absolute right-5 top-5 font-mono text-3xs uppercase tracking-[0.15em] text-primary-foreground/60">
                   Most popular
                 </span>
               )}
 
               {/* Plan name */}
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-55">
+              <p className="font-mono text-2xs uppercase tracking-[0.18em] opacity-55">
                 {plan.name}
               </p>
 
@@ -121,14 +121,14 @@ export function PricingSection({ plans }: { plans: Plan[] }) {
 
                 {/* Yearly savings callout */}
                 {cycle === "yearly" ? (
-                  <p className={`mt-2 text-[11px] font-medium ${plan.featured ? "text-primary-foreground/60" : "text-emerald-700"}`}>
+                  <p className={`mt-2 text-xs-plus font-medium ${plan.featured ? "text-primary-foreground/60" : "text-emerald-700"}`}>
                     <span className="line-through opacity-50">
                       {sym}{fullYearlyAmt.toLocaleString()}/yr
                     </span>
                     {" "}— you save {sym}{(fullYearlyAmt - shownAmt).toLocaleString()}
                   </p>
                 ) : (
-                  <p className={`mt-2 text-[11px] ${plan.featured ? "text-primary-foreground/55" : "text-muted-foreground"}`}>
+                  <p className={`mt-2 text-xs-plus ${plan.featured ? "text-primary-foreground/55" : "text-muted-foreground"}`}>
                     or {sym}{toYearly(monthlyAmt).toLocaleString()}/yr{" "}
                     <span className={`font-semibold ${plan.featured ? "text-primary-foreground/80" : "text-emerald-700"}`}>
                       (save 2 months)

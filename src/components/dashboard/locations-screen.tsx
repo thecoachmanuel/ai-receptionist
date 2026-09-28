@@ -209,7 +209,7 @@ export function LocationsScreen() {
                     <div>
                       <CardTitle className="font-heading text-base font-semibold">{loc.name}</CardTitle>
                       {loc.isPrimary && (
-                        <Badge className="mt-0.5 bg-primary text-primary-foreground text-[10px]">
+                        <Badge className="mt-0.5 bg-primary text-primary-foreground text-2xs">
                           Main Branch
                         </Badge>
                       )}
@@ -225,7 +225,7 @@ export function LocationsScreen() {
                 {loc.phone && (
                   <div className="flex items-center gap-2">
                     <Phone className="size-3.5 shrink-0 text-foreground/70" />
-                    <span className="font-mono text-[11px]">{loc.phone}</span>
+                    <span className="font-mono text-xs-plus">{loc.phone}</span>
                   </div>
                 )}
                 {loc.email && (

@@ -78,7 +78,7 @@ export default function OnboardingPage() {
           <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-foreground text-background shadow-lg">
             <BrandIcon className="size-7 border-none bg-transparent text-background" inverted />
           </div>
-          <h1 className="font-heading text-[28px] font-bold tracking-tight text-foreground">
+          <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
             Let&apos;s set up your business
           </h1>
           <p className="mt-2 text-sm text-muted-foreground max-w-sm">

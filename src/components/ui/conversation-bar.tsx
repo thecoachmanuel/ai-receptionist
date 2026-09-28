@@ -190,7 +190,7 @@ export const ConversationBar = React.forwardRef<
                       />
                       {(status === "disconnected" || status === "error") && (
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-foreground/50 text-[10px] font-medium">
+                          <span className="text-foreground/50 text-2xs font-medium">
                             Customer Support
                           </span>
                         </div>

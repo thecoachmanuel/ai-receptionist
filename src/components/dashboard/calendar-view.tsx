@@ -68,15 +68,15 @@ export function CalendarView({ bookings, onSelectBooking }: CalendarViewProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "confirmed":
-        return <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 text-[10px]">Confirmed</Badge>;
+        return <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 text-2xs">Confirmed</Badge>;
       case "completed":
-        return <Badge className="bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30 text-[10px]">Completed</Badge>;
+        return <Badge className="bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30 text-2xs">Completed</Badge>;
       case "pending":
-        return <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 text-[10px]">Pending</Badge>;
+        return <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 text-2xs">Pending</Badge>;
       case "canceled":
-        return <Badge className="bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30 text-[10px]">Canceled</Badge>;
+        return <Badge className="bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30 text-2xs">Canceled</Badge>;
       default:
-        return <Badge variant="outline" className="text-[10px]">{status}</Badge>;
+        return <Badge variant="outline" className="text-2xs">{status}</Badge>;
     }
   };
 
@@ -137,7 +137,7 @@ export function CalendarView({ bookings, onSelectBooking }: CalendarViewProps) {
       {viewMode === "month" && (
         <div className="grid grid-cols-7 border border-border/80 rounded-lg bg-card overflow-hidden text-xs shadow-sm">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-            <div key={d} className="bg-muted/40 border-b border-r py-2 text-center font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">
+            <div key={d} className="bg-muted/40 border-b border-r py-2 text-center font-semibold text-muted-foreground uppercase text-2xs tracking-wider">
               {d}
             </div>
           ))}
@@ -156,11 +156,11 @@ export function CalendarView({ bookings, onSelectBooking }: CalendarViewProps) {
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <span className={cn("inline-grid size-5 place-items-center rounded-full text-[11px]", isToday && "bg-primary text-primary-foreground font-bold")}>
+                  <span className={cn("inline-grid size-5 place-items-center rounded-full text-xs-plus", isToday && "bg-primary text-primary-foreground font-bold")}>
                     {format(day, "d")}
                   </span>
                   {dayBookings.length > 0 && (
-                    <span className="font-mono text-[9px] text-muted-foreground font-normal">
+                    <span className="font-mono text-3xs text-muted-foreground font-normal">
                       {dayBookings.length} appt{dayBookings.length > 1 ? "s" : ""}
                     </span>
                   )}
@@ -173,18 +173,18 @@ export function CalendarView({ bookings, onSelectBooking }: CalendarViewProps) {
                       onClick={() => onSelectBooking?.(b)}
                       className="group cursor-pointer rounded border border-black/8 bg-background p-1 hover:border-primary/50 transition shadow-2xs"
                     >
-                      <div className="flex items-center justify-between text-[10px]">
+                      <div className="flex items-center justify-between text-2xs">
                         <span className="font-medium text-foreground truncate max-w-[80px]">
                           {b.contactName}
                         </span>
-                        <span className="font-mono text-[9px] text-muted-foreground">
+                        <span className="font-mono text-3xs text-muted-foreground">
                           {formatTimeInTimeZone(b.startAt)}
                         </span>
                       </div>
                     </div>
                   ))}
                   {dayBookings.length > 3 && (
-                    <p className="text-[9px] text-muted-foreground font-mono text-center">
+                    <p className="text-3xs text-muted-foreground font-mono text-center">
                       +{dayBookings.length - 3} more
                     </p>
                   )}
@@ -199,14 +199,14 @@ export function CalendarView({ bookings, onSelectBooking }: CalendarViewProps) {
       {viewMode === "week" && (
         <div className="border border-border/80 rounded-lg bg-card overflow-hidden shadow-sm">
           <div className="grid grid-cols-[3.5rem_repeat(7,1fr)] border-b bg-muted/40 text-center text-xs">
-            <div className="border-r p-2 font-mono text-[10px] text-muted-foreground flex items-center justify-center">
+            <div className="border-r p-2 font-mono text-2xs text-muted-foreground flex items-center justify-center">
               Time
             </div>
             {weekDays.map((day) => {
               const isToday = isSameDay(day, new Date());
               return (
                 <div key={day.toISOString()} className={cn("border-r py-2.5 px-1", isToday && "bg-primary/10 font-bold")}>
-                  <p className="font-mono text-[10px] uppercase text-muted-foreground">{format(day, "EEE")}</p>
+                  <p className="font-mono text-2xs uppercase text-muted-foreground">{format(day, "EEE")}</p>
                   <p className={cn("text-sm font-semibold mt-0.5", isToday && "text-primary")}>{format(day, "d MMM")}</p>
                 </div>
               );
@@ -214,7 +214,7 @@ export function CalendarView({ bookings, onSelectBooking }: CalendarViewProps) {
           </div>
 
           <div className="grid grid-cols-[3.5rem_repeat(7,1fr)] divide-x text-xs min-h-[35rem] max-h-[45rem] overflow-y-auto">
-            <div className="divide-y text-right pr-2 text-[10px] font-mono text-muted-foreground">
+            <div className="divide-y text-right pr-2 text-2xs font-mono text-muted-foreground">
               {hours.map((h) => (
                 <div key={h} className="h-16 pt-1">
                   {h === 12 ? "12 PM" : h > 12 ? `${h - 12} PM` : `${h} AM`}
@@ -253,9 +253,9 @@ export function CalendarView({ bookings, onSelectBooking }: CalendarViewProps) {
                             <p className="font-semibold text-xs text-foreground truncate">{b.contactName}</p>
                             {getStatusBadge(b.status)}
                           </div>
-                          <p className="text-[10px] text-muted-foreground truncate">{b.offeringName}</p>
+                          <p className="text-2xs text-muted-foreground truncate">{b.offeringName}</p>
                         </div>
-                        <p className="font-mono text-[9px] text-primary font-medium flex items-center gap-1">
+                        <p className="font-mono text-3xs text-primary font-medium flex items-center gap-1">
                           <Clock className="size-2.5 inline" /> {formatTimeInTimeZone(b.startAt)} - {formatTimeInTimeZone(b.endAt)}
                         </p>
                       </div>
@@ -315,7 +315,7 @@ export function CalendarView({ bookings, onSelectBooking }: CalendarViewProps) {
                       <p className="font-mono text-xs font-semibold text-foreground">
                         {format(new Date(b.startAt), "h:mm a")} - {format(new Date(b.endAt), "h:mm a")}
                       </p>
-                      <p className="font-mono text-[10px] text-muted-foreground uppercase mt-0.5">
+                      <p className="font-mono text-2xs text-muted-foreground uppercase mt-0.5">
                         Code: {b.confirmationCode}
                       </p>
                     </div>

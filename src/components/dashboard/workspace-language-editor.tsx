@@ -336,7 +336,7 @@ export function WorkspaceLanguageEditor({
                         {preset.label}
                         {selected && <Check className="size-3.5 text-primary" />}
                       </span>
-                      <span className="mt-0.5 block text-[11px] leading-4 font-normal text-muted-foreground">
+                      <span className="mt-0.5 block text-xs-plus leading-4 font-normal text-muted-foreground">
                         {preset.description}
                       </span>
                     </span>
@@ -358,12 +358,12 @@ export function WorkspaceLanguageEditor({
                 >
                   <legend className="sr-only">{group.label} labels</legend>
                   <div className="mb-3 flex items-start gap-2.5">
-                    <span className="font-mono text-[10px] font-semibold text-primary">
+                    <span className="font-mono text-2xs font-semibold text-primary">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     <div>
                       <p className="text-sm font-semibold">{group.label}</p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      <p className="mt-0.5 text-xs-plus text-muted-foreground">
                         {group.description}
                       </p>
                     </div>
@@ -407,7 +407,7 @@ export function WorkspaceLanguageEditor({
             <aside className="flex min-h-64 flex-col rounded-xl bg-[#20201e] p-5 text-white ring-1 ring-black/15">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[9px] font-semibold tracking-[0.16em] text-white/40 uppercase">
+                  <p className="text-3xs font-semibold tracking-[0.16em] text-white/40 uppercase">
                     Live preview
                   </p>
                   <p className="mt-1 font-heading text-xl tracking-tight">
@@ -427,7 +427,7 @@ export function WorkspaceLanguageEditor({
                   ["Schedule", normalizedDraft.bookingPlural],
                 ].map(([label, value]) => (
                   <div key={label} className="bg-[#20201e] p-3">
-                    <p className="text-[9px] font-semibold tracking-[0.12em] text-white/35 uppercase">
+                    <p className="text-3xs font-semibold tracking-[0.12em] text-white/35 uppercase">
                       {label}
                     </p>
                     <p className="mt-1 truncate text-xs font-medium text-white">
@@ -438,17 +438,17 @@ export function WorkspaceLanguageEditor({
               </div>
 
               <div className="mt-auto pt-6">
-                <p className="text-[11px] leading-5 text-white/45">
+                <p className="text-xs-plus leading-5 text-white/45">
                   Example actions
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-white/8 px-2.5 py-1 text-[10px] text-white/80">
+                  <span className="rounded-full bg-white/8 px-2.5 py-1 text-2xs text-white/80">
                     New {normalizedDraft.offeringSingular || "—"}
                   </span>
-                  <span className="rounded-full bg-white/8 px-2.5 py-1 text-[10px] text-white/80">
+                  <span className="rounded-full bg-white/8 px-2.5 py-1 text-2xs text-white/80">
                     Add {normalizedDraft.teamMemberSingular || "—"}
                   </span>
-                  <span className="rounded-full bg-white/8 px-2.5 py-1 text-[10px] text-white/80">
+                  <span className="rounded-full bg-white/8 px-2.5 py-1 text-2xs text-white/80">
                     Create {normalizedDraft.bookingSingular || "—"}
                   </span>
                 </div>

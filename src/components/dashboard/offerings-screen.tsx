@@ -214,7 +214,7 @@ function OfferingDialog({ offering }: { offering?: Offering }) {
             <div className="flex items-center justify-between rounded-lg border border-black/10 bg-muted/35 p-3 sm:col-span-2">
               <div>
                 <Label htmlFor={`active-${offering?._id ?? "new"}`}>Available</Label>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                <p className="mt-0.5 text-xs-plus text-muted-foreground">
                   Show this in booking flows and agent suggestions.
                 </p>
               </div>
@@ -274,7 +274,7 @@ export function OfferingsScreen() {
                       <h2 className="font-heading text-lg font-semibold tracking-tight">
                         {offering.name}
                       </h2>
-                      <p className="mt-0.5 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+                      <p className="mt-0.5 text-2xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
                         {offering.category}
                       </p>
                     </div>
@@ -289,11 +289,11 @@ export function OfferingsScreen() {
                 <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-black/8 pt-4">
                   <ActivePill active={offering.active} />
                   {getOfferingDuration(offering) > 0 && (
-                    <Badge variant="outline" className="gap-1 bg-white font-mono text-[10px]">
+                    <Badge variant="outline" className="gap-1 bg-white font-mono text-2xs">
                       <Clock3 className="size-3" /> {getOfferingDuration(offering)}m
                     </Badge>
                   )}
-                  <Badge variant="outline" className="ml-auto bg-white font-mono text-[10px]">
+                  <Badge variant="outline" className="ml-auto bg-white font-mono text-2xs">
                     {formatMoney(
                       getOfferingPrice(offering),
                       offering.currency || organization?.currency,

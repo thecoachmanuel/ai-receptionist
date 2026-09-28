@@ -219,7 +219,7 @@ export function BillingScreen() {
                         : `Active · ${orgBillingCycle === "yearly" ? "Yearly" : "Monthly"}`}
                 </Badge>
               </div>
-              <p className="mt-8 text-[10px] font-semibold tracking-[0.16em] text-white/45 uppercase">
+              <p className="mt-8 text-2xs font-semibold tracking-[0.16em] text-white/45 uppercase">
                 Current plan
               </p>
               <p className="mt-1 font-heading text-4xl font-semibold tracking-[-0.045em]">
@@ -239,7 +239,7 @@ export function BillingScreen() {
                 Feature access is verified securely on every session.
               </p>
             </div>
-            <div className="mt-8 space-y-2 border-t border-white/10 pt-4 text-[11px] text-white/60">
+            <div className="mt-8 space-y-2 border-t border-white/10 pt-4 text-xs-plus text-white/60">
               <p className="flex items-center gap-2">
                 <ShieldCheck className="size-3.5 text-emerald-400" /> Paystack Secured Billing
               </p>
@@ -264,7 +264,7 @@ export function BillingScreen() {
       <section className="mt-8">
         <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-[10px] font-semibold tracking-[0.16em] text-primary uppercase">
+            <p className="text-2xs font-semibold tracking-[0.16em] text-primary uppercase">
               {isExpired ? "Renew subscription" : "Compare plans"}
             </p>
             <h2 className="mt-1 font-heading text-2xl font-semibold tracking-[-0.025em]">
@@ -294,12 +294,12 @@ export function BillingScreen() {
                 }`}
               >
                 Yearly
-                <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[8px] font-bold text-emerald-700">
+                <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-4xs font-bold text-emerald-700">
                   2 FREE
                 </span>
               </button>
             </div>
-            <span className="hidden items-center gap-1.5 text-[11px] text-muted-foreground sm:inline-flex">
+            <span className="hidden items-center gap-1.5 text-xs-plus text-muted-foreground sm:inline-flex">
               <Check className="size-3.5" /> Paystack Instant Checkout
             </span>
           </div>
@@ -347,7 +347,7 @@ export function BillingScreen() {
                     </span>
                   </p>
                   {billingCycle === "yearly" && shownPrice && (
-                    <p className="mt-0.5 text-[11px] font-medium text-emerald-700">
+                    <p className="mt-0.5 text-xs-plus font-medium text-emerald-700">
                       Save {sym}{(plan.monthlyPrice * 2).toLocaleString()} vs monthly
                     </p>
                   )}
@@ -390,7 +390,7 @@ export function BillingScreen() {
         </div>
       </section>
 
-      <div className="mt-6 flex items-start gap-2 rounded-lg border border-black/10 bg-white p-3 text-[11px] leading-5 text-muted-foreground">
+      <div className="mt-6 flex items-start gap-2 rounded-lg border border-black/10 bg-white p-3 text-xs-plus leading-5 text-muted-foreground">
         <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" />
         Yearly billing gives you 2 months free (10× monthly rate). Auto-renewal charges your saved card before expiry.
         Qwilo gates capabilities by real-time feature entitlement, backed by secure payment verification.

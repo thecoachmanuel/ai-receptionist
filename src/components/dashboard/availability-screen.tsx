@@ -187,7 +187,7 @@ function WeeklyEditor({
                     <p className="text-xs text-muted-foreground">Unavailable</p>
                   )}
 
-                  <p className="hidden text-right font-mono text-[10px] tracking-[0.1em] text-muted-foreground uppercase sm:block">
+                  <p className="hidden text-right font-mono text-2xs tracking-[0.1em] text-muted-foreground uppercase sm:block">
                     {row.enabled ? terminology.bookingPlural : "Off"}
                   </p>
                 </div>
@@ -196,7 +196,7 @@ function WeeklyEditor({
           </div>
 
           <div className="mt-4 flex flex-col gap-3 border-t border-black/8 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="max-w-xl text-[11px] leading-5 text-muted-foreground">
+            <p className="max-w-xl text-xs-plus leading-5 text-muted-foreground">
               These hours define the recurring availability envelope. Existing{" "}
               {terminology.bookingPlural.toLowerCase()} remain reserved; future
               date exceptions can layer on top.
@@ -291,7 +291,7 @@ export function AvailabilityScreen() {
         />
       )}
 
-      <div className="mt-4 flex items-start gap-2 rounded-lg border border-black/10 bg-white p-3 text-[11px] leading-5 text-muted-foreground">
+      <div className="mt-4 flex items-start gap-2 rounded-lg border border-black/10 bg-white p-3 text-xs-plus leading-5 text-muted-foreground">
         <Clock3 className="mt-0.5 size-3.5 shrink-0 text-primary" />
         Times are stored against {organization?.timezone ?? "the organization timezone"},
         keeping public-page, AI-assisted, and internal {terminology.booking.toLowerCase()} flows

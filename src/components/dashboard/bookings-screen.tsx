@@ -310,15 +310,15 @@ function BookingDetailDialog({
             </h4>
             <div className="grid gap-2 sm:grid-cols-2 pt-1">
               <div>
-                <span className="text-[11px] text-muted-foreground block">Name</span>
+                <span className="text-xs-plus text-muted-foreground block">Name</span>
                 <span className="font-semibold text-foreground">{booking.contactName || "—"}</span>
               </div>
               <div>
-                <span className="text-[11px] text-muted-foreground block">Email</span>
+                <span className="text-xs-plus text-muted-foreground block">Email</span>
                 <span className="font-medium text-foreground">{booking.contactEmail || "—"}</span>
               </div>
               <div className="sm:col-span-2">
-                <span className="text-[11px] text-muted-foreground block">Phone</span>
+                <span className="text-xs-plus text-muted-foreground block">Phone</span>
                 <span className="font-mono text-xs font-medium text-foreground">{booking.contactPhone || "—"}</span>
               </div>
             </div>
@@ -331,24 +331,24 @@ function BookingDetailDialog({
             </h4>
             <div className="grid gap-3 sm:grid-cols-2 pt-1">
               <div>
-                <span className="text-[11px] text-muted-foreground block">Start Time</span>
+                <span className="text-xs-plus text-muted-foreground block">Start Time</span>
                 <span className="font-medium text-foreground">
                   {formatDateTime(booking.startAt, organization?.timezone)}
                 </span>
               </div>
               <div>
-                <span className="text-[11px] text-muted-foreground block">Assigned {terminology.teamMember}</span>
+                <span className="text-xs-plus text-muted-foreground block">Assigned {terminology.teamMember}</span>
                 <span className="font-medium text-foreground">{booking.teamMemberName || "Unassigned"}</span>
               </div>
               {(booking.locationName || booking.location) && (
                 <div className="sm:col-span-2 pt-2 border-t mt-1">
-                  <span className="text-[11px] text-muted-foreground block">Branch Location</span>
+                  <span className="text-xs-plus text-muted-foreground block">Branch Location</span>
                   <div className="mt-1 flex items-start gap-2 rounded-lg bg-background p-2.5 border">
                     <Building2 className="size-4 shrink-0 text-primary mt-0.5" />
                     <div>
                       <p className="font-semibold text-xs text-foreground">{booking.locationName || booking.location?.name}</p>
                       {booking.location?.address && (
-                        <p className="text-[11px] text-muted-foreground">{booking.location.address}, {booking.location.city}</p>
+                        <p className="text-xs-plus text-muted-foreground">{booking.location.address}, {booking.location.city}</p>
                       )}
                     </div>
                   </div>
@@ -364,7 +364,7 @@ function BookingDetailDialog({
             </h4>
             <div className="grid gap-3 sm:grid-cols-2 pt-1">
               <div>
-                <span className="text-[11px] text-muted-foreground block">Amount</span>
+                <span className="text-xs-plus text-muted-foreground block">Amount</span>
                 <span className="font-semibold text-foreground">
                   {formatMoney(
                     booking.priceCents,
@@ -374,7 +374,7 @@ function BookingDetailDialog({
                 </span>
               </div>
               <div>
-                <span className="text-[11px] text-muted-foreground block">Channel Source</span>
+                <span className="text-xs-plus text-muted-foreground block">Channel Source</span>
                 <span className="font-mono text-xs uppercase tracking-wide text-foreground">
                   {booking.source || "dashboard"}
                 </span>
@@ -382,7 +382,7 @@ function BookingDetailDialog({
             </div>
             {booking.notes && (
               <div className="pt-2 border-t mt-2">
-                <span className="text-[11px] text-muted-foreground block">Internal Notes</span>
+                <span className="text-xs-plus text-muted-foreground block">Internal Notes</span>
                 <p className="text-xs text-foreground mt-0.5 leading-relaxed bg-white p-2 rounded border">
                   {booking.notes}
                 </p>
@@ -412,11 +412,11 @@ function BookingDetailDialog({
                     <MessageCircle className="size-3.5 text-emerald-600" />
                     Free WhatsApp Notification
                   </span>
-                  <span className="text-[10px] text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full font-medium">
+                  <span className="text-2xs text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full font-medium">
                     {booking.contactPhone}
                   </span>
                 </div>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs-plus text-muted-foreground">
                   Send 1-click automated messages directly to this client on WhatsApp for free:
                 </p>
                 <div className="flex flex-wrap gap-2 pt-1">
@@ -424,7 +424,7 @@ function BookingDetailDialog({
                     asChild
                     variant="outline"
                     size="sm"
-                    className="h-7 text-[11px] gap-1 border-emerald-600/30 hover:bg-emerald-50 text-emerald-700"
+                    className="h-7 text-xs-plus gap-1 border-emerald-600/30 hover:bg-emerald-50 text-emerald-700"
                   >
                     <a
                       href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(confirmMsg)}`}
@@ -439,7 +439,7 @@ function BookingDetailDialog({
                     asChild
                     variant="outline"
                     size="sm"
-                    className="h-7 text-[11px] gap-1 border-emerald-600/30 hover:bg-emerald-50 text-emerald-700"
+                    className="h-7 text-xs-plus gap-1 border-emerald-600/30 hover:bg-emerald-50 text-emerald-700"
                   >
                     <a
                       href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(invoiceMsg)}`}
@@ -454,7 +454,7 @@ function BookingDetailDialog({
                     asChild
                     variant="outline"
                     size="sm"
-                    className="h-7 text-[11px] gap-1 border-emerald-600/30 hover:bg-emerald-50 text-emerald-700"
+                    className="h-7 text-xs-plus gap-1 border-emerald-600/30 hover:bg-emerald-50 text-emerald-700"
                   >
                     <a
                       href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(reminderMsg)}`}
@@ -642,7 +642,7 @@ export function BookingsScreen() {
                     </TableCell>
                     <TableCell>
                       <p className="font-medium">{booking.contactName}</p>
-                      <p className="mt-0.5 max-w-40 truncate text-[11px] text-muted-foreground">
+                      <p className="mt-0.5 max-w-40 truncate text-xs-plus text-muted-foreground">
                         {booking.contactEmail ?? booking.contactPhone ?? "No contact details"}
                       </p>
                     </TableCell>
@@ -651,7 +651,7 @@ export function BookingsScreen() {
                       {booking.teamMemberName ?? "Unassigned"}
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      <span className="font-mono text-[10px] tracking-wide uppercase">
+                      <span className="font-mono text-2xs tracking-wide uppercase">
                         {booking.source}
                       </span>
                     </TableCell>

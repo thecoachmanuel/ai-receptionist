@@ -74,7 +74,7 @@ export function OrganizationSwitcher({
               <span className="truncate text-xs font-medium text-foreground">
                 {organization?.name || "Select workspace"}
               </span>
-              <span className="truncate text-[10px] text-muted-foreground capitalize">
+              <span className="truncate text-2xs text-muted-foreground capitalize">
                 {organization?.role || "Active workspace"}
               </span>
             </div>
@@ -82,7 +82,7 @@ export function OrganizationSwitcher({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="start">
-          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <DropdownMenuLabel className="text-2xs uppercase tracking-wider text-muted-foreground">
             Workspaces
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -96,7 +96,7 @@ export function OrganizationSwitcher({
               >
                 <div className="flex flex-col min-w-0">
                   <span className="truncate text-xs font-medium">{org.name}</span>
-                  <span className="truncate text-[10px] text-muted-foreground capitalize">{org.role}</span>
+                  <span className="truncate text-2xs text-muted-foreground capitalize">{org.role}</span>
                 </div>
                 {isSelected && <Check className="size-4 text-primary" />}
               </DropdownMenuItem>
@@ -194,7 +194,7 @@ export function OrganizationList({
               >
                 <div className="text-left">
                   <p className="font-medium text-sm">{org.name}</p>
-                  <p className="text-[10px] text-muted-foreground capitalize">{org.role}</p>
+                  <p className="text-2xs text-muted-foreground capitalize">{org.role}</p>
                 </div>
                 <Check className="size-4 opacity-50" />
               </Button>

@@ -202,7 +202,7 @@ function MemberDialog({ member }: { member?: TeamMember }) {
                     disabled={uploadingImage}
                     className="text-xs"
                   />
-                  {uploadingImage && <p className="text-[10px] text-muted-foreground mt-1">Uploading...</p>}
+                  {uploadingImage && <p className="text-2xs text-muted-foreground mt-1">Uploading...</p>}
                 </div>
               </div>
             </div>
@@ -236,7 +236,7 @@ function MemberDialog({ member }: { member?: TeamMember }) {
                 defaultValue={member?.phone}
                 placeholder="+234 801 234 5678"
               />
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-2xs text-muted-foreground">
                 Automated booking updates will be sent to this WhatsApp number.
               </p>
             </div>
@@ -325,7 +325,7 @@ function MemberDialog({ member }: { member?: TeamMember }) {
             <div className="flex items-center justify-between rounded-lg border border-black/10 bg-muted/35 p-3 sm:col-span-2">
               <div>
                 <Label htmlFor={`member-active-${member?._id ?? "new"}`}>Active</Label>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                <p className="mt-0.5 text-xs-plus text-muted-foreground">
                   Keep this person visible in the workspace.
                 </p>
               </div>
@@ -338,7 +338,7 @@ function MemberDialog({ member }: { member?: TeamMember }) {
             <div className="flex items-center justify-between rounded-lg border border-black/10 bg-muted/35 p-3 sm:col-span-2">
               <div>
                 <Label htmlFor={`member-bookable-${member?._id ?? "new"}`}>Bookable</Label>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                <p className="mt-0.5 text-xs-plus text-muted-foreground">
                   Allow this person to receive scheduled work.
                 </p>
               </div>
@@ -422,7 +422,7 @@ export function TeamScreen() {
                     {member.acceptingBookings ? "Bookable" : "Not bookable"}
                   </Badge>
                   {member.phone && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-800">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-2xs font-medium text-emerald-800">
                       <MessageSquare className="size-2.5 text-emerald-600" />
                       {member.phone}
                     </span>
@@ -433,7 +433,7 @@ export function TeamScreen() {
                     onClick={() => {
                       toast.success(`Google Calendar sync enabled for ${member.name}! Connected to Google Workspace.`);
                     }}
-                    className="ml-auto text-[10px] h-6 px-2 gap-1"
+                    className="ml-auto text-2xs h-6 px-2 gap-1"
                   >
                     <CalendarCheck2 className="size-3 text-emerald-600" />
                     Google Sync

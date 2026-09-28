@@ -68,7 +68,7 @@ export default async function PricingPage() {
 
       <section className="mx-auto max-w-[1400px] px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
         <div className="mb-14 max-w-3xl">
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
+          <p className="font-mono text-2xs font-semibold uppercase tracking-[0.2em] text-primary">
             Plans that unlock capabilities
           </p>
           <h1 className="mt-5 font-heading text-6xl font-medium leading-[0.92] tracking-[-0.055em] sm:text-7xl">

@@ -52,7 +52,7 @@ export function WaitlistPage() {
         <div className="absolute inset-0 hairline-grid opacity-45 [mask-image:linear-gradient(to_bottom,black,transparent_88%)]" />
         
         <div className="relative mx-auto w-full max-w-[1400px] px-5 py-20 sm:px-8 lg:px-12 flex flex-col items-center text-center">
-          <Badge variant="outline" className="mb-7 rounded-sm bg-background px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em]">
+          <Badge variant="outline" className="mb-7 rounded-sm bg-background px-2.5 py-1 font-mono text-2xs uppercase tracking-[0.16em]">
             Waitlist Mode
           </Badge>
           

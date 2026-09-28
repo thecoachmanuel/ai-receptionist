@@ -776,7 +776,7 @@ function AgentLauncherInner({
               <CardTitle className="text-base font-semibold">
                 {businessName} Assistant
               </CardTitle>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs-plus text-muted-foreground">
                 {isConnected
                   ? activeProvider === "gemini"
                     ? "Online · AI Engine"
@@ -790,7 +790,7 @@ function AgentLauncherInner({
           <Badge
             variant="outline"
             className={cn(
-              "font-mono text-[10px]",
+              "font-mono text-2xs",
               isConnected
                 ? "border-emerald-500/30 text-emerald-600 bg-emerald-50"
                 : "text-muted-foreground",
@@ -847,7 +847,7 @@ function AgentLauncherInner({
                         : "mr-auto bg-card border text-foreground shadow-sm",
                     )}
                   >
-                    <p className="font-semibold text-[10px] opacity-70 mb-0.5">
+                    <p className="font-semibold text-2xs opacity-70 mb-0.5">
                       {item.role === "user" ? "You" : businessName + " AI"}
                     </p>
                     {item.text}
@@ -865,7 +865,7 @@ function AgentLauncherInner({
                   <Sparkles className="size-3.5" />
                   <span>AI Conversation Preview</span>
                 </div>
-                <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-mono bg-background/80 px-2 py-0.5 rounded-full border border-border/50">
+                <span className="inline-flex items-center gap-1 text-2xs text-muted-foreground font-mono bg-background/80 px-2 py-0.5 rounded-full border border-border/50">
                   <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live Receptionist
                 </span>
               </div>
@@ -873,7 +873,7 @@ function AgentLauncherInner({
               <div className="space-y-2.5 text-xs">
                 {/* AI Sample Message 1 */}
                 <div className="flex gap-2">
-                  <div className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                  <div className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-2xs font-bold">
                     AI
                   </div>
                   <div className="max-w-[85%] rounded-2xl rounded-tl-xs bg-background border p-2.5 shadow-2xs text-foreground leading-relaxed">
@@ -892,7 +892,7 @@ function AgentLauncherInner({
 
                 {/* AI Sample Message 2 */}
                 <div className="flex gap-2">
-                  <div className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                  <div className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-2xs font-bold">
                     AI
                   </div>
                   <div className="max-w-[85%] rounded-2xl rounded-tl-xs bg-background border p-2.5 shadow-2xs text-foreground leading-relaxed">
@@ -905,21 +905,21 @@ function AgentLauncherInner({
 
               {/* Sample Prompt Pills */}
               <div className="mt-3 pt-2.5 border-t border-border/40">
-                <p className="text-[10px] font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                <p className="text-2xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
                   <MessageCircle className="size-3 text-primary" /> Click a topic to try speaking with AI:
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   <button
                     type="button"
                     onClick={() => void start("voice")}
-                    className="rounded-full bg-background hover:bg-primary/10 border border-primary/20 px-2.5 py-1 text-[11px] text-foreground font-medium transition-all hover:border-primary/40 cursor-pointer shadow-2xs flex items-center gap-1"
+                    className="rounded-full bg-background hover:bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs-plus text-foreground font-medium transition-all hover:border-primary/40 cursor-pointer shadow-2xs flex items-center gap-1"
                   >
                     ✨ What are your services?
                   </button>
                   <button
                     type="button"
                     onClick={() => void start("voice")}
-                    className="rounded-full bg-background hover:bg-primary/10 border border-primary/20 px-2.5 py-1 text-[11px] text-foreground font-medium transition-all hover:border-primary/40 cursor-pointer shadow-2xs flex items-center gap-1"
+                    className="rounded-full bg-background hover:bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs-plus text-foreground font-medium transition-all hover:border-primary/40 cursor-pointer shadow-2xs flex items-center gap-1"
                   >
                     📅 Check open appointment slots
                   </button>

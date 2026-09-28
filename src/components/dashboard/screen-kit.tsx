@@ -27,7 +27,7 @@ export function ScreenHeader({
   return (
     <div className="mb-7 flex flex-col gap-5 border-b border-black/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
       <div className="max-w-3xl">
-        <p className="text-[10px] font-semibold tracking-[0.2em] text-primary uppercase">
+        <p className="text-2xs font-semibold tracking-[0.2em] text-primary uppercase">
           {eyebrow}
         </p>
         <h1 className="mt-2 font-heading text-3xl leading-none font-semibold tracking-[-0.035em] sm:text-4xl">
@@ -139,7 +139,7 @@ export function StatusBadge({ status }: { status: string }) {
     <Badge
       variant="outline"
       className={cn(
-        "gap-1.5 px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] uppercase",
+        "gap-1.5 px-2 py-0.5 text-2xs font-semibold tracking-[0.08em] uppercase",
         statusStyles[status] ?? "border-black/10 bg-white text-foreground",
       )}
     >
@@ -154,7 +154,7 @@ export function ActivePill({ active }: { active: boolean }) {
     <Badge
       variant="outline"
       className={cn(
-        "gap-1.5 text-[10px] font-semibold tracking-[0.08em] uppercase",
+        "gap-1.5 text-2xs font-semibold tracking-[0.08em] uppercase",
         active
           ? "border-emerald-200 bg-emerald-50 text-emerald-800"
           : "border-black/10 bg-muted text-muted-foreground",

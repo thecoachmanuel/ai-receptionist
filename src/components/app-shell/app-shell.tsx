@@ -148,7 +148,7 @@ function WorkspaceNavigation({
     <>
       {navigation.map((section) => (
         <SidebarGroup key={section.label} className="px-3 py-2">
-          <SidebarGroupLabel className="px-2 text-[10px] font-semibold tracking-[0.18em] text-white/45 uppercase">
+          <SidebarGroupLabel className="px-2 text-2xs font-semibold tracking-[0.18em] text-white/45 uppercase">
             {section.label}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -169,7 +169,7 @@ function WorkspaceNavigation({
                       isActive={isActive}
                       tooltip={item.label}
                       className={cn(
-                        "h-9 rounded-md px-2.5 text-[13px] text-white/75 hover:text-white hover:bg-white/10 transition-colors font-medium",
+                        "h-9 rounded-md px-2.5 text-sm text-white/75 hover:text-white hover:bg-white/10 transition-colors font-medium",
                         isActive &&
                           "bg-white text-[#12151e] font-semibold hover:bg-white hover:text-[#12151e] shadow-xs",
                       )}
@@ -192,7 +192,7 @@ function WorkspaceNavigation({
 
       {isSuperAdmin && (
         <SidebarGroup className="px-3 py-2 border-t border-white/10 mt-2">
-          <SidebarGroupLabel className="px-2 text-[10px] font-semibold tracking-[0.18em] text-blue-300 uppercase">
+          <SidebarGroupLabel className="px-2 text-2xs font-semibold tracking-[0.18em] text-blue-300 uppercase">
             Platform Super Admin
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -201,7 +201,7 @@ function WorkspaceNavigation({
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === "/app/admin" || pathname === "/admin"}
-                  className="h-9 rounded-md px-2.5 text-[13px] font-medium bg-primary/20 text-blue-300 hover:bg-primary/30 border border-primary/30"
+                  className="h-9 rounded-md px-2.5 text-sm font-medium bg-primary/20 text-blue-300 hover:bg-primary/30 border border-primary/30"
                 >
                   <Link href="/app/admin">
                     <Building2 className="size-4" />
@@ -253,7 +253,7 @@ function ShellChrome({
         <SidebarHeader className="gap-4 px-4 pt-4 pb-3">
           <div className="flex flex-col gap-0.5">
             <Brand inverted href={`/app/${orgSlug}`} />
-            <span className="pl-0.5 text-[9px] font-semibold tracking-[0.18em] text-white/45 uppercase">
+            <span className="pl-0.5 text-3xs font-semibold tracking-[0.18em] text-white/45 uppercase">
               Operations desk
             </span>
           </div>
@@ -262,9 +262,9 @@ function ShellChrome({
             <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 shadow-xs">
               <div className="space-y-0.5 truncate">
                 <p className="text-xs font-semibold text-white truncate">{organizationName}</p>
-                <p className="text-[10px] text-white/50 font-mono uppercase tracking-wider">Staff Operating Portal</p>
+                <p className="text-2xs text-white/50 font-mono uppercase tracking-wider">Staff Operating Portal</p>
               </div>
-              <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 shrink-0 bg-primary/20 text-blue-300 border-primary/30">
+              <Badge variant="secondary" className="text-3xs px-1.5 py-0.5 shrink-0 bg-primary/20 text-blue-300 border-primary/30">
                 Staff
               </Badge>
             </div>
@@ -282,7 +282,7 @@ function ShellChrome({
                     organizationPreviewMainIdentifier:
                       "text-xs font-medium text-white",
                     organizationPreviewSecondaryIdentifier:
-                      "text-[10px] text-white/60",
+                      "text-2xs text-white/60",
                   },
                 }}
               />
@@ -298,10 +298,10 @@ function ShellChrome({
         <SidebarFooter className="p-3">
           <div className="rounded-lg border border-white/10 bg-white/5 p-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-[10px] font-semibold tracking-[0.14em] text-white/50 uppercase">
+              <p className="text-2xs font-semibold tracking-[0.14em] text-white/50 uppercase">
                 Live workspace
               </p>
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400">
+              <span className="inline-flex items-center gap-1 text-2xs font-medium text-emerald-400">
                 <span className="size-1.5 rounded-full bg-emerald-400" />
                 Synced
               </span>
@@ -329,7 +329,7 @@ function ShellChrome({
           <div className="flex items-center gap-2">
             <Badge
               variant="outline"
-              className="hidden border-black/10 bg-white px-2 text-[10px] font-semibold tracking-[0.12em] uppercase sm:inline-flex"
+              className="hidden border-black/10 bg-white px-2 text-2xs font-semibold tracking-[0.12em] uppercase sm:inline-flex"
             >
               {organization?.timezone ?? "Timezone pending"}
             </Badge>

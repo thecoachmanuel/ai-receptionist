@@ -192,15 +192,15 @@ export function StaffPortalScreen() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-heading text-xl font-bold tracking-tight text-foreground">{staffName}</h2>
-                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-mono uppercase tracking-wider">
+                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-2xs font-mono uppercase tracking-wider">
                   {staffTitle}
                 </Badge>
                 {isAcceptingBookings ? (
-                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">
+                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-2xs">
                     ● Accepting Bookings
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px]">
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-2xs">
                     ● Offline
                   </Badge>
                 )}
@@ -221,11 +221,11 @@ export function StaffPortalScreen() {
 
           <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-border/60">
             <div className="rounded-xl border bg-background/80 px-3 py-1.5 text-xs">
-              <span className="text-muted-foreground text-[10px] block font-mono uppercase tracking-wider">Assigned Branch</span>
+              <span className="text-muted-foreground text-2xs block font-mono uppercase tracking-wider">Assigned Branch</span>
               <span className="font-semibold text-foreground">{assignedLocationNames}</span>
             </div>
             <div className="rounded-xl border bg-background/80 px-3 py-1.5 text-xs">
-              <span className="text-muted-foreground text-[10px] block font-mono uppercase tracking-wider">Services / Offerings</span>
+              <span className="text-muted-foreground text-2xs block font-mono uppercase tracking-wider">Services / Offerings</span>
               <span className="font-semibold text-foreground">{staffMember?.offeringIds?.length || "All"} Services</span>
             </div>
           </div>
@@ -240,7 +240,7 @@ export function StaffPortalScreen() {
             <CalendarCheck2 className="size-4 text-primary" />
           </div>
           <p className="font-heading text-2xl font-bold mt-2">{stats.todayCount}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
+          <p className="text-xs-plus text-muted-foreground mt-0.5">
             {stats.upcomingToday} pending for today
           </p>
         </Card>
@@ -253,7 +253,7 @@ export function StaffPortalScreen() {
           <p className="font-heading text-2xl font-bold mt-2 text-emerald-700">
             {stats.completedToday}
           </p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Marked complete</p>
+          <p className="text-xs-plus text-muted-foreground mt-0.5">Marked complete</p>
         </Card>
 
         <Card className="p-4 bg-card border-black/10">
@@ -264,7 +264,7 @@ export function StaffPortalScreen() {
           <p className="font-heading text-base font-semibold mt-2 truncate">
             {stats.nextAppointment ? stats.nextAppointment.contactName : "No upcoming"}
           </p>
-          <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">
+          <p className="text-xs-plus text-muted-foreground mt-0.5 font-mono">
             {stats.nextAppointment
               ? `${formatTimeInTimeZone(stats.nextAppointment.startAt)} (${stats.nextAppointment.offeringName})`
               : "Schedule clear"}
@@ -279,7 +279,7 @@ export function StaffPortalScreen() {
           <p className="font-heading text-base font-semibold mt-2 truncate">
             {organization?.name || "Organization"}
           </p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
+          <p className="text-xs-plus text-muted-foreground mt-0.5">
             Role: <span className="font-semibold text-foreground capitalize">{userRole}</span>
           </p>
         </Card>
@@ -350,7 +350,7 @@ export function StaffPortalScreen() {
                           {b.contactName}
                         </CardTitle>
                         {isTodayAppt && (
-                          <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.2">
+                          <Badge variant="secondary" className="text-2xs bg-primary/10 text-primary px-1.5 py-0.2">
                             Today
                           </Badge>
                         )}
@@ -361,7 +361,7 @@ export function StaffPortalScreen() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 pt-0 text-xs">
-                  <div className="rounded-lg bg-muted/40 p-2.5 space-y-1.5 font-mono text-[11px] border border-black/5">
+                  <div className="rounded-lg bg-muted/40 p-2.5 space-y-1.5 font-mono text-xs-plus border border-black/5">
                     <div className="flex items-center justify-between text-muted-foreground">
                       <span>Date:</span>
                       <span className="font-semibold text-foreground">
@@ -408,7 +408,7 @@ export function StaffPortalScreen() {
                   )}
 
                   {b.notes && (
-                    <div className="rounded-md bg-amber-500/10 p-2 text-amber-950 dark:text-amber-200 text-[11px] italic flex items-start gap-1.5">
+                    <div className="rounded-md bg-amber-500/10 p-2 text-amber-950 dark:text-amber-200 text-xs-plus italic flex items-start gap-1.5">
                       <FileText className="size-3.5 shrink-0 text-amber-600 mt-0.5" />
                       <span className="line-clamp-2">"{b.notes}"</span>
                     </div>

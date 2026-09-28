@@ -52,7 +52,7 @@ export function PricingTogglePage({
             }`}
           >
             Yearly
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-2 py-0.5 text-3xs font-bold uppercase tracking-wide text-white">
               <Zap className="size-2.5" />2 months free
             </span>
           </button>
@@ -82,7 +82,7 @@ export function PricingTogglePage({
                 plan.featured ? "bg-primary text-primary-foreground" : "bg-card hover:bg-muted/20"
               }`}
             >
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-60">
+              <p className="font-mono text-2xs uppercase tracking-[0.18em] opacity-60">
                 {plan.name}
               </p>
 
@@ -95,14 +95,14 @@ export function PricingTogglePage({
                 </p>
 
                 {cycle === "yearly" ? (
-                  <p className={`mt-2 text-[11px] font-medium ${plan.featured ? "text-primary-foreground/60" : "text-emerald-700"}`}>
+                  <p className={`mt-2 text-xs-plus font-medium ${plan.featured ? "text-primary-foreground/60" : "text-emerald-700"}`}>
                     <span className="line-through opacity-50">
                       {sym}{fullYearlyAmt.toLocaleString()}/yr
                     </span>
                     {" "}— save {sym}{(fullYearlyAmt - shownAmt).toLocaleString()}
                   </p>
                 ) : (
-                  <p className={`mt-2 text-[11px] ${plan.featured ? "text-primary-foreground/55" : "text-muted-foreground"}`}>
+                  <p className={`mt-2 text-xs-plus ${plan.featured ? "text-primary-foreground/55" : "text-muted-foreground"}`}>
                     or{" "}
                     <button
                       type="button"

@@ -184,7 +184,7 @@ function planBadge(plan: AdminOrgStat["plan"]) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+        "inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-semibold",
         map[plan],
       )}
     >
@@ -277,13 +277,13 @@ function KeyRotationList({
               <div className="flex items-center gap-3">
                 <span
                   className={cn(
-                    "flex size-5 items-center justify-center rounded-full text-[9px] font-bold text-white",
+                    "flex size-5 items-center justify-center rounded-full text-3xs font-bold text-white",
                     accent,
                   )}
                 >
                   {idx + 1}
                 </span>
-                <span className="font-mono text-[11px] text-muted-foreground">
+                <span className="font-mono text-xs-plus text-muted-foreground">
                   {key.slice(0, 8)}
                   <span className="tracking-widest">••••••••••</span>
                   {key.slice(-4)}
@@ -1020,7 +1020,7 @@ export function SuperAdminScreen() {
 
       {/* Label */}
       <div className="px-5 pt-5 pb-2">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+        <p className="text-2xs font-bold uppercase tracking-widest text-muted-foreground/60">
           Super Admin
         </p>
       </div>
@@ -1091,7 +1091,7 @@ export function SuperAdminScreen() {
           </div>
           <Badge
             variant="outline"
-            className="gap-1.5 border-amber-300/60 bg-amber-50 text-amber-700 text-[10px] font-semibold"
+            className="gap-1.5 border-amber-300/60 bg-amber-50 text-amber-700 text-2xs font-semibold"
           >
             <ShieldCheck className="size-3" />
             Super Admin
@@ -1170,11 +1170,11 @@ export function SuperAdminScreen() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/30 hover:bg-muted/30">
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Business</TableHead>
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Plan</TableHead>
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Activity</TableHead>
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Locale</TableHead>
-                        <TableHead className="text-right text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Business</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Plan</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Activity</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Locale</TableHead>
+                        <TableHead className="text-right text-2xs font-bold uppercase tracking-wider text-muted-foreground">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1199,9 +1199,9 @@ export function SuperAdminScreen() {
                                   {org.name[0]?.toUpperCase()}
                                 </div>
                                 <div>
-                                  <div className="text-[13px] font-semibold text-foreground">{org.name}</div>
+                                  <div className="text-sm font-semibold text-foreground">{org.name}</div>
                                   {org.owner?.email && (
-                                    <div className="text-[10px] font-mono text-muted-foreground/80 truncate max-w-[180px]">
+                                    <div className="text-2xs font-mono text-muted-foreground/80 truncate max-w-[180px]">
                                       {org.owner.email}
                                     </div>
                                   )}
@@ -1209,7 +1209,7 @@ export function SuperAdminScreen() {
                                     href={`/${org.slug}`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="inline-flex items-center gap-0.5 font-mono text-[10px] text-primary/80 hover:underline"
+                                    className="inline-flex items-center gap-0.5 font-mono text-2xs text-primary/80 hover:underline"
                                   >
                                     /{org.slug} <ExternalLink className="size-2.5" />
                                   </a>
@@ -1223,7 +1223,7 @@ export function SuperAdminScreen() {
                                   handlePlanChange(org._id, val)
                                 }
                               >
-                                <SelectTrigger className="h-7 w-28 border-0 bg-transparent p-0 text-[11px] font-medium shadow-none focus:ring-0 [&>span]:flex [&>span]:items-center">
+                                <SelectTrigger className="h-7 w-28 border-0 bg-transparent p-0 text-xs-plus font-medium shadow-none focus:ring-0 [&>span]:flex [&>span]:items-center">
                                   <SelectValue>{planBadge(org.plan)}</SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1235,19 +1235,19 @@ export function SuperAdminScreen() {
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-1.5">
-                                <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-700">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-1.5 py-0.5 text-2xs font-medium text-sky-700">
                                   <CalendarDays className="size-2.5" /> {org.stats.bookingsCount}
                                 </span>
-                                <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-700">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-1.5 py-0.5 text-2xs font-medium text-purple-700">
                                   <Bot className="size-2.5" /> {org.stats.conversationsCount}
                                 </span>
-                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-2xs font-medium text-emerald-700">
                                   <UsersRound className="size-2.5" /> {org.stats.teamMembersCount}
                                 </span>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <span className="text-[11px] text-muted-foreground">
+                              <span className="text-xs-plus text-muted-foreground">
                                 {org.currency} · {org.timezone.split("/").pop()}
                               </span>
                             </TableCell>
@@ -1257,7 +1257,7 @@ export function SuperAdminScreen() {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleSwitchOrg(org)}
-                                  className="h-7 gap-1 border-border/60 text-[11px] hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                                  className="h-7 gap-1 border-border/60 text-xs-plus hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                                 >
                                   Manage <ArrowUpRight className="size-3" />
                                 </Button>
@@ -1353,12 +1353,12 @@ export function SuperAdminScreen() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/30 hover:bg-muted/30">
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tenant</TableHead>
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Plan Tier</TableHead>
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Renewal / Expiry</TableHead>
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Channel / Last Payment</TableHead>
-                        <TableHead className="text-right text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Tenant</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Plan Tier</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Renewal / Expiry</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Channel / Last Payment</TableHead>
+                        <TableHead className="text-right text-2xs font-bold uppercase tracking-wider text-muted-foreground">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1391,11 +1391,11 @@ export function SuperAdminScreen() {
                                     {org.name[0]?.toUpperCase()}
                                   </div>
                                   <div>
-                                    <div className="text-[13px] font-semibold text-foreground">{org.name}</div>
-                                    <div className="text-[10px] font-mono text-muted-foreground/80 truncate max-w-[180px]">
+                                    <div className="text-sm font-semibold text-foreground">{org.name}</div>
+                                    <div className="text-2xs font-mono text-muted-foreground/80 truncate max-w-[180px]">
                                       {org.owner?.email || "No owner email"}
                                     </div>
-                                    <span className="font-mono text-[10px] text-muted-foreground">
+                                    <span className="font-mono text-2xs text-muted-foreground">
                                       /{org.slug}
                                     </span>
                                   </div>
@@ -1405,7 +1405,7 @@ export function SuperAdminScreen() {
                               <TableCell>
                                 <div>
                                   {planBadge(org.plan)}
-                                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                                  <div className="text-2xs text-muted-foreground mt-0.5">
                                     {org.plan === "voice"
                                       ? `₦${(prices.voice || 75000).toLocaleString()}/mo`
                                       : org.plan === "engage"
@@ -1417,23 +1417,23 @@ export function SuperAdminScreen() {
 
                               <TableCell>
                                 {isExpired ? (
-                                  <Badge variant="outline" className="border-rose-300 bg-rose-50 text-rose-700 text-[10px] font-semibold gap-1">
+                                  <Badge variant="outline" className="border-rose-300 bg-rose-50 text-rose-700 text-2xs font-semibold gap-1">
                                     <AlertCircle className="size-2.5" /> Expired
                                   </Badge>
                                 ) : diffDays !== null && diffDays <= 7 && diffDays > 0 ? (
-                                  <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700 text-[10px] font-semibold gap-1">
+                                  <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700 text-2xs font-semibold gap-1">
                                     <CalendarClock className="size-2.5" /> Renews in {diffDays}d
                                   </Badge>
                                 ) : org.planStatus === "trialing" ? (
-                                  <Badge variant="outline" className="border-sky-300 bg-sky-50 text-sky-700 text-[10px] font-semibold">
+                                  <Badge variant="outline" className="border-sky-300 bg-sky-50 text-sky-700 text-2xs font-semibold">
                                     Trialing
                                   </Badge>
                                 ) : org.planStatus === "canceled" ? (
-                                  <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-600 text-[10px] font-semibold">
+                                  <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-600 text-2xs font-semibold">
                                     Canceled
                                   </Badge>
                                 ) : (
-                                  <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-[10px] font-semibold gap-1">
+                                  <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-2xs font-semibold gap-1">
                                     <CheckCircle2 className="size-2.5" /> Active
                                   </Badge>
                                 )}
@@ -1442,14 +1442,14 @@ export function SuperAdminScreen() {
                               <TableCell>
                                 {org.subscriptionExpiresAt ? (
                                   <div>
-                                    <div className="text-[12px] font-medium text-foreground">
+                                    <div className="text-xs font-medium text-foreground">
                                       {new Date(org.subscriptionExpiresAt).toLocaleDateString(undefined, {
                                         month: "short",
                                         day: "numeric",
                                         year: "numeric",
                                       })}
                                     </div>
-                                    <div className="text-[10px] text-muted-foreground">
+                                    <div className="text-2xs text-muted-foreground">
                                       {diffDays !== null
                                         ? diffDays > 0
                                           ? `${diffDays} days remaining`
@@ -1458,13 +1458,13 @@ export function SuperAdminScreen() {
                                     </div>
                                   </div>
                                 ) : (
-                                  <span className="text-[11px] text-muted-foreground italic">No expiration recorded</span>
+                                  <span className="text-xs-plus text-muted-foreground italic">No expiration recorded</span>
                                 )}
                               </TableCell>
 
                               <TableCell>
                                 <div className="space-y-0.5">
-                                  <div className="inline-flex items-center gap-1 font-medium text-[11px] text-foreground capitalize">
+                                  <div className="inline-flex items-center gap-1 font-medium text-xs-plus text-foreground capitalize">
                                     {org.paystack?.channel === "paystack" ? (
                                       <span className="text-emerald-700 font-semibold flex items-center gap-1">
                                         <Zap className="size-3" /> Paystack Auto-debit
@@ -1476,12 +1476,12 @@ export function SuperAdminScreen() {
                                     )}
                                   </div>
                                   {org.paystack?.amount ? (
-                                    <div className="text-[10px] text-muted-foreground">
+                                    <div className="text-2xs text-muted-foreground">
                                       ₦{org.paystack.amount.toLocaleString()} recorded
                                     </div>
                                   ) : null}
                                   {org.paystack?.manualNotes ? (
-                                    <div className="text-[10px] text-muted-foreground/80 truncate max-w-[160px]" title={org.paystack.manualNotes}>
+                                    <div className="text-2xs text-muted-foreground/80 truncate max-w-[160px]" title={org.paystack.manualNotes}>
                                       {org.paystack.manualNotes}
                                     </div>
                                   ) : null}
@@ -1493,7 +1493,7 @@ export function SuperAdminScreen() {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleOpenManageSub(org)}
-                                  className="h-7 gap-1 text-[11px] font-medium border-primary/30 text-primary hover:bg-primary/5"
+                                  className="h-7 gap-1 text-xs-plus font-medium border-primary/30 text-primary hover:bg-primary/5"
                                 >
                                   Manage <Settings2 className="size-3" />
                                 </Button>
@@ -1567,7 +1567,7 @@ export function SuperAdminScreen() {
                             />
                             <span className="text-sm text-muted-foreground">/ mo</span>
                           </div>
-                          <p className="mt-1 text-[11px] text-muted-foreground">{sub}</p>
+                          <p className="mt-1 text-xs-plus text-muted-foreground">{sub}</p>
                         </div>
                       ))}
                     </div>
@@ -1578,12 +1578,12 @@ export function SuperAdminScreen() {
                           <h3 className="text-xs font-bold uppercase tracking-widest text-primary">
                             Paystack Dashboard Plan Codes (Optional)
                           </h3>
-                          <Badge variant="outline" className="text-[10px] border-emerald-300 bg-emerald-50 text-emerald-800">
+                          <Badge variant="outline" className="text-2xs border-emerald-300 bg-emerald-50 text-emerald-800">
                             Auto-sync supported
                           </Badge>
                         </div>
-                        <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                          Link existing plan codes from your <strong>Paystack Dashboard → Plans</strong> (e.g. <code className="text-[10px] font-mono bg-muted/60 px-1 py-0.5 rounded">PLN_xxxxxxxx</code>). If left blank, Qwilo automatically creates and synchronizes recurring plans on your Paystack account whenever customers check out. Customers can check out via Card, Bank Transfer, USSD, etc. When paying with Card, their authorization is automatically registered for recurring auto-debit.
+                        <p className="text-xs-plus text-muted-foreground mt-1 leading-relaxed">
+                          Link existing plan codes from your <strong>Paystack Dashboard → Plans</strong> (e.g. <code className="text-2xs font-mono bg-muted/60 px-1 py-0.5 rounded">PLN_xxxxxxxx</code>). If left blank, Qwilo automatically creates and synchronizes recurring plans on your Paystack account whenever customers check out. Customers can check out via Card, Bank Transfer, USSD, etc. When paying with Card, their authorization is automatically registered for recurring auto-debit.
                         </p>
                       </div>
 
@@ -1656,8 +1656,8 @@ export function SuperAdminScreen() {
                       <h3 className="text-xs font-bold uppercase tracking-widest text-orange-700">
                         Vapi AI Configuration
                       </h3>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        If left blank, values are automatically loaded from environment variables (<code className="text-[10px]">VAPI_PUBLIC_KEY</code>, <code className="text-[10px]">VAPI_PRIVATE_KEY</code>, <code className="text-[10px]">VAPI_ASSISTANT_ID</code>).
+                      <p className="text-xs-plus text-muted-foreground mt-0.5">
+                        If left blank, values are automatically loaded from environment variables (<code className="text-2xs">VAPI_PUBLIC_KEY</code>, <code className="text-2xs">VAPI_PRIVATE_KEY</code>, <code className="text-2xs">VAPI_ASSISTANT_ID</code>).
                       </p>
                     </div>
 
@@ -1709,7 +1709,7 @@ export function SuperAdminScreen() {
                           {showVapiKeys ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                         </Button>
                       </div>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-xs-plus text-muted-foreground">
                         Required for secure Vapi AI API interactions.
                       </p>
                     </div>
@@ -1790,7 +1790,7 @@ export function SuperAdminScreen() {
                   {saasWaStatus === "connected" && (
                     <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-1">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+                        <span className="text-xs-plus font-bold uppercase tracking-wider text-emerald-800">
                           Linked Platform Phone
                         </span>
                         <div className="text-xl font-mono font-bold text-emerald-950">
@@ -1934,7 +1934,7 @@ export function SuperAdminScreen() {
                             Save Phone
                           </Button>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-xs-plus text-muted-foreground">
                           Shown on public pages and used as the official fallback sender identity.
                         </p>
                       </div>
@@ -1963,7 +1963,7 @@ export function SuperAdminScreen() {
                             <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
                               1. Welcome Tenant on WhatsApp Link
                             </h4>
-                            <Badge variant="outline" className="bg-emerald-50 text-emerald-800 text-[10px]">
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-800 text-2xs">
                               Onboarding
                             </Badge>
                           </div>
@@ -1979,7 +1979,7 @@ export function SuperAdminScreen() {
 
                       {saasWelcomeOnUpload && (
                         <div className="space-y-1.5 pl-1">
-                          <Label className="text-[11px] font-semibold text-muted-foreground">
+                          <Label className="text-xs-plus font-semibold text-muted-foreground">
                             Welcome Message Template
                           </Label>
                           <Textarea
@@ -1988,8 +1988,8 @@ export function SuperAdminScreen() {
                             onChange={(e) => setSaasWelcomeTemplate(e.target.value)}
                             className="font-mono text-xs"
                           />
-                          <p className="text-[10px] text-muted-foreground">
-                            Available placeholders: <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;businessName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;phone&#125;</code>
+                          <p className="text-2xs text-muted-foreground">
+                            Available placeholders: <code className="bg-muted px-1 py-0.5 rounded text-2xs">&#123;businessName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-2xs">&#123;phone&#125;</code>
                           </p>
                         </div>
                       )}
@@ -2003,7 +2003,7 @@ export function SuperAdminScreen() {
                             <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
                               2. Subscription Expiry Warning
                             </h4>
-                            <Badge variant="outline" className="bg-amber-50 text-amber-800 text-[10px]">
+                            <Badge variant="outline" className="bg-amber-50 text-amber-800 text-2xs">
                               Retention
                             </Badge>
                           </div>
@@ -2036,7 +2036,7 @@ export function SuperAdminScreen() {
                           </div>
 
                           <div className="space-y-1.5">
-                            <Label className="text-[11px] font-semibold text-muted-foreground">
+                            <Label className="text-xs-plus font-semibold text-muted-foreground">
                               Expiry Warning Template
                             </Label>
                             <Textarea
@@ -2045,8 +2045,8 @@ export function SuperAdminScreen() {
                               onChange={(e) => setSaasExpiryTemplate(e.target.value)}
                               className="font-mono text-xs"
                             />
-                            <p className="text-[10px] text-muted-foreground">
-                              Available placeholders: <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;businessName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;planName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;daysLeft&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;expiryDate&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;renewUrl&#125;</code>
+                            <p className="text-2xs text-muted-foreground">
+                              Available placeholders: <code className="bg-muted px-1 py-0.5 rounded text-2xs">&#123;businessName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-2xs">&#123;planName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-2xs">&#123;daysLeft&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-2xs">&#123;expiryDate&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-2xs">&#123;renewUrl&#125;</code>
                             </p>
                           </div>
                         </div>
@@ -2061,7 +2061,7 @@ export function SuperAdminScreen() {
                             <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
                               3. Subscription Renewed Confirmation
                             </h4>
-                            <Badge variant="outline" className="bg-sky-50 text-sky-800 text-[10px]">
+                            <Badge variant="outline" className="bg-sky-50 text-sky-800 text-2xs">
                               Billing
                             </Badge>
                           </div>
@@ -2077,7 +2077,7 @@ export function SuperAdminScreen() {
 
                       {saasRenewedAlert && (
                         <div className="space-y-1.5 pl-1">
-                          <Label className="text-[11px] font-semibold text-muted-foreground">
+                          <Label className="text-xs-plus font-semibold text-muted-foreground">
                             Renewal Confirmation Template
                           </Label>
                           <Textarea
@@ -2086,8 +2086,8 @@ export function SuperAdminScreen() {
                             onChange={(e) => setSaasRenewedTemplate(e.target.value)}
                             className="font-mono text-xs"
                           />
-                          <p className="text-[10px] text-muted-foreground">
-                            Available placeholders: <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;businessName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;planName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;expiryDate&#125;</code>
+                          <p className="text-2xs text-muted-foreground">
+                            Available placeholders: <code className="bg-muted px-1 py-0.5 rounded text-2xs">&#123;businessName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-2xs">&#123;planName&#125;</code>, <code className="bg-muted px-1 py-0.5 rounded text-2xs">&#123;expiryDate&#125;</code>
                           </p>
                         </div>
                       )}
@@ -2153,7 +2153,7 @@ export function SuperAdminScreen() {
 
                       {/* Quick preset buttons */}
                       <div className="space-y-1.5">
-                        <Label className="text-[11px] font-semibold text-muted-foreground">
+                        <Label className="text-xs-plus font-semibold text-muted-foreground">
                           Quick Templates:
                         </Label>
                         <div className="flex flex-wrap gap-1.5">
@@ -2166,7 +2166,7 @@ export function SuperAdminScreen() {
                                 "🚀 *New Qwilo Feature Announcement!*\n\nHello {businessName},\n\nWe have just released an exciting new update on Qwilo! You can now access automated staff WhatsApp alerts and enhanced scheduling.\n\nLog in to your dashboard to explore the new features: https://qwilo.com/app\n\n— The Qwilo Team"
                               )
                             }
-                            className="text-[10px] h-7 px-2"
+                            className="text-2xs h-7 px-2"
                           >
                             New Feature
                           </Button>
@@ -2179,7 +2179,7 @@ export function SuperAdminScreen() {
                                 "🔧 *Scheduled Platform Maintenance Notice*\n\nHello {businessName},\n\nQwilo will undergo a brief system maintenance tonight from 2:00 AM to 2:30 AM WAT. Your automated reception services will remain intact.\n\nThank you for your patience!\n— The Qwilo Team"
                               )
                             }
-                            className="text-[10px] h-7 px-2"
+                            className="text-2xs h-7 px-2"
                           >
                             Maintenance
                           </Button>
@@ -2192,7 +2192,7 @@ export function SuperAdminScreen() {
                                 "👋 *Important Update from Qwilo*\n\nHello {businessName},\n\nPlease ensure your business WhatsApp number and staff phone numbers are up to date in your dashboard to receive instant booking notifications without delay.\n\nHave a great business week!\n— The Qwilo Team"
                               )
                             }
-                            className="text-[10px] h-7 px-2"
+                            className="text-2xs h-7 px-2"
                           >
                             General Update
                           </Button>
@@ -2211,8 +2211,8 @@ export function SuperAdminScreen() {
                           onChange={(e) => setBroadcastMessage(e.target.value)}
                           className="font-mono text-xs"
                         />
-                        <p className="text-[10px] text-muted-foreground">
-                          Use <code className="bg-muted px-1 py-0.5 rounded text-[10px]">&#123;businessName&#125;</code> to personalize for each business recipient.
+                        <p className="text-2xs text-muted-foreground">
+                          Use <code className="bg-muted px-1 py-0.5 rounded text-2xs">&#123;businessName&#125;</code> to personalize for each business recipient.
                         </p>
                       </div>
 
@@ -2237,16 +2237,16 @@ export function SuperAdminScreen() {
                       </Label>
                       <div className="rounded-2xl border border-emerald-300/60 bg-[#e5ddd5]/30 p-4 shadow-inner min-h-60 flex flex-col justify-end">
                         <div className="max-w-[85%] self-end rounded-2xl rounded-tr-none bg-[#d9fdd3] p-3 text-xs shadow-sm space-y-1 text-slate-900">
-                          <div className="text-[10px] font-bold text-emerald-900 border-b border-emerald-300/40 pb-1 flex items-center justify-between">
+                          <div className="text-2xs font-bold text-emerald-900 border-b border-emerald-300/40 pb-1 flex items-center justify-between">
                             <span>Qwilo Official Platform</span>
-                            <span className="font-normal text-[9px] text-muted-foreground">Official SaaS</span>
+                            <span className="font-normal text-3xs text-muted-foreground">Official SaaS</span>
                           </div>
-                          <p className="whitespace-pre-line text-[11px] leading-relaxed pt-1">
+                          <p className="whitespace-pre-line text-xs-plus leading-relaxed pt-1">
                             {broadcastMessage.trim()
                               ? broadcastMessage.replace(/{businessName}/g, "Acme Studio")
                               : "Compose a message on the left to see live WhatsApp formatting preview…"}
                           </p>
-                          <div className="text-[9px] text-right text-muted-foreground pt-1 flex items-center justify-end gap-1">
+                          <div className="text-3xs text-right text-muted-foreground pt-1 flex items-center justify-end gap-1">
                             <span>Just now</span>
                             <span className="text-sky-600 font-bold">✓✓</span>
                           </div>
@@ -2265,10 +2265,10 @@ export function SuperAdminScreen() {
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-muted/40">
-                              <TableHead className="text-[10px]">Date</TableHead>
-                              <TableHead className="text-[10px]">Audience</TableHead>
-                              <TableHead className="text-[10px]">Message Snippet</TableHead>
-                              <TableHead className="text-[10px] text-right">Dispatched</TableHead>
+                              <TableHead className="text-2xs">Date</TableHead>
+                              <TableHead className="text-2xs">Audience</TableHead>
+                              <TableHead className="text-2xs">Message Snippet</TableHead>
+                              <TableHead className="text-2xs text-right">Dispatched</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -2278,7 +2278,7 @@ export function SuperAdminScreen() {
                                   {new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                                 </TableCell>
                                 <TableCell className="text-xs capitalize">
-                                  <Badge variant="outline" className="text-[10px]">
+                                  <Badge variant="outline" className="text-2xs">
                                     {b.targetAudience}
                                   </Badge>
                                 </TableCell>
@@ -2314,8 +2314,8 @@ export function SuperAdminScreen() {
                     />
                   </div>
 
-                  <div className="rounded-xl bg-muted/40 border p-3 font-mono text-[11px] space-y-1">
-                    <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-muted-foreground block">
+                  <div className="rounded-xl bg-muted/40 border p-3 font-mono text-xs-plus space-y-1">
+                    <span className="text-2xs font-sans font-bold uppercase tracking-wider text-muted-foreground block">
                       Local / VPS Docker Setup
                     </span>
                     <div className="text-foreground select-all bg-white p-2 rounded border">
@@ -2391,11 +2391,11 @@ export function SuperAdminScreen() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/30 hover:bg-muted/30">
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Sender</TableHead>
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Message</TableHead>
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Date</TableHead>
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                        <TableHead className="text-right text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Sender</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Message</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Date</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                        <TableHead className="text-right text-2xs font-bold uppercase tracking-wider text-muted-foreground">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -2415,9 +2415,9 @@ export function SuperAdminScreen() {
                         messages.map((m) => (
                           <TableRow key={m._id} className={cn("group", m.status === "unread" ? "bg-primary/5" : "")}>
                             <TableCell>
-                              <div className="text-[13px] font-semibold text-foreground">{m.name}</div>
-                              <div className="text-[11px] text-muted-foreground">{m.email}</div>
-                              {m.phone && <div className="text-[11px] text-muted-foreground">{m.phone}</div>}
+                              <div className="text-sm font-semibold text-foreground">{m.name}</div>
+                              <div className="text-xs-plus text-muted-foreground">{m.email}</div>
+                              {m.phone && <div className="text-xs-plus text-muted-foreground">{m.phone}</div>}
                             </TableCell>
                             <TableCell className="max-w-xs">
                               <p className="truncate text-xs text-muted-foreground" title={m.message}>
@@ -2425,15 +2425,15 @@ export function SuperAdminScreen() {
                               </p>
                             </TableCell>
                             <TableCell>
-                              <span className="text-[11px] text-muted-foreground">
+                              <span className="text-xs-plus text-muted-foreground">
                                 {new Date(m.createdAt).toLocaleDateString()}
                               </span>
                             </TableCell>
                             <TableCell>
                               {m.status === "unread" ? (
-                                <Badge variant="default" className="text-[10px] h-5 bg-blue-500">Unread</Badge>
+                                <Badge variant="default" className="text-2xs h-5 bg-blue-500">Unread</Badge>
                               ) : (
-                                <Badge variant="outline" className="text-[10px] h-5 text-muted-foreground">Read</Badge>
+                                <Badge variant="outline" className="text-2xs h-5 text-muted-foreground">Read</Badge>
                               )}
                             </TableCell>
                             <TableCell className="text-right">
@@ -2488,10 +2488,10 @@ export function SuperAdminScreen() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/30 hover:bg-muted/30">
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Name</TableHead>
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Email</TableHead>
-                        <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Date Joined</TableHead>
-                        <TableHead className="text-right text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Name</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Email</TableHead>
+                        <TableHead className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Date Joined</TableHead>
+                        <TableHead className="text-right text-2xs font-bold uppercase tracking-wider text-muted-foreground">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -2511,13 +2511,13 @@ export function SuperAdminScreen() {
                         waitlist.map((entry) => (
                           <TableRow key={entry._id} className="group">
                             <TableCell>
-                              <div className="text-[13px] font-semibold text-foreground">{entry.name}</div>
+                              <div className="text-sm font-semibold text-foreground">{entry.name}</div>
                             </TableCell>
                             <TableCell>
-                              <div className="text-[13px] text-muted-foreground">{entry.email}</div>
+                              <div className="text-sm text-muted-foreground">{entry.email}</div>
                             </TableCell>
                             <TableCell>
-                              <span className="text-[11px] text-muted-foreground">
+                              <span className="text-xs-plus text-muted-foreground">
                                 {new Date(entry.createdAt).toLocaleDateString()}
                               </span>
                             </TableCell>
@@ -2592,7 +2592,7 @@ export function SuperAdminScreen() {
                         placeholder="https://example.com/client-portal"
                         className="text-sm max-w-lg"
                       />
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-xs-plus text-muted-foreground">
                         When set, the &quot;Open public page&quot; button in the tenant dashboard will redirect to this URL instead of the default public page.
                       </p>
                     </div>
@@ -2600,7 +2600,7 @@ export function SuperAdminScreen() {
                     <div className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
                         <Label className="text-sm font-semibold">Enable Waitlist Mode</Label>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-xs-plus text-muted-foreground">
                           Replaces the public homepage with a waitlist landing page.
                         </p>
                       </div>
@@ -2613,7 +2613,7 @@ export function SuperAdminScreen() {
                     <div className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
                         <Label className="text-sm font-semibold">Enable Google OAuth Sign-In</Label>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-xs-plus text-muted-foreground">
                           Allows users to sign in or sign up using their Google accounts. Super-admin can toggle this off to restrict authentication to email/password only.
                         </p>
                       </div>
@@ -2628,16 +2628,16 @@ export function SuperAdminScreen() {
                         <div className="flex items-center gap-2">
                           <Label className="text-sm font-semibold">Compulsory Payment on Signup</Label>
                           {enforcePaymentOnSignup ? (
-                            <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-[10px]">
+                            <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-2xs">
                               Enforced
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                            <Badge variant="outline" className="text-2xs text-muted-foreground">
                               Default (Disabled)
                             </Badge>
                           )}
                         </div>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        <p className="text-xs-plus text-muted-foreground leading-relaxed">
                           When disabled (default), new users register freely and access their workspace immediately with a free trial. When enabled, new users must select a plan and complete Paystack payment during registration before workspace activation.
                         </p>
                       </div>
@@ -2661,7 +2661,7 @@ export function SuperAdminScreen() {
                           onChange={(e) => setTrialDays(Number(e.target.value))}
                           className="text-sm max-w-xs"
                         />
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-xs-plus text-muted-foreground">
                           Number of days granted before service expires when compulsory payment is disabled (default: 14 days).
                         </p>
                       </div>
@@ -2771,24 +2771,24 @@ export function SuperAdminScreen() {
             <div className="space-y-4 pt-1">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Sender Name</div>
+                  <div className="text-2xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Sender Name</div>
                   <div className="text-sm font-medium">{viewingMessage.name}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Email</div>
+                  <div className="text-2xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Email</div>
                   <div className="text-sm font-medium">{viewingMessage.email}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Phone</div>
+                  <div className="text-2xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Phone</div>
                   <div className="text-sm font-medium">{viewingMessage.phone || "Not provided"}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Date</div>
+                  <div className="text-2xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Date</div>
                   <div className="text-sm font-medium">{new Date(viewingMessage.createdAt).toLocaleString()}</div>
                 </div>
               </div>
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Message</div>
+                <div className="text-2xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Message</div>
                 <div className="rounded-xl border bg-muted/30 p-3 text-sm whitespace-pre-wrap text-foreground/90">
                   {viewingMessage.message}
                 </div>
@@ -2829,45 +2829,45 @@ export function SuperAdminScreen() {
               {/* Profile Card */}
               <div className="grid grid-cols-2 gap-3 rounded-xl border bg-muted/20 p-3.5">
                 <div>
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Owner Name</span>
+                  <span className="block text-2xs font-bold uppercase tracking-wider text-muted-foreground">Owner Name</span>
                   <span className="font-semibold text-foreground">{viewingOrg.owner?.name || "N/A"}</span>
                 </div>
                 <div>
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Owner Email</span>
+                  <span className="block text-2xs font-bold uppercase tracking-wider text-muted-foreground">Owner Email</span>
                   <span className="font-mono font-medium text-foreground select-all">{viewingOrg.owner?.email || "N/A"}</span>
                 </div>
                 <div>
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Business URL Slug</span>
+                  <span className="block text-2xs font-bold uppercase tracking-wider text-muted-foreground">Business URL Slug</span>
                   <span className="font-mono text-primary font-semibold">/{viewingOrg.slug}</span>
                 </div>
                 <div>
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Subscription Tier</span>
+                  <span className="block text-2xs font-bold uppercase tracking-wider text-muted-foreground">Subscription Tier</span>
                   <span className="font-medium capitalize">{viewingOrg.plan.replace("_org", "")} ({viewingOrg.planStatus})</span>
                 </div>
                 {viewingOrg.businessType && (
                   <div>
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Industry / Type</span>
+                    <span className="block text-2xs font-bold uppercase tracking-wider text-muted-foreground">Industry / Type</span>
                     <span className="font-medium text-foreground capitalize">{viewingOrg.businessType}</span>
                   </div>
                 )}
                 <div>
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Provisioned Date</span>
+                  <span className="block text-2xs font-bold uppercase tracking-wider text-muted-foreground">Provisioned Date</span>
                   <span className="text-muted-foreground">{new Date(viewingOrg.createdAt).toLocaleString()}</span>
                 </div>
                 <div>
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Timezone & Currency</span>
+                  <span className="block text-2xs font-bold uppercase tracking-wider text-muted-foreground">Timezone & Currency</span>
                   <span className="text-muted-foreground">{viewingOrg.timezone} ({viewingOrg.currency})</span>
                 </div>
                 <div>
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Public Phone</span>
+                  <span className="block text-2xs font-bold uppercase tracking-wider text-muted-foreground">Public Phone</span>
                   <span className="font-mono text-muted-foreground">{viewingOrg.publicSite?.phone || "N/A"}</span>
                 </div>
               </div>
 
               {/* Live Portals Links */}
               <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-1.5">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-primary">Live Portals</div>
-                <div className="flex flex-col gap-1 font-mono text-[11px]">
+                <div className="text-2xs font-bold uppercase tracking-wider text-primary">Live Portals</div>
+                <div className="flex flex-col gap-1 font-mono text-xs-plus">
                   <a
                     href={`/${viewingOrg.slug}`}
                     target="_blank"
@@ -2889,27 +2889,27 @@ export function SuperAdminScreen() {
 
               {/* Activity Summary */}
               <div>
-                <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Activity & Resource Counts</div>
+                <div className="mb-2 text-2xs font-bold uppercase tracking-wider text-muted-foreground">Activity & Resource Counts</div>
                 <div className="grid grid-cols-5 gap-2 text-center">
                   <div className="rounded-lg border bg-background p-2">
                     <span className="block text-sm font-bold text-foreground">{viewingOrg.stats.bookingsCount}</span>
-                    <span className="text-[9px] text-muted-foreground">Bookings</span>
+                    <span className="text-3xs text-muted-foreground">Bookings</span>
                   </div>
                   <div className="rounded-lg border bg-background p-2">
                     <span className="block text-sm font-bold text-foreground">{viewingOrg.stats.offeringsCount}</span>
-                    <span className="text-[9px] text-muted-foreground">Offerings</span>
+                    <span className="text-3xs text-muted-foreground">Offerings</span>
                   </div>
                   <div className="rounded-lg border bg-background p-2">
                     <span className="block text-sm font-bold text-foreground">{viewingOrg.stats.teamMembersCount}</span>
-                    <span className="text-[9px] text-muted-foreground">Staff</span>
+                    <span className="text-3xs text-muted-foreground">Staff</span>
                   </div>
                   <div className="rounded-lg border bg-background p-2">
                     <span className="block text-sm font-bold text-foreground">{viewingOrg.stats.conversationsCount}</span>
-                    <span className="text-[9px] text-muted-foreground">AI Chats</span>
+                    <span className="text-3xs text-muted-foreground">AI Chats</span>
                   </div>
                   <div className="rounded-lg border bg-background p-2">
                     <span className="block text-sm font-bold text-foreground">{viewingOrg.stats.knowledgeCount}</span>
-                    <span className="text-[9px] text-muted-foreground">Knowledge</span>
+                    <span className="text-3xs text-muted-foreground">Knowledge</span>
                   </div>
                 </div>
               </div>
@@ -3002,7 +3002,7 @@ export function SuperAdminScreen() {
                     <SelectItem value="12">+1 Year (365 Days - Annual)</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-2xs text-muted-foreground">
                   Extends from current expiry date (or from today if currently expired).
                 </p>
               </div>

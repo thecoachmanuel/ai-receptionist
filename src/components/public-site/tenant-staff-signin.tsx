@@ -161,13 +161,13 @@ export function TenantStaffSignInScreen({
           )}
           <div>
             <h2 className="font-heading text-xl font-bold tracking-tight text-white">{businessName}</h2>
-            <p className="text-[10px] text-white/60 uppercase tracking-widest font-mono">Staff Operating Portal</p>
+            <p className="text-2xs text-white/60 uppercase tracking-widest font-mono">Staff Operating Portal</p>
           </div>
         </div>
 
         <div className="relative z-10 my-auto max-w-xl py-16">
           <p
-            className="mb-4 font-mono text-[11px] font-medium uppercase tracking-[0.22em]"
+            className="mb-4 font-mono text-xs-plus font-medium uppercase tracking-[0.22em]"
             style={{ color: accentColor }}
           >
             Staff Workspace
@@ -181,7 +181,7 @@ export function TenantStaffSignInScreen({
                 key={label}
                 className="flex items-center gap-4 border-t border-white/12 pt-4"
               >
-                <span className="font-mono text-[10px] text-white/35">
+                <span className="font-mono text-2xs text-white/35">
                   0{index + 1}
                 </span>
                 <Icon className="size-4" style={{ color: accentColor }} />
@@ -231,7 +231,7 @@ export function TenantStaffSignInScreen({
         <div className="flex flex-1 items-center justify-center px-6 pb-16 pt-4 sm:px-10">
           <div className="w-full max-w-[440px]">
             <p
-              className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em]"
+              className="font-mono text-2xs font-semibold uppercase tracking-[0.2em]"
               style={{ color: accentColor }}
             >
               Staff Portal Access

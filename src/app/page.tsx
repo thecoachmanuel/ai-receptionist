@@ -166,7 +166,7 @@ export default async function Home() {
         <div className="absolute inset-0 hairline-grid opacity-45 [mask-image:linear-gradient(to_bottom,black,transparent_88%)]" />
         <div className="relative mx-auto grid max-w-[1400px] gap-14 px-5 pb-20 pt-16 sm:px-8 sm:pt-24 lg:grid-cols-[1.02fr_0.98fr] lg:px-12 lg:pb-28 lg:pt-30">
           <div className="max-w-3xl">
-            <Badge variant="outline" className="mb-7 rounded-sm bg-background px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em]">
+            <Badge variant="outline" className="mb-7 rounded-sm bg-background px-2.5 py-1 font-mono text-2xs uppercase tracking-[0.16em]">
               AI Front Desk & 24/7 Smart Booking Platform
             </Badge>
             <h1 className="font-heading text-[clamp(3.8rem,8vw,7.4rem)] font-medium leading-[0.82] tracking-[-0.065em] text-balance">
@@ -237,7 +237,7 @@ export default async function Home() {
       <section id="platform" className="mx-auto max-w-[1400px] px-5 py-24 sm:px-8 lg:px-12 lg:py-32">
         <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
           <div>
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">One unified front office</p>
+            <p className="font-mono text-2xs font-semibold uppercase tracking-[0.2em] text-primary">One unified front office</p>
             <h2 className="mt-4 max-w-md font-heading text-5xl font-medium leading-[0.96] tracking-[-0.05em] sm:text-6xl">
               Where smart scheduling meets conversational AI.
             </h2>
@@ -282,7 +282,7 @@ export default async function Home() {
       <section id="features" className="border-t bg-muted/20 py-20 sm:py-28">
         <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <div className="max-w-2xl">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
+            <p className="font-mono text-2xs font-semibold uppercase tracking-[0.2em] text-primary">
               Full-Cycle Booking Automation
             </p>
             <h2 className="mt-4 font-heading text-5xl font-medium leading-[0.96] tracking-[-0.05em] sm:text-6xl">
@@ -341,7 +341,7 @@ export default async function Home() {
       <section id="built-for" className="border-y bg-[#171b24] text-white">
         <div className="mx-auto grid max-w-[1400px] lg:grid-cols-2">
           <div className="border-b border-white/10 px-5 py-20 sm:px-8 lg:border-b-0 lg:border-r lg:px-12 lg:py-28">
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-blue-300">Customized For Your Industry</p>
+            <p className="font-mono text-2xs uppercase tracking-[0.2em] text-blue-300">Customized For Your Industry</p>
             <h2 className="mt-5 max-w-xl font-heading text-5xl font-medium leading-[0.96] tracking-[-0.05em] sm:text-6xl">
               Your business defines how clients book.
             </h2>

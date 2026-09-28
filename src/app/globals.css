@@ -43,6 +43,11 @@
   --font-sans: var(--font-plex-sans), "IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), "IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, monospace;
   --font-heading: var(--font-newsreader), "Newsreader", "Newsreader Fallback", ui-serif, Georgia, serif;
+  --font-size-2xs: 0.625rem;   /* 10px — smallest label/caption tier */
+  --font-size-xs: 0.6875rem;   /* 11px — secondary caption tier */
+  --font-size-3xs: 0.5625rem;  /* 9px  — micro label tier */
+  --font-size-4xs: 0.5rem;     /* 8px  — thumbnail/preview micro text */
+  --font-size-5xs: 0.4375rem;  /* 7px  — extreme micro (preview mockups only) */
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -150,6 +155,32 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Predefined sub-xs font size tiers — use instead of text-2xs / text-xs-plus */
+  .text-2xs {
+    font-size: var(--font-size-2xs); /* 10px */
+    line-height: 1rem;
+  }
+
+  .text-xs-plus {
+    font-size: var(--font-size-xs); /* 11px */
+    line-height: 1.25rem;
+  }
+
+  .text-3xs {
+    font-size: var(--font-size-3xs); /* 9px */
+    line-height: 0.875rem;
+  }
+
+  .text-4xs {
+    font-size: var(--font-size-4xs); /* 8px */
+    line-height: 0.75rem;
+  }
+
+  .text-5xs {
+    font-size: var(--font-size-5xs); /* 7px */
+    line-height: 0.625rem;
   }
 
   .hairline-grid {

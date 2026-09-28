@@ -139,7 +139,7 @@ function SitePreview({
   const announcement = config.announcement ? (
     <Badge
       variant="outline"
-      className="bg-white/80 text-[8px] tracking-[0.15em] uppercase"
+      className="bg-white/80 text-4xs tracking-[0.15em] uppercase"
       style={{ borderRadius: controlRadius }}
     >
       {config.announcement}
@@ -152,10 +152,10 @@ function SitePreview({
         <span className="size-2 rounded-full bg-rose-400" />
         <span className="size-2 rounded-full bg-amber-400" />
         <span className="size-2 rounded-full bg-emerald-400" />
-        <div className="mx-auto rounded-md bg-white/80 px-8 py-1 font-mono text-[8px] text-muted-foreground">
+        <div className="mx-auto rounded-md bg-white/80 px-8 py-1 font-mono text-4xs text-muted-foreground">
           {`/${siteSlug}`}
         </div>
-        <span className="font-mono text-[7px] tracking-[0.12em] text-muted-foreground uppercase">
+        <span className="font-mono text-5xs tracking-[0.12em] text-muted-foreground uppercase">
           {config.template}
         </span>
       </div>
@@ -196,7 +196,7 @@ function SitePreview({
                 {config.headline}
               </h2>
               <p
-                className="mt-3 max-w-sm text-[10px] leading-4"
+                className="mt-3 max-w-sm text-2xs leading-4"
                 style={{ color: config.theme.mutedColor }}
               >
                 {config.subheadline}
@@ -231,7 +231,7 @@ function SitePreview({
                       backgroundColor: `color-mix(in srgb, ${previewOfferingColor(previewOfferings[index] ?? previewOfferings[0])} 24%, ${config.theme.backgroundColor})`,
                     }}
                   >
-                    <span className="line-clamp-2 text-[8px] font-semibold">
+                    <span className="line-clamp-2 text-4xs font-semibold">
                       {previewOfferings[index]?.name ||
                         `${terminology.offering} ${index + 1}`}
                     </span>
@@ -249,7 +249,7 @@ function SitePreview({
                   {config.headline}
                 </h2>
                 <p
-                  className="mt-3 max-w-lg text-[10px] leading-4"
+                  className="mt-3 max-w-lg text-2xs leading-4"
                   style={{ color: config.theme.mutedColor }}
                 >
                   {config.subheadline}
@@ -265,7 +265,7 @@ function SitePreview({
               {config.headline}
             </h2>
             <p
-              className="mx-auto mt-4 max-w-md text-[11px] leading-5"
+              className="mx-auto mt-4 max-w-md text-xs-plus leading-5"
               style={{ color: config.theme.mutedColor }}
             >
               {config.subheadline}
@@ -282,14 +282,14 @@ function SitePreview({
         >
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-[8px] font-semibold tracking-[0.16em] uppercase opacity-45">
+              <p className="text-4xs font-semibold tracking-[0.16em] uppercase opacity-45">
                 Explore
               </p>
               <h3 className="mt-1 font-heading text-xl font-semibold tracking-tight">
                 {terminology.offeringPlural}
               </h3>
             </div>
-            <span className="text-[9px] opacity-45">View all</span>
+            <span className="text-3xs opacity-45">View all</span>
           </div>
           <div
             className={cn(
@@ -318,10 +318,10 @@ function SitePreview({
                       borderRadius: avatarRadius,
                     }}
                   />
-                  <p className="min-w-0 flex-1 truncate text-[10px] font-semibold">
+                  <p className="min-w-0 flex-1 truncate text-2xs font-semibold">
                     {offering.name}
                   </p>
-                  <p className="font-mono text-[8px] opacity-50">
+                  <p className="font-mono text-4xs opacity-50">
                     {formatMoney(
                       getOfferingPrice(offering),
                       offering.currency || organization?.currency,
@@ -357,13 +357,13 @@ function SitePreview({
                   )}
                   <p
                     className={cn(
-                      "line-clamp-1 text-[10px] font-semibold",
+                      "line-clamp-1 text-2xs font-semibold",
                       isGallery ? "mt-3" : "mt-5",
                     )}
                   >
                     {offering.name}
                   </p>
-                  <p className="mt-1 font-mono text-[8px] opacity-50">
+                  <p className="mt-1 font-mono text-4xs opacity-50">
                     {formatMoney(
                       getOfferingPrice(offering),
                       offering.currency || organization?.currency,
@@ -388,7 +388,7 @@ function SitePreview({
               {members.slice(0, 5).map((member: any) => (
                 <span
                   key={member._id}
-                  className="grid size-9 place-items-center border-2 border-white text-[8px] font-semibold text-white"
+                  className="grid size-9 place-items-center border-2 border-white text-4xs font-semibold text-white"
                   style={{
                     backgroundColor: getMemberColor(member),
                     borderRadius: avatarRadius,
@@ -417,8 +417,8 @@ function SitePreview({
                 <Bot className="size-3.5" />
               </span>
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold">AI assistant</p>
-                <p className="mt-0.5 line-clamp-2 text-[8px] leading-3 text-white/50">
+                <p className="text-2xs font-semibold">AI assistant</p>
+                <p className="mt-0.5 line-clamp-2 text-4xs leading-3 text-white/50">
                   {config.agent.welcomeMessage}
                 </p>
               </div>
@@ -432,7 +432,7 @@ function SitePreview({
             >
               {config.agent.showWebChat ? (
                 <span
-                  className="inline-flex items-center justify-center gap-1 px-2 py-1.5 text-[8px] font-semibold"
+                  className="inline-flex items-center justify-center gap-1 px-2 py-1.5 text-4xs font-semibold"
                   style={{
                     backgroundColor: config.theme.accentColor,
                     borderRadius: controlRadius,
@@ -443,7 +443,7 @@ function SitePreview({
               ) : null}
               {config.agent.showVoiceChat ? (
                 <span
-                  className="inline-flex items-center justify-center gap-1 border border-white/15 px-2 py-1.5 text-[8px] font-semibold"
+                  className="inline-flex items-center justify-center gap-1 border border-white/15 px-2 py-1.5 text-4xs font-semibold"
                   style={{ borderRadius: controlRadius }}
                 >
                   <Mic className="size-2.5" /> Speak with AI
@@ -455,7 +455,7 @@ function SitePreview({
       </div>
 
       {(config.agent as any).showVapiWidget || config.agent.showElevenLabsWidget ? (
-        <div className="pointer-events-none absolute right-3 bottom-3 z-10 inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 py-2 text-[8px] font-semibold text-foreground shadow-lg">
+        <div className="pointer-events-none absolute right-3 bottom-3 z-10 inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 py-2 text-4xs font-semibold text-foreground shadow-lg">
           <AudioLines className="size-3 text-primary" />
           Official Vapi embed
         </div>
@@ -616,7 +616,7 @@ function SiteEditor({
             <div className="space-y-1.5">
               <Label htmlFor="siteSlug">Public URL</Label>
               <div className="flex items-center rounded-lg border border-input bg-background focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
-                <span className="pl-2.5 font-mono text-[11px] text-muted-foreground">
+                <span className="pl-2.5 font-mono text-xs-plus text-muted-foreground">
                   /
                 </span>
                 <Input
@@ -798,7 +798,7 @@ function SiteEditor({
                         (e.target as HTMLElement).style.display = "none";
                       }}
                     />
-                    <span className="text-[11px] text-muted-foreground truncate font-mono">
+                    <span className="text-xs-plus text-muted-foreground truncate font-mono">
                       {config.logoUrl}
                     </span>
                   </div>
@@ -807,13 +807,13 @@ function SiteEditor({
                     variant="ghost"
                     size="xs"
                     onClick={() => update("logoUrl", undefined)}
-                    className="text-destructive h-6 px-2 text-[10px] shrink-0 hover:bg-destructive/10"
+                    className="text-destructive h-6 px-2 text-2xs shrink-0 hover:bg-destructive/10"
                   >
                     Remove
                   </Button>
                 </div>
               ) : (
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs-plus text-muted-foreground">
                   Upload a PNG, JPG, WEBP, or SVG logo file from your device, or paste an external URL.
                 </p>
               )}
@@ -865,7 +865,7 @@ function SiteEditor({
                     />
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">Hero feature banner</p>
-                      <p className="text-[10px] text-muted-foreground truncate font-mono">
+                      <p className="text-2xs text-muted-foreground truncate font-mono">
                         {config.heroImageUrl}
                       </p>
                     </div>
@@ -875,13 +875,13 @@ function SiteEditor({
                     variant="ghost"
                     size="xs"
                     onClick={() => update("heroImageUrl", undefined)}
-                    className="text-destructive h-6 px-2 text-[10px] shrink-0 hover:bg-destructive/10"
+                    className="text-destructive h-6 px-2 text-2xs shrink-0 hover:bg-destructive/10"
                   >
                     Remove
                   </Button>
                 </div>
               ) : (
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs-plus text-muted-foreground">
                   Upload a cover image for the main feature banner on your public homepage rectangle.
                 </p>
               )}
@@ -990,7 +990,7 @@ function SiteEditor({
                     })
                   }
                 />
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-2xs text-muted-foreground">
                   Clients can send instant confirmations, payment receipts, and inquiries directly to your business WhatsApp for free.
                 </p>
               </div>
@@ -1002,7 +1002,7 @@ function SiteEditor({
                   <Label htmlFor="bookingEnabled">
                     Online {terminology.bookingPlural.toLowerCase()}
                   </Label>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  <p className="mt-0.5 text-2xs text-muted-foreground">
                     Let visitors choose a live slot.
                   </p>
                 </div>
@@ -1023,7 +1023,7 @@ function SiteEditor({
                         <Landmark className="size-3.5 text-primary" />
                         Require Booking Deposit
                       </Label>
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="text-2xs text-muted-foreground">
                         Require clients to pay an upfront percentage of the service to book.
                       </p>
                     </div>
@@ -1188,11 +1188,11 @@ function SiteEditor({
                 <div>
                   <Label htmlFor="showWebAgent">Show AI text chat</Label>
                   {!entitlements.isLoaded ? (
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                    <p className="mt-0.5 text-2xs text-muted-foreground">
                       Checking organization plan…
                     </p>
                   ) : !entitlements.webAgent ? (
-                    <p className="mt-0.5 text-[10px] text-primary">
+                    <p className="mt-0.5 text-2xs text-primary">
                       Requires a plan upgrade
                     </p>
                   ) : null}
@@ -1213,15 +1213,15 @@ function SiteEditor({
                 <div>
                   <Label htmlFor="showVoiceAgent">Show browser audio</Label>
                   {!entitlements.isLoaded ? (
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                    <p className="mt-0.5 text-2xs text-muted-foreground">
                       Checking organization plan…
                     </p>
                   ) : !entitlements.browserVoice ? (
-                    <p className="mt-0.5 text-[10px] text-primary">
+                    <p className="mt-0.5 text-2xs text-primary">
                       Requires the Voice plan
                     </p>
                   ) : (
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                    <p className="mt-0.5 text-2xs text-muted-foreground">
                       Uses the visitor’s microphone in the browser.
                     </p>
                   )}
@@ -1244,15 +1244,15 @@ function SiteEditor({
                     Also show Vapi embed
                   </Label>
                   {!entitlements.isLoaded ? (
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                    <p className="mt-0.5 text-2xs text-muted-foreground">
                       Checking organization plan…
                     </p>
                   ) : !entitlements.browserVoice ? (
-                    <p className="mt-0.5 text-[10px] text-primary">
+                    <p className="mt-0.5 text-2xs text-primary">
                       Requires the Voice plan
                     </p>
                   ) : (
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                    <p className="mt-0.5 text-2xs text-muted-foreground">
                       Adds Vapi’s official floating text and audio widget
                       alongside the custom agent experience.
                     </p>

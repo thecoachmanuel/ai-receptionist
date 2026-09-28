@@ -54,7 +54,7 @@ function BookingRow({ booking }: { booking: Booking }) {
           {booking.teamMemberName ? ` · ${booking.teamMemberName}` : ""}
         </p>
       </div>
-      <Badge variant="outline" className="hidden bg-white font-mono text-[10px] sm:flex">
+      <Badge variant="outline" className="hidden bg-white font-mono text-2xs sm:flex">
         {booking.source}
       </Badge>
     </div>
@@ -143,7 +143,7 @@ export function OverviewScreen() {
           return (
             <div key={metric.label} className="bg-white p-4 sm:p-5">
               <div className="flex items-start justify-between gap-3">
-                <span className="font-mono text-[10px] font-semibold text-muted-foreground">
+                <span className="font-mono text-2xs font-semibold text-muted-foreground">
                   0{index + 1}
                 </span>
                 <Icon className="size-4 text-muted-foreground" />
@@ -152,7 +152,7 @@ export function OverviewScreen() {
                 {metric.value}
               </p>
               <p className="mt-2 text-xs font-semibold">{metric.label}</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
+              <p className="mt-0.5 text-xs-plus text-muted-foreground">
                 {metric.note}
               </p>
             </div>
@@ -164,7 +164,7 @@ export function OverviewScreen() {
         <Card className="bg-white">
           <CardHeader className="border-b border-black/8 pb-4">
             <div>
-              <p className="text-[10px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+              <p className="text-2xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
                 Today
               </p>
               <CardTitle className="mt-1 font-heading text-xl tracking-tight">
@@ -206,7 +206,7 @@ export function OverviewScreen() {
           <Card className="bg-[#20201e] text-white ring-black/15">
             <CardHeader className="border-b border-white/10 pb-4">
               <div>
-                <p className="text-[10px] font-semibold tracking-[0.16em] text-white/45 uppercase">
+                <p className="text-2xs font-semibold tracking-[0.16em] text-white/45 uppercase">
                   Recent signal
                 </p>
                 <CardTitle className="mt-1 font-heading text-xl tracking-tight text-white">
@@ -229,7 +229,7 @@ export function OverviewScreen() {
                           <p className="truncate text-xs font-medium text-white">
                             {conversation.caller ?? "New contact"}
                           </p>
-                          <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-white/50">
+                          <p className="mt-1 line-clamp-2 text-xs-plus leading-5 text-white/50">
                             {conversation.summary ?? "Conversation captured and ready to review."}
                           </p>
                         </div>

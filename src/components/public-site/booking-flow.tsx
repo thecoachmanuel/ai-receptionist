@@ -619,7 +619,7 @@ export function BookingFlow({
 
                 {locations && locations.length > 1 && (
                   <div className="space-y-2 rounded-xl border bg-muted/20 p-3.5">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <p className="text-xs-plus font-semibold uppercase tracking-wider text-muted-foreground">
                       Select Branch Location
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -944,19 +944,19 @@ export function BookingFlow({
 
                     <div className="grid gap-3 rounded-lg border bg-background/80 p-3 text-xs sm:grid-cols-3">
                       <div>
-                        <span className="text-[11px] text-muted-foreground block">Total Service Price</span>
+                        <span className="text-xs-plus text-muted-foreground block">Total Service Price</span>
                         <span className="font-semibold text-foreground text-sm">
                           {formatPrice(selectedOffering.priceMinor, selectedOffering.currency || currency, locale)}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[11px] text-primary font-medium block">Deposit Payable Now</span>
+                        <span className="text-xs-plus text-primary font-medium block">Deposit Payable Now</span>
                         <span className="font-bold text-primary text-sm">
                           {formatPrice(depositMinor, selectedOffering.currency || currency, locale)}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[11px] text-muted-foreground block">Remaining Balance Due</span>
+                        <span className="text-xs-plus text-muted-foreground block">Remaining Balance Due</span>
                         <span className="font-semibold text-foreground text-sm">
                           {formatPrice(balanceMinor, selectedOffering.currency || currency, locale)}
                         </span>
@@ -965,26 +965,26 @@ export function BookingFlow({
 
                     {(depositConfig?.bankName || depositConfig?.accountNumber || depositConfig?.accountName) ? (
                       <div className="rounded-lg border border-border/80 bg-background p-3.5 space-y-2.5">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <p className="text-xs-plus font-semibold uppercase tracking-wider text-muted-foreground">
                           Bank Account for Transfer
                         </p>
                         <div className="grid gap-2 text-xs sm:grid-cols-2">
                           {depositConfig.bankName ? (
                             <div>
-                              <span className="text-[10px] text-muted-foreground uppercase block">Bank Name</span>
+                              <span className="text-2xs text-muted-foreground uppercase block">Bank Name</span>
                               <span className="font-medium text-foreground">{depositConfig.bankName}</span>
                             </div>
                           ) : null}
                           {depositConfig.accountName ? (
                             <div>
-                              <span className="text-[10px] text-muted-foreground uppercase block">Account Name</span>
+                              <span className="text-2xs text-muted-foreground uppercase block">Account Name</span>
                               <span className="font-medium text-foreground">{depositConfig.accountName}</span>
                             </div>
                           ) : null}
                           {depositConfig.accountNumber ? (
                             <div className="sm:col-span-2 flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 border border-border/50">
                               <div>
-                                <span className="text-[10px] text-muted-foreground uppercase block">Account Number</span>
+                                <span className="text-2xs text-muted-foreground uppercase block">Account Number</span>
                                 <span className="font-mono text-sm font-bold tracking-wider text-foreground">
                                   {depositConfig.accountNumber}
                                 </span>
@@ -1019,7 +1019,7 @@ export function BookingFlow({
                         📌 {depositConfig.instructions}
                       </p>
                     ) : (
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-xs-plus text-muted-foreground">
                         Please make a deposit transfer of {formatPrice(depositMinor, selectedOffering.currency || currency, locale)} to confirm your booking.
                       </p>
                     )}
@@ -1114,13 +1114,13 @@ export function BookingFlow({
                       </div>
                       <div className="grid gap-2 text-xs sm:grid-cols-2 pt-1 border-t border-border/60">
                         <div>
-                          <span className="text-muted-foreground block text-[11px]">Deposit Required:</span>
+                          <span className="text-muted-foreground block text-xs-plus">Deposit Required:</span>
                           <span className="font-bold text-primary">
                             {formatPrice(depositMinor, (confirmation.offering as any).currency || currency, locale)}
                           </span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground block text-[11px]">Balance at Appointment:</span>
+                          <span className="text-muted-foreground block text-xs-plus">Balance at Appointment:</span>
                           <span className="font-medium text-foreground">
                             {formatPrice(balanceMinor, (confirmation.offering as any).currency || currency, locale)}
                           </span>
@@ -1128,7 +1128,7 @@ export function BookingFlow({
                         {(depositConfig?.bankName || depositConfig?.accountNumber) ? (
                           <div className="sm:col-span-2 pt-2 border-t border-border/60 flex items-center justify-between">
                             <div>
-                              <span className="text-[10px] text-muted-foreground block">Transfer To Bank:</span>
+                              <span className="text-2xs text-muted-foreground block">Transfer To Bank:</span>
                               <span className="font-medium text-foreground">
                                 {depositConfig.bankName} · <span className="font-mono font-bold">{depositConfig.accountNumber}</span>
                                 {depositConfig.accountName ? ` (${depositConfig.accountName})` : ""}
@@ -1140,7 +1140,7 @@ export function BookingFlow({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleCopyAccount(depositConfig.accountNumber!)}
-                                className="h-7 text-[11px] gap-1"
+                                className="h-7 text-xs-plus gap-1"
                               >
                                 {copiedBank ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
                                 {copiedBank ? "Copied" : "Copy"}
@@ -1186,7 +1186,7 @@ export function BookingFlow({
                           Send Details & Receipt to WhatsApp
                         </a>
                       </Button>
-                      <p className="text-[11px] text-muted-foreground text-center">
+                      <p className="text-xs-plus text-muted-foreground text-center">
                         Free direct WhatsApp booking communication for {businessName}.
                       </p>
                     </div>
