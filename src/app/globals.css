@@ -40,9 +40,9 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
-  --font-sans: "IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, monospace;
-  --font-heading: "Newsreader", "Newsreader Fallback", ui-serif, Georgia, serif;
+  --font-sans: var(--font-plex-sans), "IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), "IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, monospace;
+  --font-heading: var(--font-newsreader), "Newsreader", "Newsreader Fallback", ui-serif, Georgia, serif;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
