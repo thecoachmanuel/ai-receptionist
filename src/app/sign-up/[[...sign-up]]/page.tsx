@@ -54,6 +54,15 @@ const PRESET_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
   general: SlidersHorizontal,
 };
 
+const ECOMMERCE_STORE_CATEGORIES = [
+  { id: "fashion", label: "Fashion & Apparel", description: "Clothing, shoes, bags & accessories" },
+  { id: "beauty", label: "Beauty & Cosmetics", description: "Skincare, hair care, makeup & perfumes" },
+  { id: "electronics", label: "Electronics & Gadgets", description: "Phones, accessories & electronics" },
+  { id: "food", label: "Food & Groceries", description: "Provisions, food items & catering" },
+  { id: "home", label: "Home & Living", description: "Decor, kitchenware & essentials" },
+  { id: "general", label: "General Retail", description: "Multiple products & merchandise" },
+];
+
 type BillingCycle = "monthly" | "yearly";
 
 export default function SignUpPage() {
@@ -66,6 +75,7 @@ export default function SignUpPage() {
   const [organizationName, setOrganizationName] = useState("");
   const [businessType, setBusinessType] = useState<BusinessPresetId>("barber");
   const [businessModel, setBusinessModel] = useState<"services" | "ecommerce" | "hybrid">("services");
+  const [storeCategory, setStoreCategory] = useState("fashion");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -151,7 +161,8 @@ export default function SignUpPage() {
           email: formEmail,
           password: formPassword,
           organizationName: formOrg,
-          businessType,
+          businessType: businessModel === "ecommerce" ? storeCategory : businessType,
+          category: storeCategory,
           businessModel,
           plan: selectedPlan,
           billingCycle,
@@ -333,43 +344,162 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="businessType" className="text-sm font-semibold">
-                {businessModel === "ecommerce" ? "Store Category / Industry" : "Business type / Industry"}
-              </Label>
-              <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-                Preset terminology
-              </span>
+          {/* Services: Service Type Selector */}
+          {businessModel === "services" && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="businessType" className="text-sm font-semibold">
+                  Business Type / Service Industry
+                </Label>
+                <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                  Preset terminology
+                </span>
+              </div>
+              <Select
+                value={businessType}
+                onValueChange={(val) => setBusinessType(val as BusinessPresetId)}
+              >
+                <SelectTrigger id="businessType" className="h-11 w-full text-base sm:text-sm bg-background">
+                  <SelectValue placeholder="Select your industry..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {BUSINESS_PRESET_LIST.map((preset) => {
+                    const Icon = PRESET_ICONS[preset.id] || SlidersHorizontal;
+                    return (
+                      <SelectItem key={preset.id} value={preset.id} className="cursor-pointer py-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <Icon className="size-4 text-primary shrink-0" />
+                          <div className="flex flex-col text-left">
+                            <span className="font-medium text-sm text-foreground">{preset.label}</span>
+                            <span className="text-xs text-muted-foreground">{preset.description}</span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Configures custom terminology ({activePreset.terminology.teamMemberPlural}, {activePreset.terminology.offeringPlural}), booking page copy, and AI receptionist greeting.
+              </p>
             </div>
-            <Select
-              value={businessType}
-              onValueChange={(val) => setBusinessType(val as BusinessPresetId)}
-            >
-              <SelectTrigger id="businessType" className="h-11 w-full text-base sm:text-sm bg-background">
-                <SelectValue placeholder="Select your industry..." />
-              </SelectTrigger>
-              <SelectContent className="max-h-72">
-                {BUSINESS_PRESET_LIST.map((preset) => {
-                  const Icon = PRESET_ICONS[preset.id] || SlidersHorizontal;
-                  return (
-                    <SelectItem key={preset.id} value={preset.id} className="cursor-pointer py-2.5">
+          )}
+
+          {/* Ecommerce: Retail Product Category Selector */}
+          {businessModel === "ecommerce" && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="storeCategory" className="text-sm font-semibold">
+                  Store Category / Retail Sector
+                </Label>
+                <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                  Catalog preset
+                </span>
+              </div>
+              <Select
+                value={storeCategory}
+                onValueChange={(val) => setStoreCategory(val)}
+              >
+                <SelectTrigger id="storeCategory" className="h-11 w-full text-base sm:text-sm bg-background">
+                  <SelectValue placeholder="Select store category..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {ECOMMERCE_STORE_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id} className="cursor-pointer py-2.5">
                       <div className="flex items-center gap-2.5">
-                        <Icon className="size-4 text-primary shrink-0" />
+                        <Store className="size-4 text-primary shrink-0" />
                         <div className="flex flex-col text-left">
-                          <span className="font-medium text-sm text-foreground">{preset.label}</span>
-                          <span className="text-xs text-muted-foreground">{preset.description}</span>
+                          <span className="font-medium text-sm text-foreground">{cat.label}</span>
+                          <span className="text-xs text-muted-foreground">{cat.description}</span>
                         </div>
                       </div>
                     </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Configures custom terminology ({activePreset.terminology.teamMemberPlural}, {activePreset.terminology.offeringPlural}), booking page copy, and AI receptionist greeting.
-            </p>
-          </div>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Pre-configures sample products, collections, shipping defaults, and WhatsApp order checkout.
+              </p>
+            </div>
+          )}
+
+          {/* Hybrid: Both Service Type & Store Retail Category */}
+          {businessModel === "hybrid" && (
+            <div className="space-y-4 rounded-xl border border-primary/20 bg-primary/[0.02] p-3.5">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="businessType" className="text-sm font-semibold text-foreground">
+                    1. Primary Service Industry
+                  </Label>
+                  <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                    Booking system
+                  </span>
+                </div>
+                <Select
+                  value={businessType}
+                  onValueChange={(val) => setBusinessType(val as BusinessPresetId)}
+                >
+                  <SelectTrigger id="businessType" className="h-11 w-full text-base sm:text-sm bg-background">
+                    <SelectValue placeholder="Select your service industry..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {BUSINESS_PRESET_LIST.map((preset) => {
+                      const Icon = PRESET_ICONS[preset.id] || SlidersHorizontal;
+                      return (
+                        <SelectItem key={preset.id} value={preset.id} className="cursor-pointer py-2.5">
+                          <div className="flex items-center gap-2.5">
+                            <Icon className="size-4 text-primary shrink-0" />
+                            <div className="flex flex-col text-left">
+                              <span className="font-medium text-sm text-foreground">{preset.label}</span>
+                              <span className="text-xs text-muted-foreground">{preset.description}</span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Sets your booking calendar rules, staff scheduling, and appointment terminology ({activePreset.terminology.teamMemberPlural}, {activePreset.terminology.offeringPlural}).
+                </p>
+              </div>
+
+              <div className="space-y-2 border-t border-border/60 pt-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="storeCategory" className="text-sm font-semibold text-foreground">
+                    2. Store Product Category
+                  </Label>
+                  <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                    Ecommerce catalog
+                  </span>
+                </div>
+                <Select
+                  value={storeCategory}
+                  onValueChange={(val) => setStoreCategory(val)}
+                >
+                  <SelectTrigger id="storeCategory" className="h-11 w-full text-base sm:text-sm bg-background">
+                    <SelectValue placeholder="Select retail category..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {ECOMMERCE_STORE_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id} className="cursor-pointer py-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <Store className="size-4 text-primary shrink-0" />
+                          <div className="flex flex-col text-left">
+                            <span className="font-medium text-sm text-foreground">{cat.label}</span>
+                            <span className="text-xs text-muted-foreground">{cat.description}</span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Sets up your retail catalog, product collections, and WhatsApp cart checkout.
+                </p>
+              </div>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input

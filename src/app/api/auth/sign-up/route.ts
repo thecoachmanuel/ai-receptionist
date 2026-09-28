@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
       organizationName,
       plan,
       businessType,
+      category,
       billingCycle,
       businessModel,
     } = await request.json();
@@ -104,9 +105,10 @@ export async function POST(request: NextRequest) {
         undefined,
         undefined,
         selectedPlan,
-        businessType,
+        businessModel === "ecommerce" ? (category || "retail") : businessType,
         selectedCycle,
         businessModel || "services",
+        category || "fashion",
       );
       orgId = createdOrg._id.toString();
       orgSlug = createdOrg.slug;

@@ -126,6 +126,7 @@ export async function createOrganizationForUser(
   businessType?: string,
   billingCycle?: BillingCycle,
   businessModel: "services" | "ecommerce" | "hybrid" = "services",
+  category?: string,
 ) {
   const db = await getDb();
   const name = requiredTrimmed(rawName, "name", 120);
@@ -218,8 +219,8 @@ export async function createOrganizationForUser(
     updatedAt: now,
   });
 
-  // Seed sample offerings tailored to the business type if any
-  if (preset.sampleOfferings.length > 0) {
+  // Seed sample offerings tailored to the business type if any (for services & hybrid)
+  if ((businessModel === "services" || businessModel === "hybrid") && preset.sampleOfferings.length > 0) {
     try {
       const sampleDocs: DbOffering[] = preset.sampleOfferings.map((sample) => ({
         organizationId: orgId,
@@ -231,7 +232,7 @@ export async function createOrganizationForUser(
         bufferBeforeMinutes: 0,
         bufferAfterMinutes: 0,
         priceMinor: sample.priceMinor,
-        currency: "NGN",
+        currency: currency || "NGN",
         capacity: 1,
         locationIds: [],
         active: true,
@@ -242,6 +243,53 @@ export async function createOrganizationForUser(
       await db.collection<DbOffering>("offerings").insertMany(sampleDocs);
     } catch (err) {
       console.error("[createOrganizationForUser] Failed to seed sample offerings:", err);
+    }
+  }
+
+  // Seed sample products & shipping zone for ecommerce & hybrid
+  if (businessModel === "ecommerce" || businessModel === "hybrid") {
+    try {
+      const sampleCat = category || (businessModel === "ecommerce" ? (businessType || "Retail") : "Retail");
+      const sampleCatLabel = sampleCat.charAt(0).toUpperCase() + sampleCat.slice(1);
+      const catImages: Record<string, string> = {
+        fashion: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&auto=format&fit=crop&q=80",
+        beauty: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop&q=80",
+        electronics: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80",
+        food: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80",
+        home: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80",
+      };
+      const sampleProduct = {
+        organizationId: orgId,
+        name: `${name} ${sampleCatLabel} Product`,
+        slug: slugify(`${name} ${sampleCatLabel} Product`),
+        description: `Premium ${sampleCat} product available for online order, in-store pickup, and automated WhatsApp checkout.`,
+        images: [
+          catImages[sampleCat.toLowerCase()] || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80",
+        ],
+        category: sampleCatLabel,
+        collectionIds: [],
+        tags: ["featured", "popular"],
+        variants: [
+          { id: "v1", label: "Standard", sku: "PROD-STD", priceMinor: 1200000, comparePriceMinor: 1500000, stock: 25, lowStockThreshold: 5 },
+        ],
+        currency: currency || "NGN",
+        active: true,
+        featured: true,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await db.collection("products").insertOne(sampleProduct as any);
+
+      await db.collection("shippingZones").insertOne({
+        organizationId: orgId,
+        name: "Standard Delivery",
+        rateMinor: 250000,
+        estimatedDeliveryDays: "1-2 business days",
+        active: true,
+        createdAt: now,
+      } as any);
+    } catch (err) {
+      console.error("[createOrganizationForUser] Failed to seed sample products:", err);
     }
   }
 
