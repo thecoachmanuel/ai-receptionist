@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     const isEcommerce = businessModel === "ecommerce";
+    const isHybrid = businessModel === "hybrid";
 
     if (isEcommerce) {
       // 🛍️ ECOMMERCE CONFIGURATION
@@ -174,6 +175,109 @@ export async function POST(request: NextRequest) {
           createdAt: Date.now(),
         } as any);
       }
+    } else if (isHybrid) {
+      // 🌟 HYBRID CONFIGURATION (Unified Bookings + Ecommerce)
+      const preset = getBusinessPreset(businessType);
+
+      await db.collection("organizations").updateOne(orgFilter, {
+        $set: {
+          name: businessName.trim(),
+          slug: finalSlug,
+          businessModel: "hybrid",
+          businessType: preset.id,
+          currency: currency || "NGN",
+          terminology: preset.terminology,
+          features: {
+            bookingsEnabled: true,
+            commerceEnabled: true,
+            voiceAgentEnabled: true,
+            whatsappCommerceEnabled: true,
+          },
+          updatedAt: Date.now(),
+        },
+      });
+
+      await db.collection("publicSites").updateMany(
+        { organizationId: activeOrgId },
+        {
+          $set: {
+            siteSlug: finalSlug,
+            "draft.businessName": businessName.trim(),
+            "draft.headline": `Welcome to ${businessName.trim()}`,
+            "draft.subheadline": "Book appointments and shop our exclusive products online with automated WhatsApp confirmations.",
+            "draft.about": `${businessName.trim()} provides premium services and curated products with seamless online scheduling and direct delivery.`,
+            "draft.agent.welcomeMessage": `Hello! Welcome to ${businessName.trim()}. Would you like to book an appointment or browse our products?`,
+            updatedAt: Date.now(),
+          },
+        }
+      );
+
+      // Seed sample offerings
+      const existingOffering = await db.collection("offerings").findOne({ organizationId: activeOrgId });
+      if (!existingOffering && preset.sampleOfferings.length > 0) {
+        const now = Date.now();
+        const sampleDocs = preset.sampleOfferings.map((sample) => ({
+          organizationId: activeOrgId,
+          name: sample.name,
+          slug: slugify(sample.name),
+          description: sample.description,
+          category: sample.category,
+          durationMinutes: sample.durationMinutes,
+          bufferBeforeMinutes: 0,
+          bufferAfterMinutes: 0,
+          priceMinor: sample.priceMinor,
+          currency: currency || "NGN",
+          capacity: 1,
+          locationIds: [],
+          active: true,
+          bookableOnline: true,
+          createdAt: now,
+          updatedAt: now,
+        }));
+        await db.collection("offerings").insertMany(sampleDocs as any);
+      }
+
+      // Seed sample products
+      const existingProduct = await db.collection("products").findOne({ organizationId: activeOrgId });
+      if (!existingProduct) {
+        const now = Date.now();
+        const sampleProducts = [
+          {
+            organizationId: activeOrgId,
+            name: `${businessName.trim()} Signature Item`,
+            slug: slugify(`${businessName.trim()} Signature Item`),
+            description: "Premium retail product available for online order and in-store pickup.",
+            images: [
+              "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop&q=80",
+            ],
+            category: category || "Retail",
+            collectionIds: [],
+            tags: ["featured", "popular"],
+            variants: [
+              { id: "v1", label: "Standard", sku: "PROD-STD", priceMinor: 1500000, stock: 20, lowStockThreshold: 5 },
+            ],
+            currency: currency || "NGN",
+            active: true,
+            featured: true,
+            createdAt: now,
+            updatedAt: now,
+          },
+        ];
+        await db.collection("products").insertMany(sampleProducts as any);
+      }
+
+      // Seed default shipping zone
+      const existingZone = await db.collection("shippingZones").findOne({ organizationId: activeOrgId });
+      if (!existingZone) {
+        await db.collection("shippingZones").insertOne({
+          organizationId: activeOrgId,
+          name: deliveryCity || "Standard Delivery",
+          rateMinor: 250000,
+          estimatedDeliveryDays: "1-2 business days",
+          active: true,
+          createdAt: Date.now(),
+        } as any);
+      }
     } else {
       // 📅 SERVICES CONFIGURATION (Backward compatible)
       const preset = getBusinessPreset(businessType);
@@ -184,6 +288,7 @@ export async function POST(request: NextRequest) {
           slug: finalSlug,
           businessModel: "services",
           businessType: preset.id,
+          currency: currency || "NGN",
           terminology: preset.terminology,
           features: {
             bookingsEnabled: true,
@@ -225,7 +330,7 @@ export async function POST(request: NextRequest) {
           bufferBeforeMinutes: 0,
           bufferAfterMinutes: 0,
           priceMinor: sample.priceMinor,
-          currency: "NGN",
+          currency: currency || "NGN",
           capacity: 1,
           locationIds: [],
           active: true,
@@ -255,7 +360,7 @@ export async function POST(request: NextRequest) {
       success: true,
       slug: finalSlug,
       businessName: businessName.trim(),
-      businessModel: isEcommerce ? "ecommerce" : "services",
+      businessModel: isEcommerce ? "ecommerce" : isHybrid ? "hybrid" : "services",
     });
   } catch (err) {
     console.error("[onboarding/complete]", err);

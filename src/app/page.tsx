@@ -15,7 +15,10 @@ import {
   Mic,
   MoveUpRight,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
+  Store,
+  Truck,
   Zap,
 } from "lucide-react";
 import { UserButton } from "@/components/auth/user-button";
@@ -31,34 +34,32 @@ const moments = [
   {
     time: "09:41",
     icon: Mic,
-    label: "Voice AI Reception",
-    detail: "Answered questions & booked slot · 2m 14s",
+    label: "Voice AI Receptionist",
+    detail: "Answered pricing & booked slot · 2m 14s",
     tone: "bg-blue-600 text-white",
   },
   {
     time: "09:44",
-    icon: CalendarDays,
-    label: "Appointment Reserved",
-    detail: "Tuesday, 14:30 · Stylist Maya",
+    icon: ShoppingBag,
+    label: "WhatsApp Order Received",
+    detail: "ORD-0084 · Signature Cotton Tee (₦12,000)",
     tone: "bg-[#dff5e8] text-[#17623a]",
   },
   {
     time: "09:47",
-    icon: MessageSquareText,
-    label: "Web AI Assistant",
-    detail: "Guided client & confirmed booking",
+    icon: CalendarDays,
+    label: "Appointment Reserved",
+    detail: "Tuesday, 14:30 · Stylist Maya",
     tone: "bg-[#f8e9c8] text-[#6b4710]",
   },
   {
-    time: "09:49",
+    time: "09:50",
     icon: MessageCircle,
-    label: "WhatsApp Alert Sent",
-    detail: "Instant reminder to client & staff",
+    label: "WhatsApp Alert Dispatched",
+    detail: "Tracking link sent to customer & staff",
     tone: "bg-[#e1f3fe] text-[#0369a1]",
   },
 ];
-
-// Moved dynamic plans creation into Home component
 
 function MarketingNav({ signedIn }: { signedIn: boolean }) {
   return (
@@ -119,24 +120,24 @@ export default async function Home() {
       name: "Core",
       planKey: "free_org" as const,
       monthlyPrice: settings.planPrices.core,
-      copy: "The complete online booking & scheduling engine for growing businesses.",
+      copy: "The complete online booking & ecommerce scheduling engine for growing businesses.",
       features: [
-        "Online self-serve booking calendar",
-        "Staff availability & slot management",
-        "Branded public booking site",
-        "Automated WhatsApp notifications",
+        "Online booking calendar & catalog storefront",
+        "Staff availability & delivery zone management",
+        "Branded public booking & shop site",
+        "Automated WhatsApp notifications & checkout",
       ],
     },
     {
       name: "Engage",
       planKey: "engage" as const,
       monthlyPrice: settings.planPrices.engage,
-      copy: "Smart booking paired with an intelligent 24/7 Web AI assistant.",
+      copy: "Smart bookings & commerce paired with an intelligent 24/7 Web AI assistant.",
       features: [
         "Everything in Core",
         "Conversational Web AI chat assistant",
-        "Instant FAQ & service recommendations",
-        "In-chat appointment booking",
+        "Instant service & product recommendations",
+        "In-chat bookings & order inquiries",
       ],
       featured: true,
     },
@@ -144,12 +145,12 @@ export default async function Home() {
       name: "Voice",
       planKey: "voice" as const,
       monthlyPrice: settings.planPrices.voice,
-      copy: "Full AI voice receptionist with live browser audio scheduling.",
+      copy: "Full AI voice receptionist with live browser audio scheduling & product advisory.",
       features: [
         "Everything in Engage",
         "24/7 Live AI Voice Receptionist",
-        "Microphone voice bookings in browser",
-        "Advanced appointment analytics",
+        "Microphone voice bookings & inquiries",
+        "Advanced appointment & commerce analytics",
       ],
     },
   ];
@@ -162,37 +163,38 @@ export default async function Home() {
     <main className="bg-background w-full overflow-x-hidden">
       <MarketingNav signedIn={Boolean(userId)} />
 
+      {/* ── Hero Section ──────────────────────────────────────────────── */}
       <section className="relative border-b overflow-hidden">
         <div className="absolute inset-0 hairline-grid opacity-45 [mask-image:linear-gradient(to_bottom,black,transparent_88%)]" />
         <div className="relative mx-auto grid max-w-[1400px] gap-14 px-5 pb-20 pt-16 sm:px-8 sm:pt-24 lg:grid-cols-[1.02fr_0.98fr] lg:px-12 lg:pb-28 lg:pt-30">
           <div className="max-w-3xl">
             <Badge variant="outline" className="mb-7 rounded-sm bg-background px-2.5 py-1 font-mono text-2xs uppercase tracking-[0.16em]">
-              AI Front Desk & 24/7 Smart Booking Platform
+              AI Front Desk · Smart Bookings · WhatsApp Commerce
             </Badge>
             <h1 className="font-heading text-[clamp(3.8rem,8vw,7.4rem)] font-medium leading-[0.82] tracking-[-0.065em] text-balance">
               Never miss
-              <span className="mt-3 block text-primary italic">a booking.</span>
+              <span className="mt-3 block text-primary italic">a booking or sale.</span>
             </h1>
             <p className="mt-9 max-w-xl text-lg leading-7 text-muted-foreground sm:text-xl sm:leading-8">
-              Qwilo pairs an effortless online booking engine with intelligent AI voice and web receptionists. Clients book appointments around the clock, get questions answered instantly, and receive automated WhatsApp confirmations—even while you sleep.
+              Qwilo pairs 24/7 AI voice & web receptionists with smart appointment scheduling and automated WhatsApp ecommerce. Service businesses fill their calendars around the clock, while product brands showcase catalogs and close sales via WhatsApp checkout—even while you sleep.
             </p>
             <div className="mt-9 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <Button asChild size="lg" className="h-12 w-full sm:w-auto gap-2 rounded-md px-6 shadow-none">
                 <Link href="/sign-up">
-                  Build your booking front desk <ArrowRight className="size-4 shrink-0" />
+                  Build your front desk & store <ArrowRight className="size-4 shrink-0" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-12 w-full sm:w-auto gap-2 rounded-md bg-background px-6 shadow-none">
                 <Link href="/p/papafam-cuts">
-                  View a live booking site <MoveUpRight className="size-4 shrink-0" />
+                  View a live demo site <MoveUpRight className="size-4 shrink-0" />
                 </Link>
               </Button>
             </div>
             <div className="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t pt-5 text-sm font-medium text-foreground/85">
               <span className="flex items-center gap-2"><Check className="size-4 text-primary shrink-0" /> From ₦1,000/mo</span>
-              <span className="flex items-center gap-2"><Check className="size-4 text-primary shrink-0" /> 24/7 Online Bookings</span>
-              <span className="flex items-center gap-2"><Check className="size-4 text-primary shrink-0" /> Conversational Voice AI</span>
-              <span className="flex items-center gap-2"><Check className="size-4 text-primary shrink-0" /> WhatsApp Confirmations</span>
+              <span className="flex items-center gap-2"><Check className="size-4 text-primary shrink-0" /> 24/7 AI Voice Receptionist</span>
+              <span className="flex items-center gap-2"><Check className="size-4 text-primary shrink-0" /> Appointment Scheduling</span>
+              <span className="flex items-center gap-2"><Check className="size-4 text-primary shrink-0" /> WhatsApp Commerce & Checkout</span>
             </div>
           </div>
 
@@ -200,8 +202,8 @@ export default async function Home() {
             <div className="w-full border border-foreground/12 bg-card shadow-[18px_22px_0_0_oklch(0.205_0.018_264.4)]">
               <div className="flex items-center border-b px-5 py-4">
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Tuesday · Live front desk</p>
-                  <p className="mt-1 text-sm sm:text-base font-semibold">Real-time activity & bookings</p>
+                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Live front desk & store</p>
+                  <p className="mt-1 text-sm sm:text-base font-semibold">Real-time appointments & orders</p>
                 </div>
                 <span className="ml-auto inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
                   <span className="size-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_oklch(0.9_0.08_151)]" />
@@ -222,7 +224,7 @@ export default async function Home() {
                 ))}
               </div>
               <div className="grid grid-cols-3 border-t bg-[#171b24] text-white">
-                {[["24/7", "online bookings"], ["100%", "auto-scheduled"], ["0", "missed calls"]].map(([value, label]) => (
+                {[["24/7", "live operations"], ["100%", "auto-confirmed"], ["0", "missed sales"]].map(([value, label]) => (
                   <div key={label} className="border-r px-4 py-5 last:border-0 border-white/10">
                     <p className="font-heading text-2xl sm:text-3xl tracking-[-0.04em]">{value}</p>
                     <p className="mt-1 font-mono text-xs uppercase tracking-wider text-white/70">{label}</p>
@@ -234,15 +236,16 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* ── Platform Overview ─────────────────────────────────────────── */}
       <section id="platform" className="mx-auto max-w-[1400px] px-5 py-24 sm:px-8 lg:px-12 lg:py-32">
         <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
           <div>
-            <p className="font-mono text-2xs font-semibold uppercase tracking-[0.2em] text-primary">One unified front office</p>
+            <p className="font-mono text-2xs font-semibold uppercase tracking-[0.2em] text-primary">Unified operations & commerce</p>
             <h2 className="mt-4 max-w-md font-heading text-5xl font-medium leading-[0.96] tracking-[-0.05em] sm:text-6xl">
-              Where smart scheduling meets conversational AI.
+              Where smart scheduling & ecommerce meet conversational AI.
             </h2>
             <p className="mt-6 max-w-md text-base leading-7 text-muted-foreground">
-              Turn curious inquiries into confirmed appointments on your calendar. Qwilo gives your business a branded booking portal, real-time availability sync, and an AI receptionist that knows your exact services and team.
+              Turn inquiries into confirmed appointments and paid orders. Qwilo gives your business a branded booking portal, a modern ecommerce storefront with WhatsApp checkout, and an intelligent AI receptionist that knows your exact services, staff, and products.
             </p>
           </div>
           <div className="grid border-t md:grid-cols-3">
@@ -251,19 +254,19 @@ export default async function Home() {
                 icon: CalendarDays,
                 n: "01",
                 title: "Smart Booking Engine",
-                copy: "Self-serve booking calendar, team member assignment, real-time slot availability, multi-service offerings, and deposit settings.",
+                copy: "Self-serve booking calendar, team member assignment, real-time slot availability, multi-service offerings, and deposit verification.",
+              },
+              {
+                icon: ShoppingBag,
+                n: "02",
+                title: "Automated WhatsApp Commerce",
+                copy: "Online product catalog, delivery zone rates, direct bank transfer with 1-click copy, structured WhatsApp checkout, and live order tracking.",
               },
               {
                 icon: Headphones,
-                n: "02",
-                title: "24/7 Voice AI Receptionist",
-                copy: "Clients can speak naturally with your front desk right in the browser. The AI answers service queries and schedules their appointment hands-free.",
-              },
-              {
-                icon: Bot,
                 n: "03",
-                title: "Interactive Web AI Assistant",
-                copy: "An on-page AI chat assistant that greets visitors, explains your pricing, recommends packages, and guides clients directly into booking.",
+                title: "24/7 Voice & Web AI Receptionist",
+                copy: "Clients speak naturally with your front desk in the browser or chat online. The AI answers questions, recommends items, and schedules appointments hands-free.",
               },
             ].map(({ icon: Icon, n, title, copy }) => (
               <article key={n} className="border-b border-r px-0 py-8 pr-7 md:px-7 md:first:pl-0 md:last:border-r-0">
@@ -279,17 +282,18 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* ── Features ─────────────────────────────────────────────────── */}
       <section id="features" className="border-t bg-muted/20 py-20 sm:py-28">
         <div className="mx-auto max-w-[1400px] px-5 sm:px-8 lg:px-12">
           <div className="max-w-2xl">
             <p className="font-mono text-2xs font-semibold uppercase tracking-[0.2em] text-primary">
-              Full-Cycle Booking Automation
+              Full-Cycle Customer Automation
             </p>
             <h2 className="mt-4 font-heading text-5xl font-medium leading-[0.96] tracking-[-0.05em] sm:text-6xl">
-              From first inquiry to confirmed appointment.
+              From first inquiry to confirmed booking or delivery.
             </h2>
             <p className="mt-6 text-base leading-7 text-muted-foreground">
-              Say goodbye to endless back-and-forth messages, double bookings, and lost after-hours inquiries.
+              Eliminate endless back-and-forth messaging, lost after-hours orders, and scheduling mix-ups with an all-in-one automated pipeline.
             </p>
           </div>
 
@@ -298,26 +302,26 @@ export default async function Home() {
               {
                 step: "01",
                 icon: Mic,
-                title: "24/7 AI Inquiries",
-                description: "Visitors talk or chat with your AI front desk to ask about pricing, opening hours, services, and staff.",
+                title: "24/7 AI Front Desk",
+                description: "Visitors talk or chat with your AI assistant to ask about pricing, opening hours, services, and product catalog.",
               },
               {
                 step: "02",
                 icon: CalendarCheck,
-                title: "Real-Time Scheduling",
-                description: "Clients select available dates and times tailored to your staff's working hours and buffer periods.",
+                title: "Instant Booking & Cart",
+                description: "Clients reserve appointment times or add retail products to their cart with real-time stock checks.",
               },
               {
                 step: "03",
                 icon: MessageCircle,
-                title: "Instant WhatsApp Alerts",
-                description: "Both the client and the assigned staff member immediately receive automated WhatsApp booking confirmations.",
+                title: "WhatsApp Checkout",
+                description: "Itemized orders, direct bank details, and automated order confirmation alerts delivered directly to WhatsApp.",
               },
               {
                 step: "04",
                 icon: ShieldCheck,
-                title: "Zero Missed Bookings",
-                description: "Automated reminders reduce no-shows while keeping your calendar filled around the clock.",
+                title: "Fulfillment & Tracking",
+                description: "Customers track live order delivery or receive automated booking reminders to eliminate no-shows.",
               },
             ].map(({ step, icon: Icon, title, description }) => (
               <div
@@ -338,23 +342,24 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* ── Built For Section ────────────────────────────────────────── */}
       <section id="built-for" className="border-y bg-[#171b24] text-white">
         <div className="mx-auto grid max-w-[1400px] lg:grid-cols-2">
           <div className="border-b border-white/10 px-5 py-20 sm:px-8 lg:border-b-0 lg:border-r lg:px-12 lg:py-28">
-            <p className="font-mono text-2xs uppercase tracking-[0.2em] text-blue-300">Customized For Your Industry</p>
+            <p className="font-mono text-2xs uppercase tracking-[0.2em] text-blue-300">Customized For Services & Ecommerce</p>
             <h2 className="mt-5 max-w-xl font-heading text-5xl font-medium leading-[0.96] tracking-[-0.05em] sm:text-6xl">
-              Your business defines how clients book.
+              Your business defines how clients book and buy.
             </h2>
             <p className="mt-6 max-w-lg text-base leading-7 text-white/58">
-              A salon books appointments by stylist. A consultant schedules 1-on-1 strategy sessions. A clinic books patient visits. Qwilo’s booking forms, AI receptionist knowledge, team availability, and public scheduling adapt without changing your workflow.
+              A salon books appointments by stylist. An ecommerce brand sells products with WhatsApp checkout. A wellness studio does both. Qwilo’s booking forms, product catalog, AI receptionist, and automated WhatsApp pipeline adapt without changing your workflow.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2">
             {[
               ["Barbers & salons", "Service · Stylist · Appointment · Instant WhatsApp"],
-              ["Studios & coaches", "Session · Coach · Booking · Calendar sync"],
-              ["Clinics & practices", "Visit · Practitioner · Patient · Slot management"],
-              ["Consulting & firms", "Consultation · Specialist · Client · Intake forms"],
+              ["Fashion & retail brands", "Products · Collections · Delivery Zones · WhatsApp Checkout"],
+              ["Clinics & consultancies", "Consultation · Practitioner · Calendar Sync · Patient Intake"],
+              ["Spas & wellness stores", "Treatments + Skincare Store · Unified Bookings & Product Orders"],
             ].map(([title, vocabulary], index) => (
               <div key={title} className="min-h-44 border-b border-white/10 p-6 sm:p-8 last:border-b-0 sm:odd:border-r sm:even:border-r-0">
                 <span className="font-mono text-xs font-medium text-white/60">0{index + 1}</span>
@@ -366,17 +371,19 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* ── Pricing Section ──────────────────────────────────────────── */}
       <PricingSection plans={plans} />
 
+      {/* ── CTA Banner ───────────────────────────────────────────────── */}
       <section className="border-t bg-[#dce6ff]">
         <div className="mx-auto flex max-w-[1400px] flex-col items-start gap-8 px-5 py-20 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:px-12 lg:py-24">
           <div>
             <Sparkles className="size-6 text-primary" />
             <h2 className="mt-6 max-w-3xl font-heading text-5xl font-medium leading-[0.94] tracking-[-0.05em] sm:text-7xl">
-              Ready for an AI front desk that fills your calendar?
+              Ready for an AI front desk that grows your bookings and sales?
             </h2>
             <p className="mt-4 max-w-xl text-base text-slate-700 leading-relaxed">
-              Start taking automated bookings, answering client inquiries, and sending WhatsApp reminders in under 5 minutes.
+              Start taking automated bookings, showcasing products, answering customer inquiries, and sending WhatsApp updates in under 5 minutes.
             </p>
           </div>
           <Button asChild size="lg" className="h-12 shrink-0 gap-2 rounded-md px-6 shadow-none">
@@ -385,6 +392,7 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* ── Footer ───────────────────────────────────────────────────── */}
       <footer className="border-t bg-card">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-5 px-5 py-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:px-8 lg:px-12">
           <Brand />

@@ -125,6 +125,7 @@ export async function createOrganizationForUser(
   initialPlan?: PlanType,
   businessType?: string,
   billingCycle?: BillingCycle,
+  businessModel: "services" | "ecommerce" | "hybrid" = "services",
 ) {
   const db = await getDb();
   const name = requiredTrimmed(rawName, "name", 120);
@@ -165,12 +166,19 @@ export async function createOrganizationForUser(
     clerkOrgId,
     name,
     slug,
+    businessModel,
     businessType: preset.id,
     createdBy: userId,
     timezone,
     currency,
     locale,
     terminology: preset.terminology,
+    features: {
+      bookingsEnabled: businessModel === "services" || businessModel === "hybrid",
+      commerceEnabled: businessModel === "ecommerce" || businessModel === "hybrid",
+      voiceAgentEnabled: businessModel === "services" || businessModel === "hybrid",
+      whatsappCommerceEnabled: businessModel === "ecommerce" || businessModel === "hybrid",
+    },
     plan: initialPlan || "free_org",
     planStatus,
     billingCycle: billingCycle || "monthly",

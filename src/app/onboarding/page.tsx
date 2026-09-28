@@ -14,6 +14,8 @@ import {
   Store,
   MapPin,
   Coins,
+  Sparkles,
+  Layers,
 } from "lucide-react";
 import { toast } from "sonner";
 import { BrandIcon } from "@/components/brand";
@@ -44,9 +46,9 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { data: session, update: updateSession } = useSession();
 
-  // Step 1: Model ("services" | "ecommerce"), Step 2: Details
+  // Step 1: Model ("services" | "ecommerce" | "hybrid"), Step 2: Details
   const [step, setStep] = useState<1 | 2>(1);
-  const [businessModel, setBusinessModel] = useState<"services" | "ecommerce">("services");
+  const [businessModel, setBusinessModel] = useState<"services" | "ecommerce" | "hybrid">("services");
 
   // Common details
   const [businessName, setBusinessName] = useState("");
@@ -71,7 +73,7 @@ export default function OnboardingPage() {
       const payload = {
         businessName: businessName.trim(),
         businessModel,
-        businessType: businessModel === "services" ? businessType : category,
+        businessType: businessModel === "ecommerce" ? category : businessType,
         category,
         currency,
         deliveryCity,
@@ -90,11 +92,14 @@ export default function OnboardingPage() {
       // Clear the isNewGoogleUser flag from session
       await updateSession({ isNewGoogleUser: false, orgSlug: data.slug });
 
-      toast.success(
+      const welcomeMessage =
         businessModel === "ecommerce"
           ? "Online store created successfully! Welcome to Qwilo."
-          : "Business workspace set up successfully! Welcome to Qwilo."
-      );
+          : businessModel === "hybrid"
+          ? "Unified booking & commerce workspace created! Welcome to Qwilo."
+          : "Business workspace set up successfully! Welcome to Qwilo.";
+
+      toast.success(welcomeMessage);
 
       // Brief delay to allow session update to propagate
       setTimeout(() => {
@@ -121,20 +126,22 @@ export default function OnboardingPage() {
         }}
       />
 
-      <div className="relative z-10 w-full max-w-xl">
+      <div className="relative z-10 w-full max-w-3xl">
         {/* Brand header */}
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-foreground text-background shadow-lg">
             <BrandIcon className="size-7 border-none bg-transparent text-background" inverted />
           </div>
           <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
-            {step === 1 ? "What kind of business are you setting up?" : "Let's configure your workspace"}
+            {step === 1 ? "What kind of business are you setting up?" : "Configure your workspace"}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground max-w-md">
+          <p className="mt-2 text-sm text-muted-foreground max-w-lg">
             {step === 1
-              ? `Welcome, ${firstName}! Choose your primary business model so we can customize your workspace suite.`
+              ? `Welcome, ${firstName}! Choose whether you offer appointments, sell products online, or want both combined.`
               : businessModel === "ecommerce"
               ? "A few quick details to prepare your online store, catalog, and WhatsApp checkout."
+              : businessModel === "hybrid"
+              ? "Configure your combined booking calendar, staff availability, and retail product storefront."
               : "A few quick details to prepare your booking calendar, service menu, and AI receptionist."}
           </p>
         </div>
@@ -147,7 +154,13 @@ export default function OnboardingPage() {
               {step}
             </div>
             <span className="text-sm font-medium text-foreground">
-              {step === 1 ? "Choose Business Model" : businessModel === "ecommerce" ? "Store Details" : "Service Details"}
+              {step === 1
+                ? "Choose Business Model"
+                : businessModel === "ecommerce"
+                ? "Store & Delivery Details"
+                : businessModel === "hybrid"
+                ? "Unified Setup Details"
+                : "Service & Booking Details"}
             </span>
             <div className="ml-auto text-xs text-muted-foreground font-mono">
               Step {step} of 2
@@ -156,8 +169,8 @@ export default function OnboardingPage() {
 
           {/* STEP 1: CHOOSE MODEL */}
           {step === 1 ? (
-            <div className="space-y-5 p-7">
-              <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-6 p-7">
+              <div className="grid gap-4 sm:grid-cols-3">
                 {/* Services Card */}
                 <button
                   type="button"
@@ -178,23 +191,23 @@ export default function OnboardingPage() {
                     </Badge>
                   </div>
 
-                  <h2 className="text-base font-bold text-foreground">Services & Appointments</h2>
+                  <h2 className="text-sm font-bold text-foreground">Services & Bookings</h2>
                   <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
                     Barbershops, salons, dental clinics, spas, fitness & service appointments.
                   </p>
 
                   <div className="mt-4 space-y-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Check className="size-3.5 text-emerald-600 shrink-0" />
-                      <span>AI phone receptionist 24/7</span>
+                      <span>24/7 AI receptionist</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Check className="size-3.5 text-emerald-600 shrink-0" />
-                      <span>Client booking calendar</span>
+                      <span>Self-serve booking calendar</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Check className="size-3.5 text-emerald-600 shrink-0" />
-                      <span>Staff & branches setup</span>
+                      <span>Staff & branch scheduling</span>
                     </div>
                   </div>
                 </button>
@@ -219,23 +232,64 @@ export default function OnboardingPage() {
                     </Badge>
                   </div>
 
-                  <h2 className="text-base font-bold text-foreground">Online Store & Products</h2>
+                  <h2 className="text-sm font-bold text-foreground">Online Store & Products</h2>
                   <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                    Fashion, beauty, gadgets, groceries & retail product sellers.
+                    Fashion, beauty, electronics, food & retail product brands.
                   </p>
 
                   <div className="mt-4 space-y-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Check className="size-3.5 text-blue-600 shrink-0" />
-                      <span>Shopify-level store & cart</span>
+                      <span>Online store & cart</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Check className="size-3.5 text-blue-600 shrink-0" />
-                      <span>Automated WhatsApp checkout</span>
+                      <span>WhatsApp checkout</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Check className="size-3.5 text-blue-600 shrink-0" />
-                      <span>Inventory & delivery tracking</span>
+                      <span>Live delivery tracking</span>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Hybrid Card */}
+                <button
+                  type="button"
+                  onClick={() => setBusinessModel("hybrid")}
+                  className={cn(
+                    "flex flex-col text-left rounded-xl border p-5 transition-all cursor-pointer relative",
+                    businessModel === "hybrid"
+                      ? "border-primary bg-primary/[0.03] ring-2 ring-primary/20 shadow-sm"
+                      : "border-border/80 hover:border-border hover:bg-black/[0.01]"
+                  )}
+                >
+                  <div className="flex items-center justify-between w-full mb-3">
+                    <div className="flex size-10 items-center justify-center rounded-lg bg-purple-50 text-purple-700 border border-purple-200/60">
+                      <Sparkles className="size-5" />
+                    </div>
+                    <Badge variant="outline" className="text-2xs font-semibold bg-purple-50 text-purple-800 border-purple-200">
+                      Unified Suite
+                    </Badge>
+                  </div>
+
+                  <h2 className="text-sm font-bold text-foreground">Both (Services + Store)</h2>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    Salons selling hair products, clinics selling skincare, or wellness studios.
+                  </p>
+
+                  <div className="mt-4 space-y-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <Check className="size-3.5 text-purple-600 shrink-0" />
+                      <span>Bookings + Storefront</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Check className="size-3.5 text-purple-600 shrink-0" />
+                      <span>AI voice & chat assistant</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Check className="size-3.5 text-purple-600 shrink-0" />
+                      <span>Unified WhatsApp alerts</span>
                     </div>
                   </div>
                 </button>
@@ -247,7 +301,12 @@ export default function OnboardingPage() {
                   onClick={() => setStep(2)}
                   className="w-full h-12 text-sm font-semibold gap-2 shadow-sm cursor-pointer"
                 >
-                  Continue with {businessModel === "ecommerce" ? "Commerce Suite" : "Booking Suite"}
+                  Continue with{" "}
+                  {businessModel === "ecommerce"
+                    ? "Commerce Suite"
+                    : businessModel === "hybrid"
+                    ? "Unified Suite (Services + Store)"
+                    : "Booking Suite"}
                   <ArrowRight className="size-4" />
                 </Button>
               </div>
@@ -264,14 +323,20 @@ export default function OnboardingPage() {
                   <ArrowLeft className="size-3.5" /> Change business model
                 </button>
                 <Badge variant="outline" className="text-2xs font-mono">
-                  {businessModel === "ecommerce" ? "🛍️ Commerce Suite" : "📅 Booking Suite"}
+                  {businessModel === "ecommerce"
+                    ? "🛍️ Commerce Suite"
+                    : businessModel === "hybrid"
+                    ? "✨ Unified Suite"
+                    : "📅 Booking Suite"}
                 </Badge>
               </div>
 
               {/* Business / Store Name */}
               <div className="space-y-2">
                 <Label htmlFor="businessName" className="text-sm font-semibold">
-                  {businessModel === "ecommerce" ? "Store / Brand Name" : "Business Name"}{" "}
+                  {businessModel === "ecommerce"
+                    ? "Store / Brand Name"
+                    : "Business Name"}{" "}
                   <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
@@ -283,7 +348,11 @@ export default function OnboardingPage() {
                   <Input
                     id="businessName"
                     type="text"
-                    placeholder={businessModel === "ecommerce" ? "e.g. Bella Fashion Hub, Kicks Empire..." : "e.g. Luxe Hair Studio, Vitality Clinic..."}
+                    placeholder={
+                      businessModel === "ecommerce"
+                        ? "e.g. Bella Fashion Hub, Kicks Empire..."
+                        : "e.g. Luxe Hair Studio, Vitality Clinic..."
+                    }
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
                     className="h-12 pl-10 text-base sm:text-sm"
@@ -294,15 +363,15 @@ export default function OnboardingPage() {
                 <p className="text-xs text-muted-foreground">
                   {businessModel === "ecommerce"
                     ? "This will be your brand name on your public storefront and WhatsApp receipts."
-                    : "This will be the name of your Qwilo workspace and public booking site."}
+                    : "This will be the name of your workspace, public site, and customer receipts."}
                 </p>
               </div>
 
-              {/* Branch based on model */}
-              {businessModel === "services" ? (
+              {/* Services or Hybrid: Service Business Type */}
+              {(businessModel === "services" || businessModel === "hybrid") && (
                 <div className="space-y-2">
                   <Label htmlFor="businessType" className="text-sm font-semibold">
-                    Business Type / Industry
+                    Primary Service Type / Industry
                   </Label>
                   <div className="relative">
                     <Briefcase className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground z-10" />
@@ -320,109 +389,114 @@ export default function OnboardingPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Customizes your appointment calendar, treatment duration templates, and staff terminology.
+                  </p>
                 </div>
-              ) : (
-                <>
-                  {/* Ecommerce Store Category */}
-                  <div className="space-y-2">
-                    <Label htmlFor="category" className="text-sm font-semibold">
-                      Primary Retail Category
-                    </Label>
-                    <div className="relative">
-                      <Briefcase className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground z-10" />
-                      <Select value={category} onValueChange={setCategory}>
-                        <SelectTrigger id="category" className="h-12 pl-10 text-sm">
-                          <SelectValue placeholder="Select product category..." />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-72">
-                          {ECOMMERCE_CATEGORIES.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>
-                              <span className="font-medium text-sm">{cat.label}</span>
-                              <span className="ml-2 text-xs text-muted-foreground">({cat.description})</span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Delivery Location & Currency Row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="deliveryCity" className="text-sm font-semibold">
-                        Primary Delivery Hub
-                      </Label>
-                      <div className="relative">
-                        <MapPin className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          id="deliveryCity"
-                          type="text"
-                          placeholder="e.g. Lagos Mainland"
-                          value={deliveryCity}
-                          onChange={(e) => setDeliveryCity(e.target.value)}
-                          className="h-12 pl-10 text-sm"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="currency" className="text-sm font-semibold">
-                        Store Currency
-                      </Label>
-                      <div className="relative">
-                        <Coins className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground z-10" />
-                        <Select value={currency} onValueChange={setCurrency}>
-                          <SelectTrigger id="currency" className="h-12 pl-10 text-sm">
-                            <SelectValue placeholder="Select currency..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="NGN">NGN (₦) — Nigerian Naira</SelectItem>
-                            <SelectItem value="USD">USD ($) — US Dollar</SelectItem>
-                            <SelectItem value="GHS">GHS (₵) — Ghanaian Cedi</SelectItem>
-                            <SelectItem value="KES">KES (KSh) — Kenyan Shilling</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                </>
               )}
 
-              {/* Google account note */}
-              <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
-                <div className="mt-0.5 size-4 shrink-0">
-                  <svg viewBox="0 0 24 24" className="size-4">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                  </svg>
+              {/* Ecommerce or Hybrid: Retail Product Category */}
+              {(businessModel === "ecommerce" || businessModel === "hybrid") && (
+                <div className="space-y-2">
+                  <Label htmlFor="category" className="text-sm font-semibold">
+                    Product Retail Category
+                  </Label>
+                  <div className="relative">
+                    <Store className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground z-10" />
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger id="category" className="h-12 pl-10 text-sm">
+                        <SelectValue placeholder="Select product category..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ECOMMERCE_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            <span className="font-medium text-sm">{cat.label}</span>
+                            <span className="ml-2 text-xs text-muted-foreground">({cat.description})</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Pre-configures sample products and storefront collections tailored to your brand.
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Your Google account is linked to this workspace. You can switch between organizations anytime.
+              )}
+
+              {/* Ecommerce or Hybrid: Delivery Area */}
+              {(businessModel === "ecommerce" || businessModel === "hybrid") && (
+                <div className="space-y-2">
+                  <Label htmlFor="deliveryCity" className="text-sm font-semibold">
+                    Primary Delivery City / Area
+                  </Label>
+                  <div className="relative">
+                    <MapPin className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground z-10" />
+                    <Select value={deliveryCity} onValueChange={setDeliveryCity}>
+                      <SelectTrigger id="deliveryCity" className="h-12 pl-10 text-sm">
+                        <SelectValue placeholder="Select primary shipping region..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Lagos Mainland">Lagos (Mainland & Surulere)</SelectItem>
+                        <SelectItem value="Lagos Island">Lagos (Island, Lekki, Ikoyi & VI)</SelectItem>
+                        <SelectItem value="Abuja Express">Abuja (FCT Express)</SelectItem>
+                        <SelectItem value="Port Harcourt Central">Port Harcourt Central</SelectItem>
+                        <SelectItem value="Nationwide Standard">Nationwide Standard Shipping</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Sets up your first active shipping rate. You can add more delivery zones at any time.
+                  </p>
+                </div>
+              )}
+
+              {/* Currency */}
+              <div className="space-y-2">
+                <Label htmlFor="currency" className="text-sm font-semibold">
+                  Operating Currency
+                </Label>
+                <div className="relative">
+                  <Coins className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground z-10" />
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger id="currency" className="h-12 pl-10 text-sm">
+                      <SelectValue placeholder="Select currency..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NGN">NGN (₦) — Nigerian Naira</SelectItem>
+                      <SelectItem value="USD">USD ($) — US Dollar</SelectItem>
+                      <SelectItem value="GBP">GBP (£) — British Pound</SelectItem>
+                      <SelectItem value="EUR">EUR (€) — Euro</SelectItem>
+                      <SelectItem value="CAD">CAD ($) — Canadian Dollar</SelectItem>
+                      <SelectItem value="GHS">GHS (₵) — Ghanaian Cedi</SelectItem>
+                      <SelectItem value="KES">KES (KSh) — Kenyan Shilling</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Applied to your price tags, booking deposits, and WhatsApp checkout totals.
                 </p>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full h-12 text-sm font-semibold gap-2 shadow-sm cursor-pointer"
-                disabled={loading || !businessName.trim()}
-              >
-                {loading ? "Preparing your workspace..." : (
-                  <>
-                    {businessModel === "ecommerce" ? "Launch my online store" : "Launch my workspace"}
-                    <ArrowRight className="size-4" />
-                  </>
-                )}
-              </Button>
+              {/* Submit */}
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  disabled={loading || !businessName.trim()}
+                  className="w-full h-12 text-sm font-semibold gap-2 shadow-sm cursor-pointer"
+                >
+                  {loading ? (
+                    <>Configuring your workspace...</>
+                  ) : (
+                    <>
+                      Complete Setup & Enter Workspace
+                      <ArrowRight className="size-4" />
+                    </>
+                  )}
+                </Button>
+              </div>
             </form>
           )}
         </div>
-
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          You can always configure additional channels and features later in{" "}
-          <span className="font-semibold text-foreground">Settings</span>.
-        </p>
       </div>
     </div>
   );

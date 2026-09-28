@@ -19,12 +19,15 @@ import {
   Headphones,
   HeartPulse,
   Scissors,
+  ShoppingBag,
   SlidersHorizontal,
   Smile,
   Sparkles,
+  Store,
   Zap,
 } from "lucide-react";
 import type { PlanType } from "@/lib/db/types";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -62,6 +65,7 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [organizationName, setOrganizationName] = useState("");
   const [businessType, setBusinessType] = useState<BusinessPresetId>("barber");
+  const [businessModel, setBusinessModel] = useState<"services" | "ecommerce" | "hybrid">("services");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -148,6 +152,7 @@ export default function SignUpPage() {
           password: formPassword,
           organizationName: formOrg,
           businessType,
+          businessModel,
           plan: selectedPlan,
           billingCycle,
         }),
@@ -284,10 +289,54 @@ export default function SignUpPage() {
               className="h-11 text-base sm:text-sm"
             />
           </div>
+
+          {/* Business Model Selector */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">Primary Business Model</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setBusinessModel("services")}
+                className={cn(
+                  "rounded-lg border p-2 text-center transition-all cursor-pointer text-xs font-medium",
+                  businessModel === "services"
+                    ? "border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary"
+                    : "border-border hover:bg-muted text-muted-foreground hover:text-foreground",
+                )}
+              >
+                📅 Services & Booking
+              </button>
+              <button
+                type="button"
+                onClick={() => setBusinessModel("ecommerce")}
+                className={cn(
+                  "rounded-lg border p-2 text-center transition-all cursor-pointer text-xs font-medium",
+                  businessModel === "ecommerce"
+                    ? "border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary"
+                    : "border-border hover:bg-muted text-muted-foreground hover:text-foreground",
+                )}
+              >
+                🛍️ Online Store
+              </button>
+              <button
+                type="button"
+                onClick={() => setBusinessModel("hybrid")}
+                className={cn(
+                  "rounded-lg border p-2 text-center transition-all cursor-pointer text-xs font-medium",
+                  businessModel === "hybrid"
+                    ? "border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary"
+                    : "border-border hover:bg-muted text-muted-foreground hover:text-foreground",
+                )}
+              >
+                ✨ Both (Unified)
+              </button>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="businessType" className="text-sm font-semibold">
-                Business type / Industry
+                {businessModel === "ecommerce" ? "Store Category / Industry" : "Business type / Industry"}
               </Label>
               <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
                 Preset terminology
