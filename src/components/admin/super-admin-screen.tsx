@@ -39,6 +39,8 @@ import {
   Settings2,
   ShieldAlert,
   ShieldCheck,
+  ShoppingBag,
+  SlidersHorizontal,
   Smartphone,
   Sparkles,
   Trash2,
@@ -196,6 +198,87 @@ function planBadge(plan: AdminOrgStat["plan"]) {
       {labels[plan]}
     </span>
   );
+}
+
+/* ─────────────────────────────────────────────
+   Feature Categories for Governance
+───────────────────────────────────────────── */
+const FEATURE_CATEGORIES = [
+  {
+    title: "Core Storefront & Payment Rails",
+    items: [
+      {
+        key: "storefrontActive",
+        label: "Online Storefront Active",
+        description: "Public store availability on /[siteSlug]/shop. Turn off to temporarily pause public browsing.",
+      },
+      {
+        key: "bankTransfer",
+        label: "Direct Bank Transfer Checkout",
+        description: "Allow shoppers to pay directly into the merchant verified bank account with receipt upload.",
+      },
+    ],
+  },
+  {
+    title: "WhatsApp Automation & Notifications",
+    items: [
+      {
+        key: "whatsappCheckout",
+        label: "Automated WhatsApp Checkout",
+        description: "Instant guided checkout link sent to shopper WhatsApp (included in Base Plan).",
+      },
+      {
+        key: "whatsappAlerts",
+        label: "Automated WhatsApp Order Alerts",
+        description: "Automated customer notifications for order placement, packing, dispatch, and delivery.",
+      },
+      {
+        key: "aiShoppingAssistant",
+        label: "WhatsApp AI Shopping Assistant",
+        description: "Autonomous AI sales bot answering product inquiries and inventory questions on WhatsApp.",
+      },
+      {
+        key: "abandonedCartRecovery",
+        label: "Abandoned Cart Auto-Recovery",
+        description: "Automated WhatsApp follow-up sent 30 minutes after checkout drop-off.",
+      },
+    ],
+  },
+  {
+    title: "Marketing & Conversion Boosters",
+    items: [
+      {
+        key: "promoCodes",
+        label: "Discount Promo Codes",
+        description: "Coupon and discount code entry in slide-out cart drawer and checkout.",
+      },
+      {
+        key: "customerReviews",
+        label: "Customer Reviews & Ratings",
+        description: "Verified customer reviews and star ratings displayed on product detail pages.",
+      },
+    ],
+  },
+];
+
+function getPlanFeatureDefault(plan: string, key: string): boolean {
+  if (plan === "voice") return true;
+  if (plan === "engage") {
+    return [
+      "whatsappCheckout",
+      "whatsappAlerts",
+      "bankTransfer",
+      "storefrontActive",
+      "promoCodes",
+    ].includes(key);
+  }
+  // Core / free_org / Base Plan defaults
+  return [
+    "whatsappCheckout",
+    "whatsappAlerts",
+    "bankTransfer",
+    "storefrontActive",
+  ].includes(key);
 }
 
 /* ─────────────────────────────────────────────
@@ -804,6 +887,64 @@ export function SuperAdminScreen() {
     }
   };
 
+  const handleOpenManageFeatures = (org: AdminOrgStat) => {
+    setManageFeaturesOrg(org);
+    if (org.customProductLimit === null || org.customProductLimit === undefined) {
+      setEditProductLimitMode("plan");
+      setEditCustomLimitValue(50);
+    } else if (org.customProductLimit === -1) {
+      setEditProductLimitMode("unlimited");
+      setEditCustomLimitValue(50);
+    } else {
+      setEditProductLimitMode("custom");
+      setEditCustomLimitValue(org.customProductLimit);
+    }
+    setEditFeatureOverrides(org.featureOverrides || {});
+  };
+
+  const handleSaveFeatureOverrides = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manageFeaturesOrg) return;
+    setSavingFeatureOverrides(true);
+    try {
+      const customProductLimit =
+        editProductLimitMode === "plan"
+          ? null
+          : editProductLimitMode === "unlimited"
+          ? -1
+          : Number(editCustomLimitValue);
+
+      const res = await fetch(`/api/admin/organizations/${manageFeaturesOrg._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customProductLimit,
+          featureOverrides: editFeatureOverrides,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update store features and limits");
+
+      toast.success(`Features & limits updated for ${manageFeaturesOrg.name}`);
+      setOrganizations((prev) =>
+        prev.map((o) =>
+          o._id === manageFeaturesOrg._id
+            ? {
+                ...o,
+                customProductLimit,
+                featureOverrides: editFeatureOverrides,
+              }
+            : o,
+        ),
+      );
+      setManageFeaturesOrg(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update features");
+    } finally {
+      setSavingFeatureOverrides(false);
+    }
+  };
+
   const handleSaveWaGateway = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingWaGateway(true);
@@ -1250,14 +1391,29 @@ export function SuperAdminScreen() {
                                       {org.owner.email}
                                     </div>
                                   )}
-                                  <a
-                                    href={`/${org.slug}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center gap-0.5 font-mono text-2xs text-primary/80 hover:underline"
-                                  >
-                                    /{org.slug} <ExternalLink className="size-2.5" />
-                                  </a>
+                                  <div className="flex items-center gap-1.5 pt-0.5">
+                                    <a
+                                      href={`/${org.slug}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="inline-flex items-center gap-0.5 font-mono text-2xs text-primary/80 hover:underline"
+                                    >
+                                      /{org.slug} <ExternalLink className="size-2.5" />
+                                    </a>
+                                    {org.businessModel === "ecommerce" ? (
+                                      <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.2 text-2xs font-medium text-emerald-700">
+                                        <ShoppingBag className="size-2.5" /> Commerce
+                                      </span>
+                                    ) : org.businessModel === "hybrid" ? (
+                                      <span className="inline-flex items-center gap-0.5 rounded-full bg-indigo-50 px-1.5 py-0.2 text-2xs font-medium text-indigo-700">
+                                        <Layers className="size-2.5" /> Hybrid
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-0.5 rounded-full bg-sky-50 px-1.5 py-0.2 text-2xs font-medium text-sky-700">
+                                        <CalendarDays className="size-2.5" /> Services
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </TableCell>
@@ -1289,6 +1445,19 @@ export function SuperAdminScreen() {
                                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-2xs font-medium text-emerald-700">
                                   <UsersRound className="size-2.5" /> {org.stats.teamMembersCount}
                                 </span>
+                                {(org.businessModel === "ecommerce" || org.businessModel === "hybrid" || (org.stats.productsCount ?? 0) > 0) && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-2xs font-medium text-amber-700">
+                                    <ShoppingBag className="size-2.5" /> {org.stats.productsCount ?? 0}
+                                    {org.customProductLimit !== null && org.customProductLimit !== undefined
+                                      ? ` / ${org.customProductLimit === -1 ? "∞" : org.customProductLimit}`
+                                      : ` / ${org.plan === "voice" ? ecommerceLimits.pro : org.plan === "engage" ? ecommerceLimits.starter : ecommerceLimits.base}`}
+                                  </span>
+                                )}
+                                {typeof org.stats.ordersCount === "number" && org.stats.ordersCount > 0 && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-1.5 py-0.5 text-2xs font-medium text-violet-700">
+                                    <Receipt className="size-2.5" /> {org.stats.ordersCount}
+                                  </span>
+                                )}
                               </div>
                             </TableCell>
                             <TableCell>
@@ -1298,6 +1467,15 @@ export function SuperAdminScreen() {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-1.5">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleOpenManageFeatures(org)}
+                                  className="h-7 gap-1 border-border/60 text-xs-plus hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                                  title="Manage features, kill-switches and product limits"
+                                >
+                                  <SlidersHorizontal className="size-3" /> Features
+                                </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -3107,6 +3285,264 @@ export function SuperAdminScreen() {
                     <Save className="size-3.5" />
                   )}
                   Save Subscription
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ───── MANAGE FEATURES & QUOTAS DIALOG ───── */}
+      <Dialog open={manageFeaturesOrg !== null} onOpenChange={(open) => !open && setManageFeaturesOrg(null)}>
+        <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <SlidersHorizontal className="size-4" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-semibold">
+                  Feature Governance & Product Limits
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground">
+                  Manage granular feature toggles, kill-switches, and custom catalog limits for{" "}
+                  <span className="font-semibold text-foreground">{manageFeaturesOrg?.name}</span>
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {manageFeaturesOrg && (
+            <form onSubmit={handleSaveFeatureOverrides} className="space-y-5 pt-1">
+              {/* Store Summary Card */}
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="space-y-0.5">
+                  <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Store Details</span>
+                  <div className="font-medium text-foreground flex items-center gap-2">
+                    <span>{manageFeaturesOrg.name}</span>
+                    <span className="font-mono text-2xs text-muted-foreground">({manageFeaturesOrg.slug})</span>
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Plan Tier</span>
+                  <div>{planBadge(manageFeaturesOrg.plan)}</div>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Model</span>
+                  <div className="font-medium capitalize text-foreground">{manageFeaturesOrg.businessModel || "services"}</div>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Catalog</span>
+                  <div className="font-medium text-foreground">
+                    {manageFeaturesOrg.stats?.productsCount ?? 0} products uploaded
+                  </div>
+                </div>
+              </div>
+
+              {/* Product Quota Section */}
+              <div className="space-y-2.5 rounded-xl border border-border/60 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-xs font-semibold text-foreground">Product Upload Limit</Label>
+                    <p className="text-2xs text-muted-foreground">
+                      Override default plan allowance for this specific merchant.
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-mono font-semibold text-primary">
+                      Current:{" "}
+                      {editProductLimitMode === "plan"
+                        ? `${manageFeaturesOrg.plan === "voice" ? ecommerceLimits.pro : manageFeaturesOrg.plan === "engage" ? ecommerceLimits.starter : ecommerceLimits.base} (Plan Default)`
+                        : editProductLimitMode === "unlimited"
+                        ? "Unlimited"
+                        : `${editCustomLimitValue} products`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setEditProductLimitMode("plan")}
+                    className={cn(
+                      "flex flex-col items-start gap-1 rounded-lg border p-2.5 text-left transition-colors",
+                      editProductLimitMode === "plan"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border/60 hover:bg-muted/40 text-muted-foreground"
+                    )}
+                  >
+                    <span className="text-xs font-semibold text-foreground">Follow Plan</span>
+                    <span className="text-2xs">
+                      {manageFeaturesOrg.plan === "voice"
+                        ? `${ecommerceLimits.pro} products (Pro)`
+                        : manageFeaturesOrg.plan === "engage"
+                        ? `${ecommerceLimits.starter} products (Starter)`
+                        : `${ecommerceLimits.base} products (Base)`}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditProductLimitMode("custom")}
+                    className={cn(
+                      "flex flex-col items-start gap-1 rounded-lg border p-2.5 text-left transition-colors",
+                      editProductLimitMode === "custom"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border/60 hover:bg-muted/40 text-muted-foreground"
+                    )}
+                  >
+                    <span className="text-xs font-semibold text-foreground">Custom Allowance</span>
+                    <span className="text-2xs">Set specific product count</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditProductLimitMode("unlimited")}
+                    className={cn(
+                      "flex flex-col items-start gap-1 rounded-lg border p-2.5 text-left transition-colors",
+                      editProductLimitMode === "unlimited"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border/60 hover:bg-muted/40 text-muted-foreground"
+                    )}
+                  >
+                    <span className="text-xs font-semibold text-foreground">Unlimited</span>
+                    <span className="text-2xs">No product limit (-1)</span>
+                  </button>
+                </div>
+
+                {editProductLimitMode === "custom" && (
+                  <div className="pt-2 flex items-center gap-3">
+                    <Label htmlFor="customLimitVal" className="text-xs whitespace-nowrap">
+                      Allowed products:
+                    </Label>
+                    <Input
+                      id="customLimitVal"
+                      type="number"
+                      min={1}
+                      max={50000}
+                      value={editCustomLimitValue}
+                      onChange={(e) => setEditCustomLimitValue(Math.max(1, Number(e.target.value)))}
+                      className="h-8 w-32 font-mono text-xs"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Feature Switches Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Feature Governance & Kill-Switches
+                    </h4>
+                    <p className="text-2xs text-muted-foreground">
+                      Explicitly toggle on or kill-switch any feature for this merchant.
+                    </p>
+                  </div>
+                  {Object.keys(editFeatureOverrides).length > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditFeatureOverrides({})}
+                      className="h-6 text-2xs text-muted-foreground hover:text-foreground"
+                    >
+                      Reset All to Plan Defaults
+                    </Button>
+                  )}
+                </div>
+
+                {FEATURE_CATEGORIES.map((cat) => (
+                  <div key={cat.title} className="rounded-xl border border-border/60 overflow-hidden divide-y divide-border/40">
+                    <div className="bg-muted/30 px-3.5 py-1.5 text-2xs font-bold uppercase tracking-wider text-muted-foreground">
+                      {cat.title}
+                    </div>
+                    <div className="divide-y divide-border/40">
+                      {cat.items.map((feat) => {
+                        const planDefault = getPlanFeatureDefault(manageFeaturesOrg.plan, feat.key);
+                        const isOverridden = editFeatureOverrides[feat.key] !== undefined;
+                        const activeValue = isOverridden ? editFeatureOverrides[feat.key] : planDefault;
+
+                        return (
+                          <div
+                            key={feat.key}
+                            className={cn(
+                              "flex items-center justify-between gap-4 p-3 transition-colors",
+                              !activeValue && "bg-destructive/5"
+                            )}
+                          >
+                            <div className="space-y-0.5 pr-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-foreground">{feat.label}</span>
+                                {isOverridden ? (
+                                  <span className={cn(
+                                    "inline-flex items-center rounded-full px-1.5 py-0.2 text-2xs font-semibold",
+                                    activeValue
+                                      ? "bg-emerald-500/10 text-emerald-600"
+                                      : "bg-destructive/10 text-destructive"
+                                  )}>
+                                    {activeValue ? "Custom ON" : "Kill-switched"}
+                                  </span>
+                                ) : (
+                                  <span className="text-2xs text-muted-foreground">
+                                    (Plan default: {planDefault ? "Active" : "Disabled"})
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-2xs text-muted-foreground">{feat.description}</p>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              {isOverridden && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditFeatureOverrides((prev) => {
+                                      const next = { ...prev };
+                                      delete next[feat.key];
+                                      return next;
+                                    });
+                                  }}
+                                  className="text-2xs text-muted-foreground underline hover:text-foreground"
+                                  title="Revert to plan default"
+                                >
+                                  Revert
+                                </button>
+                              )}
+                              <Switch
+                                checked={activeValue}
+                                onCheckedChange={(checked) => {
+                                  setEditFeatureOverrides((prev) => ({
+                                    ...prev,
+                                    [feat.key]: checked,
+                                  }));
+                                }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <DialogFooter className="gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setManageFeaturesOrg(null)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" size="sm" disabled={savingFeatureOverrides} className="gap-1.5">
+                  {savingFeatureOverrides ? (
+                    <LoaderCircle className="size-3.5 animate-spin" />
+                  ) : (
+                    <Save className="size-3.5" />
+                  )}
+                  Save Configuration
                 </Button>
               </DialogFooter>
             </form>

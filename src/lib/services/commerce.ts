@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/db/mongodb";
-import type { DbProduct, DbCollection, DbOrder, DbShippingZone } from "@/lib/db/types";
-import { getEffectiveProductLimit } from "@/lib/services/commerce-quota";
+import type { DbProduct, DbCollection, DbOrder, DbShippingZone, DbPromoCode, DbProductReview } from "@/lib/db/types";
+import { getEffectiveProductLimit, isFeatureActive } from "@/lib/services/commerce-quota";
 import { getOrganizationByIdOrSlug } from "@/lib/services/organizations";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -415,4 +415,172 @@ export async function createStorefrontOrder(
   const order = await createOrder(orgId, orderData);
   return { order, organization: org };
 }
+
+// ─── PROMO CODES ─────────────────────────────────────────────────────────────
+
+export async function listPromoCodes(orgId: string) {
+  const db = await getDb();
+  const codes = await db
+    .collection<DbPromoCode>("promoCodes")
+    .find({ organizationId: orgId })
+    .sort({ createdAt: -1 })
+    .toArray();
+  return codes.map((c) => ({ ...c, _id: String(c._id) }));
+}
+
+export async function createPromoCode(
+  orgId: string,
+  data: Omit<DbPromoCode, "_id" | "organizationId" | "usedCount" | "createdAt" | "updatedAt">,
+) {
+  const db = await getDb();
+  const now = Date.now();
+  const doc: DbPromoCode = {
+    ...data,
+    code: data.code.trim().toUpperCase(),
+    organizationId: orgId,
+    usedCount: 0,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const result = await db.collection<DbPromoCode>("promoCodes").insertOne(doc as any);
+  return { ...doc, _id: String(result.insertedId) };
+}
+
+export async function deletePromoCode(orgId: string, promoId: string) {
+  const db = await getDb();
+  const res = await db.collection<DbPromoCode>("promoCodes").deleteOne({
+    _id: toId(promoId),
+    organizationId: orgId,
+  });
+  return res.deletedCount > 0;
+}
+
+export async function validatePromoCode(
+  siteSlug: string,
+  code: string,
+  subtotalMinor: number,
+): Promise<{ valid: boolean; discountMinor: number; error?: string; promoCode?: string }> {
+  const { getPublishedBySlug } = await import("@/lib/services/publicSite");
+  const published = await getPublishedBySlug(siteSlug);
+  if (!published) return { valid: false, discountMinor: 0, error: "Store not found" };
+
+  const org = published.organization;
+  const orgId = String(org._id || org.clerkOrgId);
+
+  // Check feature permission
+  if (!isFeatureActive(org as any, "promoCodes")) {
+    return { valid: false, discountMinor: 0, error: "Promo codes are not active on this store." };
+  }
+
+  const cleanCode = code.trim().toUpperCase();
+  const db = await getDb();
+  const promo = await db.collection<DbPromoCode>("promoCodes").findOne({
+    organizationId: orgId,
+    code: cleanCode,
+    active: true,
+  });
+
+  if (!promo) {
+    return { valid: false, discountMinor: 0, error: "Invalid promo code" };
+  }
+
+  if (promo.expiresAt && promo.expiresAt < Date.now()) {
+    return { valid: false, discountMinor: 0, error: "This promo code has expired" };
+  }
+
+  if (promo.maxUses && promo.usedCount >= promo.maxUses) {
+    return { valid: false, discountMinor: 0, error: "Promo code usage limit reached" };
+  }
+
+  if (promo.minSpendMinor && subtotalMinor < promo.minSpendMinor) {
+    const minMajor = promo.minSpendMinor / 100;
+    return {
+      valid: false,
+      discountMinor: 0,
+      error: `Minimum order amount of ₦${minMajor.toLocaleString()} required for this code`,
+    };
+  }
+
+  let discountMinor = 0;
+  if (promo.discountType === "percentage") {
+    discountMinor = Math.round((subtotalMinor * promo.discountValue) / 100);
+  } else {
+    discountMinor = Math.min(subtotalMinor, promo.discountValue);
+  }
+
+  return {
+    valid: true,
+    discountMinor,
+    promoCode: promo.code,
+  };
+}
+
+// ─── REVIEWS & RATINGS ───────────────────────────────────────────────────────
+
+export async function listProductReviews(siteSlug: string, productId: string) {
+  const { getPublishedBySlug } = await import("@/lib/services/publicSite");
+  const published = await getPublishedBySlug(siteSlug);
+  if (!published) return { reviews: [], averageRating: 5, totalReviews: 0 };
+
+  const org = published.organization;
+  const orgId = String(org._id || org.clerkOrgId);
+
+  const db = await getDb();
+  const reviews = await db
+    .collection<DbProductReview>("productReviews")
+    .find({ organizationId: orgId, productId, active: true })
+    .sort({ createdAt: -1 })
+    .toArray();
+
+  const totalReviews = reviews.length;
+  const averageRating =
+    totalReviews > 0
+      ? Number((reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews).toFixed(1))
+      : 5;
+
+  return {
+    reviews: reviews.map((r) => ({ ...r, _id: String(r._id) })),
+    averageRating,
+    totalReviews,
+  };
+}
+
+export async function createProductReview(
+  siteSlug: string,
+  data: {
+    productId: string;
+    customerName: string;
+    rating: number;
+    title?: string;
+    comment: string;
+  },
+) {
+  const { getPublishedBySlug } = await import("@/lib/services/publicSite");
+  const published = await getPublishedBySlug(siteSlug);
+  if (!published) throw new Error("Store not found");
+
+  const org = published.organization;
+  const orgId = String(org._id || org.clerkOrgId);
+
+  if (!isFeatureActive(org as any, "customerReviews")) {
+    throw new Error("Customer reviews are currently disabled on this store");
+  }
+
+  const db = await getDb();
+  const doc: DbProductReview = {
+    organizationId: orgId,
+    productId: data.productId,
+    customerName: data.customerName.trim() || "Verified Shopper",
+    rating: Math.min(5, Math.max(1, Math.round(data.rating))),
+    title: data.title?.trim(),
+    comment: data.comment.trim(),
+    verifiedPurchase: true,
+    active: true,
+    createdAt: Date.now(),
+  };
+
+  const result = await db.collection<DbProductReview>("productReviews").insertOne(doc as any);
+  return { ...doc, _id: String(result.insertedId) };
+}
+
 

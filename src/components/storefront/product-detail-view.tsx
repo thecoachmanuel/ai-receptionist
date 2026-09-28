@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -8,12 +8,14 @@ import {
   Check,
   ChevronRight,
   MessageCircle,
+  MessageSquareQuote,
   Minus,
   Package,
   Plus,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
+  Star,
   Truck,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -21,6 +23,15 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/components/storefront/cart-context";
@@ -77,6 +88,67 @@ export function ProductDetailView({
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
+
+  // Reviews State
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [averageRating, setAverageRating] = useState(5.0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [newRating, setNewRating] = useState(5);
+  const [newName, setNewName] = useState("");
+  const [newTitle, setNewTitle] = useState("");
+  const [newComment, setNewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [siteSlug, product._id]);
+
+  const fetchReviews = async () => {
+    try {
+      const res = await fetch("/api/data/publicCommerce/getProductReviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ siteSlug, productId: product._id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setReviews(data.reviews || []);
+        if (typeof data.averageRating === "number") setAverageRating(data.averageRating);
+        if (typeof data.totalReviews === "number") setTotalReviews(data.totalReviews);
+      }
+    } catch (_) {}
+  };
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    setSubmittingReview(true);
+    try {
+      const res = await fetch("/api/data/publicCommerce/submitReview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          siteSlug,
+          productId: product._id,
+          customerName: newName.trim() || "Verified Shopper",
+          rating: newRating,
+          title: newTitle.trim(),
+          comment: newComment.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to post review");
+      toast.success("Thank you! Your review has been submitted.");
+      setReviewModalOpen(false);
+      setNewTitle("");
+      setNewComment("");
+      fetchReviews();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to submit review");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   const variants = product.variants || [];
   const activeVariant = variants[selectedVariantIndex] || variants[0];
@@ -212,6 +284,25 @@ export function ProductDetailView({
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1">
                 {product.name}
               </h1>
+              <div className="flex items-center gap-2 mt-1.5">
+                <div className="flex items-center text-amber-500">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={cn(
+                        "size-3.5",
+                        star <= Math.round(averageRating)
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-muted-foreground/30"
+                      )}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs font-semibold text-foreground">{averageRating.toFixed(1)}</span>
+                <span className="text-2xs text-muted-foreground">
+                  ({totalReviews} {totalReviews === 1 ? "review" : "reviews"})
+                </span>
+              </div>
             </div>
 
             {/* Price block */}
@@ -372,6 +463,92 @@ export function ProductDetailView({
         </div>
       </div>
 
+      {/* ── Customer Reviews & Ratings ──────────────────────────────────── */}
+      <div className="space-y-6 border-t pt-8">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-bold text-foreground">Verified Customer Reviews</h2>
+            <p className="text-xs text-muted-foreground">
+              Real feedback from shoppers who purchased this item.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setReviewModalOpen(true)}
+            className="text-xs gap-1.5"
+          >
+            <MessageSquareQuote className="size-3.5" /> Write a Review
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Review Summary Score */}
+          <div className="rounded-xl border border-border/60 bg-muted/20 p-5 flex flex-col items-center justify-center text-center space-y-2">
+            <div className="text-3xl font-extrabold text-foreground">{averageRating.toFixed(1)}</div>
+            <div className="flex items-center text-amber-400">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star
+                  key={s}
+                  className={cn(
+                    "size-4",
+                    s <= Math.round(averageRating) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
+                  )}
+                />
+              ))}
+            </div>
+            <p className="text-2xs text-muted-foreground">
+              Based on {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
+            </p>
+          </div>
+
+          {/* Reviews list */}
+          <div className="md:col-span-2 space-y-3">
+            {reviews.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border/70 p-6 text-center text-muted-foreground space-y-2">
+                <p className="text-xs">No reviews yet. Be the first to review this product!</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setReviewModalOpen(true)}
+                  className="text-xs text-primary"
+                >
+                  Leave a Review
+                </Button>
+              </div>
+            ) : (
+              reviews.map((r: any) => (
+                <div key={r._id} className="rounded-xl border border-border/60 p-4 space-y-2 bg-card">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-foreground">{r.customerName}</span>
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.2 text-2xs font-medium text-emerald-700">
+                        <Check className="size-2.5 mr-0.5" /> Verified Buyer
+                      </span>
+                    </div>
+                    <div className="flex items-center text-amber-400">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          className={cn(
+                            "size-3",
+                            s <= r.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  {r.title && <p className="text-xs font-semibold text-foreground">{r.title}</p>}
+                  <p className="text-xs text-muted-foreground leading-relaxed">{r.comment}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* ── Related Products ────────────────────────────────────────────── */}
       {relatedProducts.length > 0 && (
         <div className="space-y-4 border-t pt-8">
@@ -409,6 +586,101 @@ export function ProductDetailView({
           </div>
         </div>
       )}
+
+      {/* Write Review Dialog */}
+      <Dialog open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
+        <DialogContent className="max-w-md">
+          <form onSubmit={handleSubmitReview} className="space-y-4">
+            <DialogHeader>
+              <DialogTitle className="text-base font-bold">Write a Customer Review</DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                Share your experience with <span className="font-semibold text-foreground">{product.name}</span>.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3">
+              {/* Rating Stars */}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Your Rating</Label>
+                <div className="flex items-center gap-1.5 pt-1">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setNewRating(s)}
+                      className="p-1 hover:scale-110 transition-transform"
+                    >
+                      <Star
+                        className={cn(
+                          "size-5",
+                          s <= newRating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
+                        )}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Customer Name */}
+              <div className="space-y-1">
+                <Label className="text-xs">Your Name</Label>
+                <Input
+                  required
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="e.g. Chioma Okafor"
+                  className="text-xs"
+                />
+              </div>
+
+              {/* Review Title */}
+              <div className="space-y-1">
+                <Label className="text-xs">Headline / Title</Label>
+                <Input
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="e.g. Excellent fit and top quality fabric!"
+                  className="text-xs"
+                />
+              </div>
+
+              {/* Review Comment */}
+              <div className="space-y-1">
+                <Label className="text-xs">Your Review</Label>
+                <textarea
+                  required
+                  rows={3}
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Tell other shoppers what you liked about this item..."
+                  className="w-full rounded-md border border-input bg-background p-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setReviewModalOpen(false)}
+                className="text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={submittingReview || !newComment.trim()}
+                className="text-xs"
+              >
+                {submittingReview ? "Submitting…" : "Post Review"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+

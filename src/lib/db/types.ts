@@ -494,3 +494,32 @@ export type DbCart = {
   promoCode?: string;
   updatedAt: number;
 };
+
+export type DbPromoCode = {
+  _id?: ObjectId | string;
+  organizationId: string;
+  code: string;
+  discountType: "percentage" | "fixed";
+  discountValue: number;
+  minSpendMinor?: number;
+  maxUses?: number;
+  usedCount: number;
+  expiresAt?: number;
+  active: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type DbProductReview = {
+  _id?: ObjectId | string;
+  organizationId: string;
+  productId: string;
+  customerName: string;
+  rating: number;
+  title?: string;
+  comment: string;
+  verifiedPurchase: boolean;
+  active: boolean;
+  createdAt: number;
+};
+

@@ -17,8 +17,10 @@ import {
   Plus,
   ShoppingBag,
   Store,
+  Tag,
   Trash2,
   Truck,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -112,6 +114,52 @@ export function StorefrontShell({
     "whatsapp_bank_transfer" | "whatsapp_paystack" | "cash_on_delivery"
   >("whatsapp_bank_transfer");
 
+  // Promo Code State
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{
+    code: string;
+    discountMinor: number;
+  } | null>(null);
+  const [validatingPromo, setValidatingPromo] = useState(false);
+
+  const discountMinor = appliedPromo?.discountMinor ?? 0;
+  const finalTotalMinor = Math.max(0, totalMinor - discountMinor);
+
+  const handleApplyPromo = async () => {
+    if (!promoCodeInput.trim()) return;
+    setValidatingPromo(true);
+    try {
+      const res = await fetch("/api/data/publicCommerce/validatePromoCode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          siteSlug,
+          code: promoCodeInput.trim(),
+          subtotalMinor,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.valid) {
+        toast.error(data.error || "Invalid promo code");
+        return;
+      }
+      setAppliedPromo({
+        code: data.promoCode,
+        discountMinor: data.discountMinor,
+      });
+      toast.success(`Promo code ${data.promoCode} applied!`);
+    } catch {
+      toast.error("Failed to apply promo code");
+    } finally {
+      setValidatingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoCodeInput("");
+  };
+
   const activeZones = shippingZones.filter((z: any) => z.active !== false);
 
   const copyAccountNumber = (acc: string) => {
@@ -148,8 +196,8 @@ export function StorefrontShell({
         })),
         subtotalMinor,
         deliveryFeeMinor: shippingFeeMinor,
-        discountMinor: 0,
-        totalMinor,
+        discountMinor,
+        totalMinor: finalTotalMinor,
         currency,
         status: "pending" as const,
         paymentStatus: "unpaid" as const,
@@ -196,7 +244,8 @@ export function StorefrontShell({
           `📍 *Delivery:* ${street.trim()}, ${city.trim()}, ${stateName.trim()}\n\n` +
           `🛒 *ITEMS:*\n${itemsList}\n\n` +
           `📦 *Delivery Fee:* ${formatMoney(shippingFeeMinor, currency)} (${selectedShippingZone?.name || "Standard"})\n` +
-          `💰 *TOTAL:* *${formatMoney(totalMinor, currency)}*\n` +
+          (discountMinor > 0 ? `🏷️ *Discount (${appliedPromo?.code}):* -${formatMoney(discountMinor, currency)}\n` : "") +
+          `💰 *TOTAL:* *${formatMoney(finalTotalMinor, currency)}*\n` +
           `💳 *Payment Method:* ${paymentMethod.replace(/_/g, " ").toUpperCase()}\n\n` +
           `🔗 Track: ${window.location.origin}/${siteSlug}/orders/${order.orderNumber}`,
       );
@@ -465,6 +514,48 @@ export function StorefrontShell({
                 </div>
               )}
 
+              {/* Promo Code Input in Cart Drawer */}
+              <div className="border-t bg-muted/10 px-6 py-3 space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                  <Tag className="size-3.5 text-primary" /> Promo / Discount Code
+                </div>
+                {appliedPromo ? (
+                  <div className="flex items-center justify-between rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-emerald-600">{appliedPromo.code}</span>
+                      <span className="text-2xs text-emerald-700">(-{formatMoney(appliedPromo.discountMinor, currency)})</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemovePromo}
+                      className="text-muted-foreground hover:text-destructive"
+                      title="Remove code"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Enter promo code"
+                      value={promoCodeInput}
+                      onChange={(e) => setPromoCodeInput(e.target.value)}
+                      className="h-8 text-xs font-mono uppercase bg-background"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleApplyPromo}
+                      disabled={validatingPromo || !promoCodeInput.trim()}
+                      className="h-8 text-xs"
+                    >
+                      {validatingPromo ? <Loader2 className="size-3 animate-spin" /> : "Apply"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
               {/* Order Summary & Checkout Trigger */}
               <SheetFooter className="border-t bg-background px-6 py-4 space-y-3">
                 <div className="w-full space-y-1.5 text-xs">
@@ -480,9 +571,15 @@ export function StorefrontShell({
                         : "Calculated at checkout"}
                     </span>
                   </div>
+                  {discountMinor > 0 && (
+                    <div className="flex justify-between text-emerald-600 font-medium">
+                      <span>Discount ({appliedPromo?.code})</span>
+                      <span>-{formatMoney(discountMinor, currency)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between pt-1 text-sm font-bold text-foreground">
                     <span>Total</span>
-                    <span>{formatMoney(totalMinor, currency)}</span>
+                    <span>{formatMoney(finalTotalMinor, currency)}</span>
                   </div>
                 </div>
 
@@ -674,11 +771,27 @@ export function StorefrontShell({
             </div>
 
             {/* Total Review */}
-            <div className="rounded-lg bg-muted/40 p-3 flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Total to pay:</span>
-              <span className="text-base font-bold text-primary">
-                {formatMoney(totalMinor, currency)}
-              </span>
+            <div className="rounded-lg bg-muted/40 p-3 space-y-1 text-xs">
+              <div className="flex justify-between text-muted-foreground">
+                <span>Subtotal:</span>
+                <span>{formatMoney(subtotalMinor, currency)}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Delivery:</span>
+                <span>{formatMoney(shippingFeeMinor, currency)}</span>
+              </div>
+              {discountMinor > 0 && (
+                <div className="flex justify-between text-emerald-600 font-medium">
+                  <span>Discount ({appliedPromo?.code}):</span>
+                  <span>-{formatMoney(discountMinor, currency)}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center pt-1 border-t text-sm font-bold">
+                <span className="text-foreground">Total to pay:</span>
+                <span className="text-base text-primary">
+                  {formatMoney(finalTotalMinor, currency)}
+                </span>
+              </div>
             </div>
 
             <DialogFooter className="gap-2 sm:gap-0">

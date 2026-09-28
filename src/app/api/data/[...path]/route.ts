@@ -103,6 +103,25 @@ export async function POST(
       return NextResponse.json(data);
     }
 
+    if (endpoint === "publicCommerce/validatePromoCode") {
+      const data = await commerceService.validatePromoCode(
+        body.siteSlug,
+        body.code,
+        body.subtotalMinor,
+      );
+      return NextResponse.json(data);
+    }
+
+    if (endpoint === "publicCommerce/getProductReviews") {
+      const data = await commerceService.listProductReviews(body.siteSlug, body.productId);
+      return NextResponse.json(data);
+    }
+
+    if (endpoint === "publicCommerce/submitReview") {
+      const data = await commerceService.createProductReview(body.siteSlug, body as any);
+      return NextResponse.json(data);
+    }
+
     // Require session authentication for dashboard endpoints
     const session = await getSession();
     if (!session || !session.user || !session.organization) {
@@ -380,6 +399,19 @@ export async function POST(
       }
       case "commerce/deleteShippingZone": {
         const data = await commerceService.deleteShippingZone(orgId, body.zoneId);
+        return NextResponse.json({ success: data });
+      }
+      // ─── Commerce: Promo Codes ───────────────────────────────────────────
+      case "commerce/listPromoCodes": {
+        const data = await commerceService.listPromoCodes(orgId);
+        return NextResponse.json(data);
+      }
+      case "commerce/createPromoCode": {
+        const data = await commerceService.createPromoCode(orgId, body as any);
+        return NextResponse.json(data);
+      }
+      case "commerce/deletePromoCode": {
+        const data = await commerceService.deletePromoCode(orgId, body.promoId);
         return NextResponse.json({ success: data });
       }
       default:
