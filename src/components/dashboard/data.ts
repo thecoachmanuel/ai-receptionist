@@ -455,6 +455,7 @@ export const dashboardApi = {
     listShippingZones: "commerce/listShippingZones" as any,
     createShippingZone: "commerce/createShippingZone" as any,
     updateShippingZone: "commerce/updateShippingZone" as any,
+    deleteShippingZone: "commerce/deleteShippingZone" as any,
   },
 };
 

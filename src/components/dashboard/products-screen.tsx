@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useRef, type FormEvent } from "react";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
 import {
   AlertTriangle,
@@ -8,13 +8,16 @@ import {
   ChevronDown,
   ChevronUp,
   ImagePlus,
+  Loader2,
   Package,
   Pencil,
   Plus,
   Trash2,
   TrendingUp,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
 
 function generateId(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
@@ -323,6 +326,9 @@ function ProductDialog({
   );
   const [imageUrls, setImageUrls] = useState<string[]>(product?.images ?? []);
   const [imageInput, setImageInput] = useState("");
+  const [uploadTab, setUploadTab] = useState<"upload" | "url">("upload");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadFiles, uploading: imageUploading } = useImageUpload();
 
   const currency = organization?.currency ?? "NGN";
 
@@ -489,26 +495,99 @@ function ProductDialog({
 
           {/* Images */}
           <div className="space-y-2">
-            <Label className="text-sm">Product images (URLs)</Label>
-            <div className="flex gap-2">
-              <Input
-                value={imageInput}
-                onChange={(e) => setImageInput(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                className="text-sm"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addImage();
-                  }
-                }}
-              />
-              <Button type="button" variant="outline" size="sm" onClick={addImage} className="shrink-0 gap-1 text-xs">
-                <ImagePlus className="size-3.5" /> Add
-              </Button>
+            <Label className="text-sm">Product images</Label>
+            {/* Tab switcher */}
+            <div className="flex gap-1 rounded-lg bg-muted p-1">
+              {(["upload", "url"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setUploadTab(tab)}
+                  className={cn(
+                    "flex-1 rounded-md py-1 text-xs font-medium transition-all",
+                    uploadTab === tab
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {tab === "upload" ? "📁 Upload file" : "🔗 Paste URL"}
+                </button>
+              ))}
             </div>
+
+            {uploadTab === "upload" ? (
+              <div
+                className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/30 p-6 text-center transition-colors hover:border-primary/50 hover:bg-primary/5"
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  const files = Array.from(e.dataTransfer.files).filter((f) =>
+                    f.type.startsWith("image/"),
+                  );
+                  if (!files.length) return;
+                  const urls = await uploadFiles(files);
+                  setImageUrls((prev) => [...prev, ...urls]);
+                }}
+              >
+                {imageUploading ? (
+                  <Loader2 className="size-6 animate-spin text-primary" />
+                ) : (
+                  <Upload className="size-6 text-muted-foreground" />
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {imageUploading
+                    ? "Uploading…"
+                    : "Drag & drop images here, or click to select"}
+                </p>
+                <p className="text-2xs text-muted-foreground/60">PNG, JPG, WEBP up to 10 MB each</p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={async (e) => {
+                    const files = e.target.files;
+                    if (!files?.length) return;
+                    const urls = await uploadFiles(files);
+                    setImageUrls((prev) => [...prev, ...urls]);
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  value={imageInput}
+                  onChange={(e) => setImageInput(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  className="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const url = imageInput.trim();
+                      if (url) { setImageUrls((p) => [...p, url]); setImageInput(""); }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const url = imageInput.trim();
+                    if (url) { setImageUrls((p) => [...p, url]); setImageInput(""); }
+                  }}
+                  className="shrink-0 gap-1 text-xs"
+                >
+                  <ImagePlus className="size-3.5" /> Add
+                </Button>
+              </div>
+            )}
+
             {imageUrls.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 pt-1">
                 {imageUrls.map((url, i) => (
                   <div key={i} className="group relative size-16 overflow-hidden rounded-md border">
                     <img src={url} alt="" className="size-full object-cover" />

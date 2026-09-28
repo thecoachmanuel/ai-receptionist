@@ -15,6 +15,7 @@ import * as organizationsService from "@/lib/services/organizations";
 import * as publicSiteService from "@/lib/services/publicSite";
 import * as teamService from "@/lib/services/team";
 import * as commerceService from "@/lib/services/commerce";
+import * as whatsappNotifications from "@/lib/services/whatsapp-notifications";
 
 export async function POST(
   request: Request,
@@ -74,6 +75,31 @@ export async function POST(
         body.confirmationCode,
         body.phone,
       );
+      return NextResponse.json(data);
+    }
+
+    // ─── Public Commerce Endpoints (Storefront) ───────────────────────────
+    if (endpoint === "publicCommerce/getStorefront") {
+      const data = await commerceService.getStorefrontData(body.siteSlug);
+      return NextResponse.json(data);
+    }
+
+    if (endpoint === "publicCommerce/createOrder") {
+      const { order, organization } = await commerceService.createStorefrontOrder(
+        body.siteSlug,
+        body.orderData,
+      );
+      if (order) {
+        whatsappNotifications.sendOrderNotification(
+          String(organization._id || organization.clerkOrgId),
+          order as any,
+        ).catch(() => {});
+      }
+      return NextResponse.json(order);
+    }
+
+    if (endpoint === "publicCommerce/getOrder") {
+      const data = await commerceService.getOrderByNumber(body.orderNumber, body.siteSlug);
       return NextResponse.json(data);
     }
 
@@ -329,6 +355,10 @@ export async function POST(
           body.paymentStatus,
           body.extra,
         );
+        // Fire-and-forget WhatsApp notification — never blocks the response
+        if (data) {
+          whatsappNotifications.sendOrderNotification(orgId, data as any).catch(() => {});
+        }
         return NextResponse.json(data);
       }
       case "commerce/getOrderStats": {
@@ -347,6 +377,10 @@ export async function POST(
       case "commerce/updateShippingZone": {
         const data = await commerceService.updateShippingZone(orgId, body.zoneId, body as any);
         return NextResponse.json(data);
+      }
+      case "commerce/deleteShippingZone": {
+        const data = await commerceService.deleteShippingZone(orgId, body.zoneId);
+        return NextResponse.json({ success: data });
       }
       default:
         return NextResponse.json({ error: `Unknown endpoint: ${endpoint}` }, { status: 404 });

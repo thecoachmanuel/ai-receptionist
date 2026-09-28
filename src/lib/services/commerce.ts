@@ -330,3 +330,89 @@ export async function updateShippingZone(
   });
   return updated ? { ...updated, _id: String(updated._id) } : null;
 }
+
+export async function deleteShippingZone(orgId: string, zoneId: string) {
+  const db = await getDb();
+  const res = await db.collection<DbShippingZone>("shippingZones").deleteOne({
+    _id: toId(zoneId),
+    organizationId: orgId,
+  });
+  return res.deletedCount > 0;
+}
+
+// ─── PUBLIC STOREFRONT HELPERS ────────────────────────────────────────────────
+
+export async function getStorefrontData(siteSlug: string) {
+  const { getPublishedBySlug } = await import("@/lib/services/publicSite");
+  const published = await getPublishedBySlug(siteSlug);
+  if (!published) return null;
+
+  const org = published.organization;
+  const orgId = String(org._id || org.clerkOrgId);
+
+  const [products, collections, shippingZones] = await Promise.all([
+    listProducts(orgId, { includeInactive: false, limit: 100 }),
+    listCollections(orgId, false),
+    listShippingZones(orgId),
+  ]);
+
+  const siteConfig = (published.site as any)?.published || (published.site as any)?.draft;
+  const deposit = siteConfig?.booking?.deposit;
+  const bankDetails =
+    deposit?.bankName && deposit?.accountNumber
+      ? {
+          bankName: deposit.bankName,
+          accountNumber: deposit.accountNumber,
+          accountName: deposit.accountName || org.name,
+          instructions: deposit.instructions,
+        }
+      : null;
+
+  return {
+    organization: {
+      _id: orgId,
+      name: org.name,
+      slug: org.slug || siteSlug,
+      currency: org.currency || "NGN",
+      businessModel: (org as any).businessModel || "ecommerce",
+      featureOverrides: (org as any).featureOverrides || {},
+      whatsappInstance: (org as any).whatsappInstance,
+    },
+    siteConfig,
+    products,
+    collections,
+    shippingZones,
+    bankDetails,
+  };
+}
+
+export async function getOrderByNumber(orderNumber: string, orgIdOrSlug?: string) {
+  const db = await getDb();
+  const query: Record<string, any> = { orderNumber: orderNumber.trim().toUpperCase() };
+  if (orgIdOrSlug) {
+    const org = await getOrganizationByIdOrSlug(orgIdOrSlug);
+    if (org) {
+      query.organizationId = String(org._id || org.clerkOrgId);
+    }
+  }
+
+  const order = await db.collection<DbOrder>("orders").findOne(query);
+  if (!order) return null;
+  return { ...order, _id: String(order._id) };
+}
+
+export async function createStorefrontOrder(
+  siteSlug: string,
+  orderData: Omit<DbOrder, "_id" | "organizationId" | "orderNumber" | "createdAt" | "updatedAt">,
+) {
+  const { getPublishedBySlug } = await import("@/lib/services/publicSite");
+  const published = await getPublishedBySlug(siteSlug);
+  if (!published) throw new Error("Storefront not found");
+
+  const org = published.organization;
+  const orgId = String(org._id || org.clerkOrgId);
+
+  const order = await createOrder(orgId, orderData);
+  return { order, organization: org };
+}
+

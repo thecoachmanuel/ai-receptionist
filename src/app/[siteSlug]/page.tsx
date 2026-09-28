@@ -111,6 +111,48 @@ export default async function PublicSitePage({
       );
     }
 
+    if ((publishedSite.organization as any).businessModel === "ecommerce") {
+      const { getStorefrontData } = await import("@/lib/services/commerce");
+      const { CartProvider } = await import("@/components/storefront/cart-context");
+      const { StorefrontShell } = await import("@/components/storefront/storefront-shell");
+      const { StorefrontHome } = await import("@/components/storefront/storefront-home");
+
+      const data = await getStorefrontData(siteSlug);
+      if (data) {
+        return (
+          <CartProvider siteSlug={siteSlug}>
+            <StorefrontShell
+              siteSlug={siteSlug}
+              storeName={data.organization.name}
+              logoUrl={data.siteConfig?.logoUrl}
+              currency={data.organization.currency}
+              shippingZones={data.shippingZones as any}
+              bankDetails={data.bankDetails}
+              whatsappPhone={
+                data.organization.whatsappInstance?.phone ||
+                data.siteConfig?.contact?.whatsapp
+              }
+            >
+              <StorefrontHome
+                siteSlug={siteSlug}
+                storeName={data.organization.name}
+                headline={data.siteConfig?.headline}
+                subheadline={data.siteConfig?.subheadline}
+                heroImageUrl={data.siteConfig?.heroImageUrl}
+                products={data.products}
+                collections={data.collections}
+                currency={data.organization.currency}
+                whatsappPhone={
+                  data.organization.whatsappInstance?.phone ||
+                  data.siteConfig?.contact?.whatsapp
+                }
+              />
+            </StorefrontShell>
+          </CartProvider>
+        );
+      }
+    }
+
     const agentFeatures = agentSessionConfig && !isSubscriptionExpired
       ? await getAgentFeatures(agentSessionConfig.clerkOrgId || agentSessionConfig.organizationId)
       : { text: false, voice: false };

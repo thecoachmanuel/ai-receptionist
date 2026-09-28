@@ -27,6 +27,7 @@ import {
   normalizeBooking,
   type Booking,
 } from "@/components/dashboard/data";
+import { CommerceOverviewScreen } from "@/components/dashboard/commerce-overview-screen";
 import { FeatureEntitlementCard } from "@/components/dashboard/feature-gates";
 import {
   EmptyState,
@@ -63,6 +64,11 @@ function BookingRow({ booking }: { booking: Booking }) {
 
 export function OverviewScreen() {
   const { organization, terminology, orgSlug } = useWorkspace();
+
+  if (organization?.businessModel === "ecommerce") {
+    return <CommerceOverviewScreen />;
+  }
+
   const [referenceTime] = useState(() => Date.now());
   const overview = useQuery<any>(
     dashboardApi.dashboard.overview,
