@@ -191,17 +191,17 @@ function SignInForm() {
             className="h-11 text-base sm:text-sm"
           />
         </div>
-        <Button type="submit" className="w-full h-11 text-sm font-medium cursor-pointer" disabled={loading || googleLoading}>
+        <Button type="submit" className="w-full h-11 text-sm sm:text-base font-semibold cursor-pointer" disabled={loading || googleLoading}>
           {loading ? "Signing in..." : "Sign in with Email"}
         </Button>
         <div className="pt-2 text-center space-y-2">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link href="/sign-up" className="font-semibold text-primary hover:underline">
               Sign up
             </Link>
           </p>
-          <p className="text-[11px] text-muted-foreground/80">
+          <p className="text-xs sm:text-sm text-muted-foreground/80">
             Looking for plan options?{" "}
             <Link href="/pricing" className="font-medium text-foreground hover:underline">
               View plans from ₦1,000/mo →

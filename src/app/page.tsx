@@ -188,11 +188,11 @@ export default async function Home() {
                 </Link>
               </Button>
             </div>
-            <div className="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t pt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-              <span className="flex items-center gap-2"><Check className="size-3 text-primary shrink-0" /> From ₦1,000/mo</span>
-              <span className="flex items-center gap-2"><Check className="size-3 text-primary shrink-0" /> 24/7 Online Bookings</span>
-              <span className="flex items-center gap-2"><Check className="size-3 text-primary shrink-0" /> Conversational Voice AI</span>
-              <span className="flex items-center gap-2"><Check className="size-3 text-primary shrink-0" /> WhatsApp Confirmations</span>
+            <div className="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t pt-5 text-sm font-medium text-foreground/85">
+              <span className="flex items-center gap-2"><Check className="size-4 text-primary shrink-0" /> From ₦1,000/mo</span>
+              <span className="flex items-center gap-2"><Check className="size-4 text-primary shrink-0" /> 24/7 Online Bookings</span>
+              <span className="flex items-center gap-2"><Check className="size-4 text-primary shrink-0" /> Conversational Voice AI</span>
+              <span className="flex items-center gap-2"><Check className="size-4 text-primary shrink-0" /> WhatsApp Confirmations</span>
             </div>
           </div>
 
@@ -200,32 +200,32 @@ export default async function Home() {
             <div className="w-full border border-foreground/12 bg-card shadow-[18px_22px_0_0_oklch(0.205_0.018_264.4)]">
               <div className="flex items-center border-b px-5 py-4">
                 <div>
-                  <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">Tuesday · Live front desk</p>
-                  <p className="mt-1 text-sm font-semibold">Real-time activity & bookings</p>
+                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Tuesday · Live front desk</p>
+                  <p className="mt-1 text-sm sm:text-base font-semibold">Real-time activity & bookings</p>
                 </div>
-                <span className="ml-auto inline-flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="ml-auto inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
                   <span className="size-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_oklch(0.9_0.08_151)]" />
                   Online
                 </span>
               </div>
               <div className="p-3 sm:p-5">
                 {moments.map(({ time, icon: Icon, label, detail, tone }, index) => (
-                  <div key={label} className="grid grid-cols-[42px_40px_1fr_auto] items-center gap-3 border-b px-1 py-4 last:border-0 sm:grid-cols-[48px_44px_1fr_auto]">
-                    <span className="font-mono text-[10px] text-muted-foreground">{time}</span>
+                  <div key={label} className="grid grid-cols-[48px_44px_1fr_auto] items-center gap-3 border-b px-1 py-4 last:border-0">
+                    <span className="font-mono text-xs text-muted-foreground">{time}</span>
                     <span className={`grid size-9 place-items-center rounded-md ${tone}`}><Icon className="size-4" /></span>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">{label}</p>
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">{detail}</p>
+                      <p className="truncate text-sm sm:text-base font-semibold">{label}</p>
+                      <p className="mt-0.5 truncate text-xs sm:text-sm text-muted-foreground">{detail}</p>
                     </div>
-                    <span className="hidden font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground sm:inline">0{index + 1}</span>
+                    <span className="hidden font-mono text-xs uppercase tracking-wider text-muted-foreground sm:inline">0{index + 1}</span>
                   </div>
                 ))}
               </div>
               <div className="grid grid-cols-3 border-t bg-[#171b24] text-white">
                 {[["24/7", "online bookings"], ["100%", "auto-scheduled"], ["0", "missed calls"]].map(([value, label]) => (
                   <div key={label} className="border-r px-4 py-5 last:border-0 border-white/10">
-                    <p className="font-heading text-3xl tracking-[-0.04em]">{value}</p>
-                    <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.16em] text-white/45">{label}</p>
+                    <p className="font-heading text-2xl sm:text-3xl tracking-[-0.04em]">{value}</p>
+                    <p className="mt-1 font-mono text-xs uppercase tracking-wider text-white/70">{label}</p>
                   </div>
                 ))}
               </div>
@@ -268,11 +268,11 @@ export default async function Home() {
             ].map(({ icon: Icon, n, title, copy }) => (
               <article key={n} className="border-b border-r px-0 py-8 pr-7 md:px-7 md:first:pl-0 md:last:border-r-0">
                 <div className="flex items-center justify-between">
-                  <Icon className="size-5 text-primary" />
-                  <span className="font-mono text-[10px] text-muted-foreground">{n}</span>
+                  <Icon className="size-6 text-primary" />
+                  <span className="font-mono text-xs font-semibold text-muted-foreground">{n}</span>
                 </div>
-                <h3 className="mt-12 font-heading text-3xl font-medium tracking-[-0.035em]">{title}</h3>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">{copy}</p>
+                <h3 className="mt-10 font-heading text-2xl sm:text-3xl font-medium tracking-[-0.035em]">{title}</h3>
+                <p className="mt-3.5 text-base sm:text-lg leading-relaxed text-muted-foreground">{copy}</p>
               </article>
             ))}
           </div>
@@ -325,13 +325,13 @@ export default async function Home() {
                 className="group relative rounded-xl border border-border/70 bg-card p-6 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm"
               >
                 <div className="flex items-center justify-between">
-                  <span className="grid size-10 place-items-center rounded-lg bg-primary/10 text-primary">
+                  <span className="grid size-11 place-items-center rounded-lg bg-primary/10 text-primary">
                     <Icon className="size-5" />
                   </span>
-                  <span className="font-mono text-[10px] text-muted-foreground">{step}</span>
+                  <span className="font-mono text-xs font-semibold text-muted-foreground">{step}</span>
                 </div>
-                <h3 className="mt-8 text-base font-semibold">{title}</h3>
-                <p className="mt-2 text-xs leading-5 text-muted-foreground">{description}</p>
+                <h3 className="mt-6 text-xl sm:text-2xl font-semibold tracking-tight">{title}</h3>
+                <p className="mt-3 text-sm sm:text-base leading-relaxed text-muted-foreground">{description}</p>
               </div>
             ))}
           </div>
@@ -349,17 +349,17 @@ export default async function Home() {
               A salon books appointments by stylist. A consultant schedules 1-on-1 strategy sessions. A clinic books patient visits. Qwilo’s booking forms, AI receptionist knowledge, team availability, and public scheduling adapt without changing your workflow.
             </p>
           </div>
-          <div className="grid grid-cols-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2">
             {[
               ["Barbers & salons", "Service · Stylist · Appointment · Instant WhatsApp"],
               ["Studios & coaches", "Session · Coach · Booking · Calendar sync"],
               ["Clinics & practices", "Visit · Practitioner · Patient · Slot management"],
               ["Consulting & firms", "Consultation · Specialist · Client · Intake forms"],
             ].map(([title, vocabulary], index) => (
-              <div key={title} className="min-h-48 border-b border-r border-white/10 p-6 last:border-b-0 sm:p-8 even:border-r-0">
-                <span className="font-mono text-[9px] text-white/30">0{index + 1}</span>
-                <h3 className="mt-10 text-base font-semibold">{title}</h3>
-                <p className="mt-2 text-xs leading-5 text-white/45">{vocabulary}</p>
+              <div key={title} className="min-h-44 border-b border-white/10 p-6 sm:p-8 last:border-b-0 sm:odd:border-r sm:even:border-r-0">
+                <span className="font-mono text-xs font-medium text-white/60">0{index + 1}</span>
+                <h3 className="mt-6 text-xl sm:text-2xl font-semibold text-white">{title}</h3>
+                <p className="mt-3 text-sm sm:text-base leading-relaxed text-white/80">{vocabulary}</p>
               </div>
             ))}
           </div>

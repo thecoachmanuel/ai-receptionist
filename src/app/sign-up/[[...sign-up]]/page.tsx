@@ -289,7 +289,7 @@ export default function SignUpPage() {
               <Label htmlFor="businessType" className="text-sm font-semibold">
                 Business type / Industry
               </Label>
-              <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
+              <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
                 Preset terminology
               </span>
             </div>
@@ -304,12 +304,12 @@ export default function SignUpPage() {
                 {BUSINESS_PRESET_LIST.map((preset) => {
                   const Icon = PRESET_ICONS[preset.id] || SlidersHorizontal;
                   return (
-                    <SelectItem key={preset.id} value={preset.id} className="cursor-pointer py-2">
+                    <SelectItem key={preset.id} value={preset.id} className="cursor-pointer py-2.5">
                       <div className="flex items-center gap-2.5">
                         <Icon className="size-4 text-primary shrink-0" />
                         <div className="flex flex-col text-left">
-                          <span className="font-medium text-xs text-foreground">{preset.label}</span>
-                          <span className="text-[10px] text-muted-foreground">{preset.description}</span>
+                          <span className="font-medium text-sm text-foreground">{preset.label}</span>
+                          <span className="text-xs text-muted-foreground">{preset.description}</span>
                         </div>
                       </div>
                     </SelectItem>
@@ -317,7 +317,7 @@ export default function SignUpPage() {
                 })}
               </SelectContent>
             </Select>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Configures custom terminology ({activePreset.terminology.teamMemberPlural}, {activePreset.terminology.offeringPlural}), booking page copy, and AI receptionist greeting.
             </p>
           </div>
@@ -340,8 +340,8 @@ export default function SignUpPage() {
           <div className="space-y-3 pt-1">
             {/* Plan selector */}
             <div className="flex items-center justify-between">
-              <Label className="text-xs font-semibold text-foreground">Select Subscription Plan</Label>
-              <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
+              <Label className="text-sm font-semibold text-foreground">Select Subscription Plan</Label>
+              <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200/60">
                 {enforcePayment ? "Compulsory on signup" : "14-day free trial on selected plan"}
               </span>
             </div>
@@ -351,7 +351,7 @@ export default function SignUpPage() {
               <button
                 type="button"
                 onClick={() => setBillingCycle("monthly")}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                className={`rounded-full px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer ${
                   billingCycle === "monthly"
                     ? "bg-white text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -362,20 +362,20 @@ export default function SignUpPage() {
               <button
                 type="button"
                 onClick={() => setBillingCycle("yearly")}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer ${
                   billingCycle === "yearly"
                     ? "bg-white text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Yearly
-                <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[8px] font-bold uppercase text-white">
-                  <Zap className="size-2" />2 FREE
+                <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] sm:text-xs font-bold uppercase text-white">
+                  <Zap className="size-2.5" />2 FREE
                 </span>
               </button>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2.5 sm:grid-cols-3">
               {[
                 { id: "free_org" as const, name: "Core", price: planPrices.core, desc: "Bookings & public site" },
                 { id: "engage" as const, name: "Engage", price: planPrices.engage, desc: "AI text assistant" },
@@ -388,39 +388,39 @@ export default function SignUpPage() {
                     key={p.id}
                     type="button"
                     onClick={() => setSelectedPlan(p.id)}
-                    className={`flex flex-col items-start p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    className={`flex flex-col items-start p-3 rounded-xl border text-left transition-all cursor-pointer ${
                       isSelected
                         ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs"
                         : "border-border/70 bg-card hover:border-border hover:bg-muted/30"
                     }`}
                   >
                     <div className="flex items-center justify-between w-full">
-                      <span className="font-semibold text-xs text-foreground">{p.name}</span>
-                      {isSelected && <Check className="size-3.5 text-primary" />}
+                      <span className="font-semibold text-sm text-foreground">{p.name}</span>
+                      {isSelected && <Check className="size-4 text-primary" />}
                     </div>
-                    <span className="font-heading text-sm font-bold text-foreground mt-1">
+                    <span className="font-heading text-base sm:text-lg font-bold text-foreground mt-1">
                       ₦{shown.toLocaleString()}
-                      <span className="text-[10px] font-normal text-muted-foreground">
+                      <span className="text-xs font-normal text-muted-foreground">
                         /{billingCycle === "yearly" ? "yr" : "mo"}
                       </span>
                     </span>
                     {billingCycle === "yearly" && (
-                      <span className="text-[9px] text-emerald-700 font-medium">2 months free</span>
+                      <span className="text-xs text-emerald-700 font-medium">2 months free</span>
                     )}
-                    <span className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{p.desc}</span>
+                    <span className="text-xs text-muted-foreground mt-1 leading-snug">{p.desc}</span>
                   </button>
                 );
               })}
             </div>
-            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 pt-0.5">
-              <ShieldCheck className="size-3.5 text-emerald-600 shrink-0" />
+            <p className="text-xs text-muted-foreground flex items-center gap-2 pt-1">
+              <ShieldCheck className="size-4 text-emerald-600 shrink-0" />
               Paystack secured Nigerian Naira (₦) checkout.
             </p>
           </div>
 
           <Button
             type="submit"
-            className="w-full h-11 text-sm font-medium cursor-pointer"
+            className="w-full h-11 text-sm font-semibold cursor-pointer"
             disabled={loading || googleLoading}
           >
             {loading
@@ -431,7 +431,7 @@ export default function SignUpPage() {
                 ? `Pay ₦${displayPrice(currentPrice).toLocaleString()}/${billingCycle === "yearly" ? "yr" : "mo"} with Paystack`
                 : `Get Started with ${selectedPlan === "voice" ? "Voice" : selectedPlan === "engage" ? "Engage" : "Core"} (₦${displayPrice(currentPrice).toLocaleString()}/${billingCycle === "yearly" ? "yr" : "mo"})`}
           </Button>
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-xs sm:text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link href="/sign-in" className="font-semibold text-primary hover:underline">
               Sign in
