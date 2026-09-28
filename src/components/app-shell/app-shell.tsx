@@ -22,7 +22,6 @@ import {
   Settings2,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
   Store,
   Truck,
   UsersRound,
@@ -114,7 +113,7 @@ function navigationFor(
     ];
 
     const experienceItems: NavItem[] = [
-      { label: "Online Storefront", segment: "storefront", icon: Store },
+      { label: "Storefront & Site", segment: "public-site", icon: Store },
       { label: "WhatsApp Agent", segment: "voice-agent", icon: Bot },
     ];
 
@@ -151,8 +150,7 @@ function navigationFor(
 
     const channelItems: NavItem[] = [
       { label: "AI Receptionist", segment: "voice-agent", icon: Bot },
-      { label: "Public Booking Site", segment: "public-site", icon: PanelsTopLeft },
-      { label: "Online Storefront", segment: "storefront", icon: Store },
+      { label: "Booking Site & Store", segment: "public-site", icon: PanelsTopLeft },
     ];
 
     const workspaceItems: NavItem[] = [

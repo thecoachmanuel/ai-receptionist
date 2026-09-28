@@ -355,6 +355,8 @@ export const authOptions: NextAuthOptions = {
           let chosenCycle: BillingCycle = "monthly";
           let chosenBusinessType = "barber";
           let chosenOrgName = `${profile?.name || "My"} Organization`;
+          let chosenBusinessModel: "services" | "ecommerce" | "hybrid" = "services";
+          let chosenStoreCategory = "fashion";
 
           try {
             const { cookies } = await import("next/headers");
@@ -363,6 +365,8 @@ export const authOptions: NextAuthOptions = {
             const cycleCookie = cookieStore.get("qwilo_chosen_cycle")?.value;
             const bTypeCookie = cookieStore.get("qwilo_business_type")?.value;
             const orgNameCookie = cookieStore.get("qwilo_org_name")?.value;
+            const businessModelCookie = cookieStore.get("qwilo_business_model")?.value;
+            const storeCategoryCookie = cookieStore.get("qwilo_store_category")?.value;
 
             if (planCookie === "voice" || planCookie === "engage" || planCookie === "free_org") {
               chosenPlan = planCookie as PlanType;
@@ -372,7 +376,16 @@ export const authOptions: NextAuthOptions = {
             }
             if (bTypeCookie) chosenBusinessType = bTypeCookie;
             if (orgNameCookie) chosenOrgName = decodeURIComponent(orgNameCookie);
+            if (businessModelCookie === "ecommerce" || businessModelCookie === "hybrid" || businessModelCookie === "services") {
+              chosenBusinessModel = businessModelCookie;
+            }
+            if (storeCategoryCookie) chosenStoreCategory = storeCategoryCookie;
           } catch {}
+
+          // For ecommerce, pass the retail category as businessType; for hybrid/services use the service preset
+          const effectiveBusinessType = chosenBusinessModel === "ecommerce"
+            ? chosenStoreCategory
+            : chosenBusinessType;
 
           const org = await createOrganizationForUser(
             userId,
@@ -381,8 +394,10 @@ export const authOptions: NextAuthOptions = {
             undefined,
             undefined,
             chosenPlan,
-            chosenBusinessType,
+            effectiveBusinessType,
             chosenCycle,
+            chosenBusinessModel,
+            chosenStoreCategory,
           );
           const activeOrgId = org._id.toString();
 

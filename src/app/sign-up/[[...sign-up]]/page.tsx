@@ -207,6 +207,10 @@ export default function SignUpPage() {
       if (typeof document !== "undefined") {
         document.cookie = `qwilo_chosen_plan=${selectedPlan}; path=/; max-age=3600; SameSite=Lax`;
         document.cookie = `qwilo_chosen_cycle=${billingCycle}; path=/; max-age=3600; SameSite=Lax`;
+        document.cookie = `qwilo_business_model=${businessModel}; path=/; max-age=3600; SameSite=Lax`;
+        // For ecommerce / hybrid: set the retail store category cookie
+        document.cookie = `qwilo_store_category=${storeCategory}; path=/; max-age=3600; SameSite=Lax`;
+        // For services / hybrid: set the service business type cookie
         document.cookie = `qwilo_business_type=${businessType}; path=/; max-age=3600; SameSite=Lax`;
         if (organizationName.trim()) {
           document.cookie = `qwilo_org_name=${encodeURIComponent(organizationName.trim())}; path=/; max-age=3600; SameSite=Lax`;
