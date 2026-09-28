@@ -71,6 +71,7 @@ interface StorefrontShellProps {
     instructions?: string;
   } | null;
   whatsappPhone?: string;
+  businessModel?: "services" | "ecommerce" | "hybrid";
   children: React.ReactNode;
 }
 
@@ -82,6 +83,7 @@ export function StorefrontShell({
   shippingZones = [],
   bankDetails,
   whatsappPhone,
+  businessModel = "ecommerce",
   children,
 }: StorefrontShellProps) {
   const router = useRouter();
@@ -278,8 +280,16 @@ export function StorefrontShell({
       {/* ── Top Announcement Bar ────────────────────────────────────────── */}
       <div className="bg-primary/10 border-b border-primary/20 px-4 py-1.5 text-center text-xs font-medium text-primary flex items-center justify-center gap-2">
         <Store className="size-3.5" />
-        <span>Official Store of {storeName}</span>
-        <span className="hidden sm:inline">· Direct WhatsApp Checkout Available</span>
+        <span>
+          {businessModel === "hybrid"
+            ? `Official Store & Appointments for ${storeName}`
+            : `Official Store of ${storeName}`}
+        </span>
+        <span className="hidden sm:inline">
+          {businessModel === "hybrid"
+            ? "· Book Online & Direct WhatsApp Checkout Available"
+            : "· Direct WhatsApp Checkout Available"}
+        </span>
       </div>
 
       {/* ── Main Navigation Header ───────────────────────────────────────── */}
@@ -306,6 +316,14 @@ export function StorefrontShell({
 
           {/* Nav Links */}
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+            {businessModel === "hybrid" && (
+              <Link
+                href={`/${siteSlug}/book`}
+                className="text-primary font-semibold hover:opacity-85 transition-opacity flex items-center gap-1.5"
+              >
+                📅 Book Appointment
+              </Link>
+            )}
             <Link
               href={`/${siteSlug}/shop`}
               className="hover:text-foreground transition-colors"

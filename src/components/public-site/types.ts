@@ -69,6 +69,7 @@ export type PublishedSite = {
     clerkOrgId?: string;
     name: string;
     slug: string;
+    businessModel?: "services" | "ecommerce" | "hybrid";
     timezone: string;
     currency: string;
     locale: string;

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  CalendarCheck2,
   CheckCircle2,
   Clock,
   FolderTree,
@@ -40,6 +41,8 @@ interface StorefrontHomeProps {
   collections: any[];
   currency?: string;
   whatsappPhone?: string;
+  businessModel?: "services" | "ecommerce" | "hybrid";
+  offerings?: any[];
 }
 
 export function StorefrontHome({
@@ -52,6 +55,8 @@ export function StorefrontHome({
   collections = [],
   currency = "NGN",
   whatsappPhone,
+  businessModel = "ecommerce",
+  offerings = [],
 }: StorefrontHomeProps) {
   const { addItem } = useCart();
   const featuredProducts = products.filter((p) => p.active && p.featured).slice(0, 8);
@@ -82,7 +87,9 @@ export function StorefrontHome({
       <section className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-primary/5 to-background py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 text-center space-y-6">
           <Badge className="bg-primary/15 text-primary text-xs font-semibold px-3 py-1 border-primary/20">
-            Official Online Store
+            {businessModel === "hybrid"
+              ? "Official Appointments & Online Store"
+              : "Official Online Store"}
           </Badge>
 
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-foreground max-w-3xl mx-auto">
@@ -91,15 +98,32 @@ export function StorefrontHome({
 
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             {subheadline ||
-              "Discover our latest collections, exclusive products, and experience seamless WhatsApp checkout with instant order confirmation."}
+              (businessModel === "hybrid"
+                ? "Book appointment services online or browse our collection of retail products with direct WhatsApp ordering and fast delivery."
+                : "Discover our latest collections, exclusive products, and experience seamless WhatsApp checkout with instant order confirmation.")}
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <Button asChild size="default" className="gap-2 text-xs font-semibold">
-              <Link href={`/${siteSlug}/shop`}>
-                <ShoppingBag className="size-4" /> Browse Catalog
-              </Link>
-            </Button>
+            {businessModel === "hybrid" ? (
+              <>
+                <Button asChild size="default" className="gap-2 text-xs font-semibold">
+                  <Link href={`/${siteSlug}/book`}>
+                    <CalendarCheck2 className="size-4" /> Book Appointment
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="default" className="gap-2 text-xs font-semibold">
+                  <Link href={`/${siteSlug}/shop`}>
+                    <ShoppingBag className="size-4" /> Shop Catalog
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <Button asChild size="default" className="gap-2 text-xs font-semibold">
+                <Link href={`/${siteSlug}/shop`}>
+                  <ShoppingBag className="size-4" /> Browse Catalog
+                </Link>
+              </Button>
+            )}
 
             {whatsappPhone && (
               <Button
@@ -120,6 +144,68 @@ export function StorefrontHome({
           </div>
         </div>
       </section>
+
+      {/* ── Featured Services (Hybrid Mode) ─────────────────────────── */}
+      {businessModel === "hybrid" && offerings.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b pb-4">
+            <div>
+              <Badge className="bg-primary/10 text-primary border-primary/20 text-xs mb-2">
+                Services & Bookings
+              </Badge>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                Book an Appointment
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                Choose a service, select your preferred specialist, and reserve your spot online.
+              </p>
+            </div>
+            <Button asChild variant="outline" size="sm" className="gap-1.5 self-start sm:self-auto text-xs font-semibold">
+              <Link href={`/${siteSlug}/book`}>
+                Open Booking Page <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {offerings.slice(0, 6).map((service: any) => (
+              <div
+                key={service._id}
+                className="rounded-xl border bg-card p-5 flex flex-col justify-between hover:shadow-md transition-shadow group"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-primary">
+                      {service.category || "Service"}
+                    </span>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1 font-mono">
+                      <Clock className="size-3" /> {service.durationMinutes}m
+                    </span>
+                  </div>
+                  <h3 className="font-semibold text-base text-foreground mt-2 group-hover:text-primary transition-colors">
+                    {service.name}
+                  </h3>
+                  {service.description && (
+                    <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">
+                      {service.description}
+                    </p>
+                  )}
+                </div>
+                <div className="mt-4 pt-3 border-t flex items-center justify-between">
+                  <span className="font-bold text-sm text-foreground">
+                    {service.priceMinor
+                      ? formatMoney(service.priceMinor, service.currency || currency)
+                      : "Complimentary"}
+                  </span>
+                  <Button asChild size="sm" className="h-8 text-xs font-semibold">
+                    <Link href={`/${siteSlug}/book`}>Book Now</Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── Value Props Strip ─────────────────────────────────────────── */}
       <div className="mx-auto max-w-6xl px-4 sm:px-6">

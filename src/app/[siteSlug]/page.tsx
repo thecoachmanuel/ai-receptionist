@@ -111,7 +111,9 @@ export default async function PublicSitePage({
       );
     }
 
-    if ((publishedSite.organization as any).businessModel === "ecommerce") {
+    const businessModel = (publishedSite.organization as any).businessModel || "services";
+
+    if (businessModel === "ecommerce" || businessModel === "hybrid") {
       const { getStorefrontData } = await import("@/lib/services/commerce");
       const { CartProvider } = await import("@/components/storefront/cart-context");
       const { StorefrontShell } = await import("@/components/storefront/storefront-shell");
@@ -128,6 +130,7 @@ export default async function PublicSitePage({
               currency={data.organization.currency}
               shippingZones={data.shippingZones as any}
               bankDetails={data.bankDetails}
+              businessModel={businessModel as any}
               whatsappPhone={
                 data.organization.whatsappInstance?.phone ||
                 data.siteConfig?.contact?.whatsapp
@@ -142,6 +145,8 @@ export default async function PublicSitePage({
                 products={data.products}
                 collections={data.collections}
                 currency={data.organization.currency}
+                businessModel={businessModel as any}
+                offerings={(publishedSite as any).offerings || []}
                 whatsappPhone={
                   data.organization.whatsappInstance?.phone ||
                   data.siteConfig?.contact?.whatsapp

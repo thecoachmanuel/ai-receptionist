@@ -7,7 +7,10 @@ import {
   AudioLines,
   ArrowUpRight,
   Bot,
+  CalendarCheck2,
   Check,
+  Copy,
+  ExternalLink,
   Eye,
   Globe2,
   ImageIcon,
@@ -15,8 +18,11 @@ import {
   LoaderCircle,
   MessageCircle,
   Mic,
+  Package,
   Save,
   Send,
+  ShoppingBag,
+  Store,
   Upload,
   UsersRound,
 } from "lucide-react";
@@ -1349,6 +1355,7 @@ function SiteEditor({
 
 export function PublicSiteScreen() {
   const { organization, terminology } = useWorkspace();
+  const businessModel = organization?.businessModel ?? "services";
   const current = useQuery<any>(
     dashboardApi.publicSite.getCurrentDraft,
     organization ? {} : "skip",
@@ -1372,12 +1379,26 @@ export function PublicSiteScreen() {
       .catch(() => {});
   }, []);
 
+  const siteTitle =
+    businessModel === "ecommerce"
+      ? "Storefront & Site"
+      : businessModel === "hybrid"
+      ? "Booking Site & Storefront"
+      : "Public Site";
+
+  const siteDescription =
+    businessModel === "ecommerce"
+      ? `Design your branded online storefront — products, collections, checkout experience, and AI shopping assistant all managed from here.`
+      : businessModel === "hybrid"
+      ? `Manage your unified public presence: the booking site for appointments and the online storefront for products, all under one brand.`
+      : `Shape a branded ${terminology.booking.toLowerCase()} page for this organization. Its ${terminology.offeringPlural.toLowerCase()}, ${terminology.teamMemberPlural.toLowerCase()}, availability, and optional agent channels stay live from the same workspace.`;
+
   return (
     <>
       <ScreenHeader
         eyebrow="Public experience"
-        title="Public Site"
-        description={`Shape a branded ${terminology.booking.toLowerCase()} page for this organization. Its ${terminology.offeringPlural.toLowerCase()}, ${terminology.teamMemberPlural.toLowerCase()}, availability, and optional agent channels stay live from the same workspace.`}
+        title={siteTitle}
+        description={siteDescription}
         action={
           current ? (
             <Button asChild variant="outline" className="bg-white">

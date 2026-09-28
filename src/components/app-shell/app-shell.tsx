@@ -329,7 +329,7 @@ function ShellChrome({
           <div className="flex flex-col gap-0.5">
             <Brand inverted href={`/app/${orgSlug}`} />
             <span className="pl-0.5 text-3xs font-semibold tracking-[0.18em] text-white/45 uppercase">
-              Operations desk
+              {businessModel === "ecommerce" ? "Commerce Desk" : "Operations Desk"}
             </span>
           </div>
 
@@ -454,7 +454,11 @@ function ShellChrome({
                 href={`/${publicSite?.site?.siteSlug ?? orgSlug}`}
                 target="_blank"
               >
-                Open public page
+                {businessModel === "ecommerce"
+                  ? "Open storefront"
+                  : businessModel === "hybrid"
+                  ? "View site"
+                  : "Open booking site"}
               </Link>
             </Button>
             <UserButton
@@ -484,7 +488,15 @@ function ShellChrome({
                       </h4>
                       <p className="text-xs text-rose-700/90 mt-0.5">
                         {organization?.planStatus === "unpaid"
-                          ? "Your workspace requires an active subscription. Online bookings, AI reception, and your live public site are offline until payment is complete."
+                          ? businessModel === "ecommerce"
+                            ? "Your workspace requires an active subscription. Your storefront, WhatsApp checkout, and order management are offline until payment is complete."
+                            : businessModel === "hybrid"
+                            ? "Your workspace requires an active subscription. Online bookings, your storefront, and AI channels are offline until payment is complete."
+                            : "Your workspace requires an active subscription. Online bookings, AI reception, and your live public site are offline until payment is complete."
+                          : businessModel === "ecommerce"
+                          ? "Your subscription has expired. Your storefront and WhatsApp checkout are currently offline. Renew now to restore live access."
+                          : businessModel === "hybrid"
+                          ? "Your subscription has expired. Your booking site, storefront, and AI channels are offline. Please renew to restore live access."
                           : "Your SaaS subscription has expired. Your public site and online bookings are currently offline. Please renew now to restore live access."}
                       </p>
                     </div>

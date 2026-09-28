@@ -8,7 +8,10 @@ import { isSubscriptionActive } from "@/lib/billing";
 
 export async function getPublishedBySlug(siteSlug: string) {
   const db = await getDb();
-  const normalizedSlug = siteSlug.trim().toLowerCase();
+  let normalizedSlug = siteSlug.trim().toLowerCase();
+  try {
+    normalizedSlug = decodeURIComponent(siteSlug).trim().toLowerCase();
+  } catch {}
 
   let site = await db.collection<DbPublicSite>("publicSites").findOne({
     siteSlug: normalizedSlug,
@@ -34,7 +37,12 @@ export async function getPublishedBySlug(siteSlug: string) {
 
   if (!site) {
     site = await db.collection<DbPublicSite>("publicSites").findOne({
-      organizationId: effectiveOrgId,
+      $or: [
+        { organizationId: effectiveOrgId },
+        { organizationId: organization._id?.toString() },
+        ...(organization.clerkOrgId ? [{ organizationId: organization.clerkOrgId }] : []),
+        ...(organization.slug ? [{ siteSlug: organization.slug }] : []),
+      ],
     });
   }
 
@@ -119,6 +127,16 @@ export async function getPublishedBySlug(siteSlug: string) {
       clerkOrgId: organization.clerkOrgId,
       name: organization.name || "Business",
       slug: organization.slug || normalizedSlug,
+      businessModel: organization.businessModel || "services",
+      businessType: organization.businessType || "",
+      features: organization.features || {
+        bookingsEnabled: (organization.businessModel || "services") !== "ecommerce",
+        commerceEnabled: (organization.businessModel || "services") !== "services",
+        voiceAgentEnabled: true,
+        whatsappCommerceEnabled: (organization.businessModel || "services") !== "services",
+      },
+      whatsappInstance: organization.whatsappInstance,
+      featureOverrides: organization.featureOverrides || {},
       timezone: organization.timezone || "Africa/Lagos",
       currency: organization.currency || "NGN",
       locale: organization.locale || "en-NG",
@@ -213,11 +231,38 @@ export async function getAgentSessionConfig(siteSlug: string) {
 
 export async function getCurrentDraft(orgId: string) {
   const db = await getDb();
-  const site = await db.collection<DbPublicSite>("publicSites").findOne({ organizationId: orgId });
   const orgFilter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
   const organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
 
-  if (!site || !organization) throw new Error("Public site not initialized.");
+  if (!organization) throw new Error("Organization not found.");
+
+  const effectiveOrgId = organization._id ? organization._id.toString() : (organization.clerkOrgId || orgId);
+
+  let site = await db.collection<DbPublicSite>("publicSites").findOne({
+    $or: [
+      { organizationId: orgId },
+      { organizationId: effectiveOrgId },
+      ...(organization.clerkOrgId ? [{ organizationId: organization.clerkOrgId }] : []),
+      ...(organization.slug ? [{ siteSlug: organization.slug }] : []),
+    ],
+  });
+
+  const now = Date.now();
+  if (!site) {
+    const defaultConfig = defaultSiteConfig(organization.name);
+    const initialSlug = organization.slug || slugify(organization.name);
+    const newSiteDoc: DbPublicSite = {
+      organizationId: effectiveOrgId,
+      siteSlug: initialSlug,
+      draft: defaultConfig,
+      published: defaultConfig,
+      publishedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const res = await db.collection<DbPublicSite>("publicSites").insertOne(newSiteDoc);
+    site = { ...newSiteDoc, _id: res.insertedId };
+  }
 
   return {
     site: {
@@ -229,18 +274,57 @@ export async function getCurrentDraft(orgId: string) {
       updatedAt: site.updatedAt,
     },
     organization: {
+      _id: effectiveOrgId,
       name: organization.name,
+      slug: organization.slug || site.siteSlug,
+      businessModel: organization.businessModel || "services",
+      businessType: organization.businessType || "",
+      features: organization.features || {
+        bookingsEnabled: (organization.businessModel || "services") !== "ecommerce",
+        commerceEnabled: (organization.businessModel || "services") !== "services",
+        voiceAgentEnabled: true,
+        whatsappCommerceEnabled: (organization.businessModel || "services") !== "services",
+      },
       timezone: organization.timezone,
       currency: organization.currency,
       locale: organization.locale,
       terminology: organization.terminology,
+      whatsappInstance: organization.whatsappInstance,
     },
   };
 }
 
 export async function updateDraft(orgId: string, config: SiteConfig, requestedSlug?: string) {
   const db = await getDb();
-  const site = await db.collection<DbPublicSite>("publicSites").findOne({ organizationId: orgId });
+  const orgFilter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
+  const organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
+  const effectiveOrgId = organization?._id ? organization._id.toString() : (organization?.clerkOrgId || orgId);
+
+  let site = await db.collection<DbPublicSite>("publicSites").findOne({
+    $or: [
+      { organizationId: orgId },
+      { organizationId: effectiveOrgId },
+      ...(organization?.clerkOrgId ? [{ organizationId: organization.clerkOrgId }] : []),
+      ...(organization?.slug ? [{ siteSlug: organization.slug }] : []),
+    ],
+  });
+
+  const now = Date.now();
+  if (!site && organization) {
+    const defaultConfig = defaultSiteConfig(organization.name);
+    const initialSlug = organization.slug || slugify(organization.name);
+    const newSiteDoc: DbPublicSite = {
+      organizationId: effectiveOrgId,
+      siteSlug: initialSlug,
+      draft: defaultConfig,
+      published: defaultConfig,
+      publishedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const res = await db.collection<DbPublicSite>("publicSites").insertOne(newSiteDoc);
+    site = { ...newSiteDoc, _id: res.insertedId };
+  }
   if (!site) throw new Error("Public site not initialized.");
 
   let siteSlug = site.siteSlug;
@@ -253,7 +337,6 @@ export async function updateDraft(orgId: string, config: SiteConfig, requestedSl
   }
 
   const sanitized = sanitizeSiteConfig(config);
-  const now = Date.now();
 
   await db.collection<DbPublicSite>("publicSites").updateOne(
     { _id: site._id },
@@ -265,7 +348,35 @@ export async function updateDraft(orgId: string, config: SiteConfig, requestedSl
 
 export async function publish(orgId: string, config?: SiteConfig, requestedSlug?: string) {
   const db = await getDb();
-  const site = await db.collection<DbPublicSite>("publicSites").findOne({ organizationId: orgId });
+  const orgFilter = ObjectId.isValid(orgId) ? { _id: new ObjectId(orgId) } : { clerkOrgId: orgId };
+  const organization = await db.collection<DbOrganization>("organizations").findOne(orgFilter);
+  const effectiveOrgId = organization?._id ? organization._id.toString() : (organization?.clerkOrgId || orgId);
+
+  let site = await db.collection<DbPublicSite>("publicSites").findOne({
+    $or: [
+      { organizationId: orgId },
+      { organizationId: effectiveOrgId },
+      ...(organization?.clerkOrgId ? [{ organizationId: organization.clerkOrgId }] : []),
+      ...(organization?.slug ? [{ siteSlug: organization.slug }] : []),
+    ],
+  });
+
+  const now = Date.now();
+  if (!site && organization) {
+    const defaultConfig = defaultSiteConfig(organization.name);
+    const initialSlug = organization.slug || slugify(organization.name);
+    const newSiteDoc: DbPublicSite = {
+      organizationId: effectiveOrgId,
+      siteSlug: initialSlug,
+      draft: defaultConfig,
+      published: defaultConfig,
+      publishedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const res = await db.collection<DbPublicSite>("publicSites").insertOne(newSiteDoc);
+    site = { ...newSiteDoc, _id: res.insertedId };
+  }
   if (!site) throw new Error("Public site not initialized.");
 
   let siteSlug = site.siteSlug;
@@ -278,7 +389,6 @@ export async function publish(orgId: string, config?: SiteConfig, requestedSlug?
   }
 
   const sanitized = config ? sanitizeSiteConfig(config) : site.draft;
-  const now = Date.now();
   await db.collection<DbPublicSite>("publicSites").updateOne(
     { _id: site._id },
     { $set: { siteSlug, draft: sanitized, published: sanitized, publishedAt: now, updatedAt: now } },

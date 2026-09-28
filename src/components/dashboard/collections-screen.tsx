@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "@/lib/api-client/use-data";
-import { FolderTree, Pencil, Plus, Trash2 } from "lucide-react";
+import { FolderTree, Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
@@ -30,6 +30,7 @@ import {
   SubmitButton,
 } from "@/components/dashboard/screen-kit";
 import { useWorkspace } from "@/components/dashboard/workspace-context";
+import { cn } from "@/lib/utils";
 
 // ─── Collection dialog ────────────────────────────────────────────────────────
 
@@ -40,8 +41,51 @@ function CollectionDialog({ collection }: { collection?: Collection }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [active, setActive] = useState(collection?.active ?? true);
+  const [imageUrl, setImageUrl] = useState(collection?.imageUrl ?? "");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const isEdit = !!collection;
+
+  useEffect(() => {
+    if (open) {
+      setActive(collection?.active ?? true);
+      setImageUrl(collection?.imageUrl ?? "");
+    }
+  }, [open, collection]);
+
+  async function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Collection image size must be under 8MB.");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/storage", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "Failed to upload image.");
+      }
+
+      setImageUrl(data.url);
+      toast.success("Collection image uploaded successfully!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload image.");
+    } finally {
+      setUploadingImage(false);
+      event.target.value = "";
+    }
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -49,7 +93,7 @@ function CollectionDialog({ collection }: { collection?: Collection }) {
     const payload = {
       name: String(form.get("name") ?? "").trim(),
       description: String(form.get("description") ?? "").trim(),
-      imageUrl: String(form.get("imageUrl") ?? "").trim() || undefined,
+      imageUrl: imageUrl.trim() || undefined,
       active,
       sortOrder: collection?.sortOrder ?? 99,
     };
@@ -123,17 +167,69 @@ function CollectionDialog({ collection }: { collection?: Collection }) {
               className="text-sm resize-none"
             />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label className="text-sm" htmlFor="col-image">
-              Cover image URL
+              Cover image
             </Label>
-            <Input
-              id="col-image"
-              name="imageUrl"
-              defaultValue={collection?.imageUrl}
-              placeholder="https://example.com/cover.jpg"
-              className="text-sm"
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                id="col-image"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://... or upload local image"
+                className="text-xs font-mono flex-1"
+              />
+              <Label
+                htmlFor={`col-file-upload-${collection?._id || "new"}`}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "cursor-pointer shrink-0 gap-1.5 font-normal text-xs h-9",
+                  uploadingImage && "opacity-50 pointer-events-none"
+                )}
+              >
+                <Upload className="size-3.5 text-primary" />
+                {uploadingImage ? "Uploading..." : "Upload image"}
+              </Label>
+              <input
+                id={`col-file-upload-${collection?._id || "new"}`}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+            </div>
+
+            {imageUrl ? (
+              <div className="mt-1 flex items-center justify-between gap-3 rounded-lg border border-black/8 bg-muted/20 p-2.5">
+                <div className="flex items-center gap-3 min-w-0">
+                  <img
+                    src={imageUrl}
+                    alt="Collection cover preview"
+                    className="size-11 rounded-md object-cover border border-black/10 shrink-0 bg-white"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = "none";
+                    }}
+                  />
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">Cover image preview</p>
+                    <p className="text-2xs text-muted-foreground truncate font-mono">{imageUrl}</p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setImageUrl("")}
+                  className="text-destructive h-7 px-2 text-2xs shrink-0 hover:bg-destructive/10"
+                >
+                  Remove
+                </Button>
+              </div>
+            ) : (
+              <p className="text-2xs text-muted-foreground">
+                Upload a cover banner or category image from your local device, or paste a URL.
+              </p>
+            )}
           </div>
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div>

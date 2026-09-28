@@ -176,6 +176,7 @@ function WebAgentSession() {
 export function VoiceAgentScreen() {
   const { organization, orgSlug } = useWorkspace();
   const entitlements = useFeatureEntitlements();
+  const businessModel = organization?.businessModel ?? "services";
   const agent = useQuery<any>(
     dashboardApi.agents.getCurrent,
     organization ? {} : "skip",
@@ -185,12 +186,26 @@ export function VoiceAgentScreen() {
     organization ? { limit: 50 } : "skip",
   );
 
+  const agentTitle =
+    businessModel === "ecommerce"
+      ? "WhatsApp Agent"
+      : businessModel === "hybrid"
+      ? "AI Receptionist & Commerce Agent"
+      : "AI Receptionist";
+
+  const agentDescription =
+    businessModel === "ecommerce"
+      ? "Configure and test your WhatsApp AI shopping assistant, inspect conversations, and manage the automated checkout experience."
+      : businessModel === "hybrid"
+      ? "Manage your AI receptionist for bookings and the WhatsApp commerce agent for orders — all from one place."
+      : "Test text chat and browser audio, inspect recent conversations, and manage the public AI experience for this organization.";
+
   return (
     <>
       <ScreenHeader
         eyebrow="AI channel control"
-        title="AI Agent"
-        description="Test text chat and browser audio, inspect recent conversations, and manage the public AI experience for this organization."
+        title={agentTitle}
+        description={agentDescription}
         action={
           <Button asChild variant="outline" className="bg-white">
             <Link href={`/app/${orgSlug}/public-site`}>

@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PublicSite } from "@/components/public-site/public-site";
 import { PublicSiteSuspended, PublicSiteUnavailable } from "@/components/public-site/public-site-states";
 import { organizationHasFeature, isSubscriptionActive } from "@/lib/billing";
@@ -41,6 +41,10 @@ export default async function PublicBookingPage({
 
     if (!publishedSite) {
       return <PublicSiteUnavailable />;
+    }
+
+    if ((publishedSite.organization as any).businessModel === "ecommerce") {
+      redirect(`/${siteSlug}`);
     }
 
     const isSubscriptionExpired = !isSubscriptionActive(publishedSite.organization as any);

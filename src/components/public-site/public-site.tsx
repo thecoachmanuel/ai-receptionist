@@ -627,6 +627,14 @@ export function PublicSite({
           </a>
 
           <nav className="hidden items-center gap-6 text-xs font-medium lg:flex" aria-label="Main navigation">
+            {organization.businessModel === "hybrid" && (
+              <a
+                href={`/${siteSlug}/shop`}
+                className="text-primary font-semibold transition hover:opacity-80 flex items-center gap-1"
+              >
+                🛍️ Online Store
+              </a>
+            )}
             {sectionSet.has("offerings") ? <a href="#offerings" className="text-muted-foreground transition hover:text-foreground">{terminology.offeringPlural}</a> : null}
             {sectionSet.has("team") && teamMembers.length ? <a href="#team" className="text-muted-foreground transition hover:text-foreground">{terminology.teamMemberPlural}</a> : null}
             {sectionSet.has("about") ? <a href="#about" className="text-muted-foreground transition hover:text-foreground">About</a> : null}
@@ -635,18 +643,27 @@ export function PublicSite({
             {agentIsVisible ? <a href="#assistant" className="text-muted-foreground transition hover:text-foreground">AI assistant</a> : null}
           </nav>
 
-          {bookingIsVisible ? (
-            <Button asChild size="lg" className="h-10 shrink-0 rounded-full px-4">
-              <a href="#book">
-                Book now
-                <ArrowRight data-icon="inline-end" />
-              </a>
-            </Button>
-          ) : config.contact.email ? (
-            <Button asChild variant="outline" size="lg" className="h-10 shrink-0 rounded-full px-4">
-              <a href={`mailto:${config.contact.email}`}>Get in touch</a>
-            </Button>
-          ) : null}
+          <div className="flex items-center gap-2">
+            {organization.businessModel === "hybrid" && (
+              <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex h-10 rounded-full px-4 text-xs font-semibold gap-1.5">
+                <a href={`/${siteSlug}/shop`}>
+                  🛍️ Online Store
+                </a>
+              </Button>
+            )}
+            {bookingIsVisible ? (
+              <Button asChild size="lg" className="h-10 shrink-0 rounded-full px-4">
+                <a href="#book">
+                  Book now
+                  <ArrowRight data-icon="inline-end" />
+                </a>
+              </Button>
+            ) : config.contact.email ? (
+              <Button asChild variant="outline" size="lg" className="h-10 shrink-0 rounded-full px-4">
+                <a href={`mailto:${config.contact.email}`}>Get in touch</a>
+              </Button>
+            ) : null}
+          </div>
         </div>
       </header>
 

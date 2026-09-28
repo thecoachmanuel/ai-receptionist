@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getStorefrontData } from "@/lib/services/commerce";
 import { CartProvider } from "@/components/storefront/cart-context";
@@ -35,6 +35,11 @@ export default async function ShopPage({
   const { organization, siteConfig, products, collections, shippingZones, bankDetails } =
     data;
 
+  // If organization is strictly services-only and has no products, redirect to primary site
+  if (organization.businessModel === "services" && products.length === 0) {
+    redirect(`/${siteSlug}`);
+  }
+
   return (
     <CartProvider siteSlug={siteSlug}>
       <StorefrontShell
@@ -44,6 +49,7 @@ export default async function ShopPage({
         currency={organization.currency}
         shippingZones={shippingZones as any}
         bankDetails={bankDetails}
+        businessModel={organization.businessModel as any}
         whatsappPhone={organization.whatsappInstance?.phone || siteConfig?.contact?.whatsapp}
       >
         <ShopCatalogView
